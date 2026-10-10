@@ -34,6 +34,13 @@ export function SiteHeader() {
   }, [pathname]);
 
   useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  useEffect(() => {
     const node = headerRef.current;
     if (!node) return;
 
@@ -63,12 +70,8 @@ export function SiteHeader() {
             : "border-b border-border bg-white/95 text-foreground shadow-[0_8px_30px_rgba(0,0,0,0.06)] backdrop-blur-md"
         }`}
       >
-        <div
-          className={`pt-[max(0.75rem,env(safe-area-inset-top,0px))] ${
-            overMedia ? "text-white" : "bg-black text-white"
-          }`}
-        >
-          <p className="px-3 py-2.5 text-center text-[10px] leading-5 tracking-wide sm:px-4 sm:py-3 sm:text-[11px] md:text-xs">
+        <div className="bg-black text-white pt-[max(12px,env(safe-area-inset-top,0px))]">
+          <p className="truncate px-3 py-2.5 text-center text-[10px] leading-4 tracking-wide sm:px-4 sm:py-3 sm:text-[11px] sm:leading-5 md:text-xs">
             <span className="sm:hidden">COD · Dhaka ৳80 · Outside ৳130 · {BRAND.phoneDisplay}</span>
             <span className="hidden sm:inline">
               COD · Dhaka ৳80 · Outside ৳130 · {BRAND.addressShort} · {BRAND.phoneDisplay}
@@ -77,10 +80,10 @@ export function SiteHeader() {
         </div>
 
         <div>
-          <div className="mx-auto flex min-h-16 max-w-7xl items-center gap-2 px-3 py-3 sm:min-h-[4.5rem] sm:gap-3 sm:px-6 sm:py-3.5">
+          <div className="mx-auto flex h-14 max-w-7xl items-center gap-1.5 px-2 sm:h-16 sm:gap-3 sm:px-6 md:h-[4.25rem]">
             <button
               type="button"
-              className={`inline-flex size-10 shrink-0 items-center justify-center rounded-md sm:size-11 lg:hidden ${
+              className={`inline-flex size-10 shrink-0 items-center justify-center rounded-md lg:hidden ${
                 overMedia ? "hover:bg-white/10" : "hover:bg-secondary"
               }`}
               aria-expanded={open}
@@ -93,7 +96,7 @@ export function SiteHeader() {
 
             <Link
               href="/"
-              className="font-display shrink-0 text-lg tracking-tight sm:text-xl md:text-2xl"
+              className="font-display min-w-0 shrink truncate text-base tracking-tight sm:text-xl md:text-2xl"
             >
               Bismillah
             </Link>
@@ -141,7 +144,7 @@ export function SiteHeader() {
 
             <Link
               href="/search"
-              className={`ml-auto inline-flex size-10 shrink-0 items-center justify-center rounded-full sm:size-11 md:hidden ${
+              className={`ml-auto inline-flex size-10 shrink-0 items-center justify-center rounded-full md:hidden ${
                 overMedia ? "hover:bg-white/10" : "hover:bg-secondary"
               }`}
               aria-label="Search"
@@ -150,7 +153,7 @@ export function SiteHeader() {
             </Link>
             <Link
               href="/checkout"
-              className={`inline-flex size-10 shrink-0 items-center justify-center rounded-full sm:size-11 ${
+              className={`inline-flex size-10 shrink-0 items-center justify-center rounded-full ${
                 overMedia ? "hover:bg-white/10" : "hover:bg-secondary"
               }`}
               aria-label="Cart"
@@ -163,7 +166,7 @@ export function SiteHeader() {
         {open ? (
           <nav
             id="mobile-nav"
-            className="max-h-[min(70vh,28rem)] overflow-y-auto border-t border-border bg-white px-4 py-4 text-foreground lg:hidden"
+            className="max-h-[min(75dvh,32rem)] overflow-y-auto overscroll-contain border-t border-border bg-white px-4 py-4 text-foreground lg:hidden"
           >
             <ul className="mb-4 grid gap-1 text-sm">
               <li>

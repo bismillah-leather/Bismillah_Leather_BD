@@ -21,12 +21,20 @@ html.storefront {
   --input: #d4d4d4;
   --ring: #000000;
   --site-header-offset: 7rem;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 html.storefront body {
   background: #ffffff;
   color: #000000;
   overflow-x: clip;
+}
+
+html.storefront img,
+html.storefront video {
+  max-width: 100%;
+  height: auto;
 }
 
 @keyframes catalog-marquee {

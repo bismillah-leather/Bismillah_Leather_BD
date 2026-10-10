@@ -80,17 +80,19 @@ export function HeroSlider() {
           />
         </div>
       ))}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/25 to-black/85" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/30 to-black/90" />
 
-      <div className="relative mx-auto flex min-h-[100svh] max-w-7xl flex-col justify-end px-4 pt-28 pb-20 sm:px-6 sm:pb-24">
-        <p className="text-xs tracking-[0.32em] uppercase">{BRAND.name}</p>
-        <h1 className="font-display mt-3 max-w-3xl text-5xl leading-[0.9] tracking-tight sm:text-7xl">
+      <div className="relative mx-auto flex min-h-[100svh] max-w-7xl flex-col justify-end px-4 pt-32 pb-24 sm:px-6 sm:pt-36 sm:pb-28">
+        <p className="text-[10px] tracking-[0.28em] uppercase sm:text-xs sm:tracking-[0.32em]">
+          {BRAND.name}
+        </p>
+        <h1 className="font-display mt-2 max-w-3xl text-[2.35rem] leading-[0.95] tracking-tight sm:mt-3 sm:text-6xl lg:text-7xl">
           {slide.title}
         </h1>
-        <div className="mt-7 flex flex-wrap gap-3">
+        <div className="mt-5 flex flex-wrap gap-2 sm:mt-7 sm:gap-3">
           <Link
             href={slide.href}
-            className="inline-flex h-12 items-center bg-white px-5 text-sm font-medium text-black"
+            className="inline-flex h-11 items-center bg-white px-4 text-sm font-medium text-black sm:h-12 sm:px-5"
           >
             {slide.cta}
           </Link>
@@ -98,13 +100,13 @@ export function HeroSlider() {
             href={BRAND.whatsappUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-12 items-center border border-white/70 px-5 text-sm text-white"
+            className="inline-flex h-11 items-center border border-white/70 px-4 text-sm text-white sm:h-12 sm:px-5"
           >
             WhatsApp
           </a>
         </div>
 
-        <div className="mt-8 flex items-center gap-2" role="tablist" aria-label="Hero slides">
+        <div className="mt-6 flex items-center gap-2 sm:mt-8" role="tablist" aria-label="Hero slides">
           {slides.map((item, slideIndex) => (
             <button
               key={item.src}
@@ -114,16 +116,16 @@ export function HeroSlider() {
               aria-label={`Slide ${slideIndex + 1}`}
               onClick={() => setIndex(slideIndex)}
               className={`h-1.5 rounded-full transition-all ${
-                slideIndex === index ? "w-8 bg-white" : "w-3 bg-white/40 hover:bg-white/70"
+                slideIndex === index ? "w-7 bg-white sm:w-8" : "w-2.5 bg-white/40 hover:bg-white/70 sm:w-3"
               }`}
             />
           ))}
         </div>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 overflow-hidden border-t border-white/15 bg-black/70">
+      <div className="absolute inset-x-0 bottom-0 overflow-hidden border-t border-white/15 bg-black/80 pb-[env(safe-area-inset-bottom,0px)]">
         <p className="sr-only">Categories</p>
-        <div className="bl-marquee flex gap-10 py-3 text-[11px] tracking-[0.22em] uppercase">
+        <div className="bl-marquee flex gap-6 py-2.5 text-[10px] tracking-[0.18em] uppercase sm:gap-10 sm:py-3 sm:text-[11px] sm:tracking-[0.22em]">
           {ticker.map((name, i) => (
             <span key={`${name}-${i}`} className="shrink-0 text-white/90">
               {name}
@@ -137,7 +139,7 @@ export function HeroSlider() {
           }
           .bl-marquee {
             width: max-content;
-            animation: bl-marquee 24s linear infinite;
+            animation: bl-marquee 22s linear infinite;
             will-change: transform;
           }
           @media (prefers-reduced-motion: reduce) {
