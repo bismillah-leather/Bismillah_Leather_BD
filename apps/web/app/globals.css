@@ -20,11 +20,13 @@ html.storefront {
   --border: #e5e5e5;
   --input: #d4d4d4;
   --ring: #000000;
+  --site-header-offset: 7rem;
 }
 
 html.storefront body {
   background: #ffffff;
   color: #000000;
+  overflow-x: clip;
 }
 
 @keyframes catalog-marquee {

@@ -54,21 +54,23 @@ async function SearchResults({
           className="h-12 w-full rounded-full border border-input bg-white px-4 text-base outline-none focus-visible:border-foreground"
         />
       </form>
-      <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
-        {[
-          { href: "/search", label: "All" },
-          { href: "/search?q=wallet", label: "Wallets" },
-          { href: "/search?q=belt", label: "Belts" },
-          { href: "/search?q=sale", label: "Sale" },
-        ].map((chip) => (
-          <Link
-            key={chip.href}
-            href={chip.href}
-            className="inline-flex h-10 shrink-0 items-center border border-input bg-white px-4 text-sm"
-          >
-            {chip.label}
-          </Link>
-        ))}
+      <div className="sticky top-[var(--site-header-offset,7rem)] z-40 -mx-4 mt-5 border-b border-border bg-white/95 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6">
+        <div className="flex gap-2 overflow-x-auto pb-0.5">
+          {[
+            { href: "/search", label: "All" },
+            { href: "/search?q=wallet", label: "Wallets" },
+            { href: "/search?q=belt", label: "Belts" },
+            { href: "/search?q=sale", label: "Sale" },
+          ].map((chip) => (
+            <Link
+              key={chip.href}
+              href={chip.href}
+              className="inline-flex h-10 shrink-0 items-center border border-input bg-white px-4 text-sm"
+            >
+              {chip.label}
+            </Link>
+          ))}
+        </div>
       </div>
       <div className="mt-8">
         <ProductGrid products={products} />
