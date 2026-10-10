@@ -99,7 +99,7 @@ async function ProductContent({ params }: { params: Promise<{ slug: string }> })
       </section>
 
       {recentlyViewed.length > 0 ? (
-        <section className="border-t border-border bg-[#efeae3] py-14">
+        <section className="border-t border-border bg-secondary py-14">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <h2 className="font-display text-3xl sm:text-4xl">More in this style</h2>
             <div className="mt-8">

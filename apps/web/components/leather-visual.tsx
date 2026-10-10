@@ -12,7 +12,7 @@ export function ProductPhoto({
   sizes?: string;
 }) {
   return (
-    <div className="relative aspect-[3/4] overflow-hidden bg-[#efeae3]">
+    <div className="relative aspect-[3/4] overflow-hidden bg-secondary">
       <Image
         src={src}
         alt={alt}

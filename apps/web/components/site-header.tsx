@@ -30,10 +30,10 @@ export function SiteHeader() {
   return (
     <>
       <header
-        className={`fixed inset-x-0 top-0 z-40 transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 ${
+        className={`fixed inset-x-0 top-0 z-40 transition-[background-color,border-color,box-shadow,backdrop-filter,padding] duration-300 ${
           overHero
-            ? "border-b border-transparent bg-transparent text-white"
-            : "border-b border-border bg-[#f6f3ee]/95 text-foreground shadow-[0_8px_30px_rgba(22,18,14,0.08)] backdrop-blur-md"
+            ? "border-b border-transparent bg-gradient-to-b from-black/70 via-black/40 to-transparent pt-[max(1.25rem,env(safe-area-inset-top,0px))] text-white"
+            : "border-b border-border bg-white/95 pt-[env(safe-area-inset-top,0px)] text-foreground shadow-[0_8px_30px_rgba(0,0,0,0.06)] backdrop-blur-md"
         }`}
       >
         <div
@@ -46,7 +46,7 @@ export function SiteHeader() {
           </div>
         </div>
 
-        <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6">
+        <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 pb-1 sm:px-6 md:h-[4.5rem]">
           <button
             type="button"
             className={`inline-flex size-11 items-center justify-center rounded-md lg:hidden ${
@@ -128,7 +128,7 @@ export function SiteHeader() {
         {open ? (
           <nav
             id="mobile-nav"
-            className="max-h-[70vh] overflow-y-auto border-t border-border bg-[#f6f3ee] px-4 py-4 text-foreground lg:hidden"
+            className="max-h-[70vh] overflow-y-auto border-t border-border bg-white px-4 py-4 text-foreground lg:hidden"
           >
             <ul className="mb-4 grid gap-1 text-sm">
               <li>

@@ -7,7 +7,7 @@ export function ProductCard({ product }: { product: ShowcaseProduct }) {
 
   return (
     <Link href={`/product/${product.slug}`} className="group block">
-      <div className="relative overflow-hidden bg-[#efeae3]">
+      <div className="relative overflow-hidden bg-secondary">
         <ProductPhoto src={product.image} alt={product.name} />
         {product.inStock ? null : (
           <span className="absolute top-3 right-3 bg-foreground px-2.5 py-1 text-[11px] tracking-wide text-background uppercase">

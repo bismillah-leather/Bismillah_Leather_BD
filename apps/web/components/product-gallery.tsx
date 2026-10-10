@@ -32,7 +32,7 @@ export function ProductGallery({
           </li>
         ))}
       </ul>
-      <div className="relative order-1 aspect-[3/4] overflow-hidden bg-[#efeae3] sm:order-2">
+      <div className="relative order-1 aspect-[3/4] overflow-hidden bg-secondary sm:order-2">
         <Image
           src={shots[active] ?? shots[0]!}
           alt={alt}

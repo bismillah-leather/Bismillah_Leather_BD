@@ -1,4 +1,4 @@
-import { BRAND, INITIAL_CATEGORIES, SHOWCASE_PRODUCTS } from "@bismillah/shared";
+import { BRAND, SHOWCASE_PRODUCTS } from "@bismillah/shared";
 import Link from "next/link";
 import { HeroSlider } from "@/components/hero-slider";
 import { ProductGrid } from "@/components/product-grid";
@@ -20,11 +20,6 @@ const moreCategories = [
   { slug: "jeans-belt", name: "Jeans Belt", image: "/catalog/belt-tan-jeans.jpg" },
 ] as const;
 
-const ticker = [
-  ...INITIAL_CATEGORIES.map((category) => category.name),
-  ...INITIAL_CATEGORIES.map((category) => category.name),
-];
-
 const newArrivals = SHOWCASE_PRODUCTS.slice(0, 4);
 const bestSellers = SHOWCASE_PRODUCTS.filter((product) => product.salePaisa).slice(0, 4);
 const saleItems = SHOWCASE_PRODUCTS.filter((product) => product.salePaisa);
@@ -39,17 +34,6 @@ export default function HomePage() {
   return (
     <div>
       <HeroSlider />
-
-      <div className="overflow-hidden bg-foreground text-background">
-        <p className="sr-only">Categories</p>
-        <div className="marquee-track flex w-max gap-8 py-3 text-[11px] tracking-[0.22em] uppercase">
-          {ticker.map((name, index) => (
-            <span key={`${name}-${index}`} className="shrink-0">
-              {name}
-            </span>
-          ))}
-        </div>
-      </div>
 
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
         <CenteredRuleHeading>Featured categories</CenteredRuleHeading>
@@ -100,7 +84,7 @@ export default function HomePage() {
         <ProductGrid products={bestSellers} />
       </section>
 
-      <section className="bg-[#efeae3] py-14 sm:py-20">
+      <section className="bg-secondary py-14 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <CenteredRuleHeading>Shop by style</CenteredRuleHeading>
           <ul className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -145,7 +129,7 @@ export default function HomePage() {
         <ProductGrid products={SHOWCASE_PRODUCTS} />
       </section>
 
-      <section className="border-y border-border bg-[#1a1511] text-white">
+      <section className="border-y border-border bg-black text-white">
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
           <div className="mb-10 max-w-xl">
             <p className="text-xs tracking-[0.28em] text-white/65 uppercase">On sale</p>
@@ -161,7 +145,7 @@ export default function HomePage() {
               Shop sale
             </Link>
           </div>
-          <div className="rounded-sm bg-[#f6f3ee] p-4 text-foreground sm:p-6">
+          <div className="rounded-sm bg-white p-4 text-foreground sm:p-6">
             <ProductGrid products={saleItems.slice(0, 4)} />
           </div>
         </div>
@@ -203,7 +187,7 @@ export default function HomePage() {
               </li>
             </ul>
           </div>
-          <div className="border border-border bg-[#f6f3ee] p-6 sm:p-8">
+          <div className="border border-border bg-secondary p-6 sm:p-8">
             <p className="text-xs tracking-[0.28em] text-muted-foreground uppercase">Stay close</p>
             <h3 className="font-display mt-3 text-3xl">New drop alerts</h3>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
