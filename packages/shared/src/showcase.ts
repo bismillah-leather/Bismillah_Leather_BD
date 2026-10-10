@@ -56,32 +56,89 @@ export const SHOWCASE_PRODUCTS = [
     blurb: "Slim profile for a dress pocket.",
   },
   {
-    slug: "cognac-mini-wallet",
+    slug: "mini-magnetic-short-wallet",
     image: "/catalog/wallet-cognac-mini.jpg",
-    name: "Cognac Mini Wallet",
+    name: "Mini Magnetic Short Wallet",
     sku: "BL-MW-001",
     categorySlug: "mini-wallet",
-    pricePaisa: 95_000n,
+    pricePaisa: 70_000n,
     salePaisa: null,
-    colors: ["Cognac"],
+    colors: ["Black", "Chocolate"],
     tone: "cognac",
     kind: "wallet",
     inStock: true,
-    blurb: "Cards and a little cash.",
+    blurb: "জেনুইন লেদার মিনি ওয়ালেট। Compact size with magnetic close. Black & Chocolate.",
   },
   {
-    slug: "black-semi-long-wallet",
-    image: "/catalog/wallet-black-semi.jpg",
-    name: "Black Semi Long Wallet",
-    sku: "BL-SL-001",
-    categorySlug: "semi-long-wallet",
-    pricePaisa: 165_000n,
+    slug: "rfid-trifold-wallet",
+    image: "/catalog/wallet-black-short.jpg",
+    name: "RFID Trifold Wallet",
+    sku: "BL-TF-001",
+    categorySlug: "trifold-wallet",
+    pricePaisa: 145_000n,
     salePaisa: null,
-    colors: ["Black", "Brown"],
+    colors: ["Black", "Chocolate"],
     tone: "black",
     kind: "wallet",
-    inStock: false,
-    blurb: "Between a bifold and a long wallet.",
+    inStock: true,
+    blurb: "Genuine leather trifold with RFID blocking. Cards stay organised; scanning risk goes down.",
+  },
+  {
+    slug: "magnetic-double-phone-long-wallet",
+    image: "/catalog/wallet-black-long.jpg",
+    name: "Magnetic Double Phone Long Wallet",
+    sku: "BL-LW-PHONE",
+    categorySlug: "long-wallet",
+    pricePaisa: 195_000n,
+    salePaisa: null,
+    colors: ["Black", "Olive"],
+    tone: "black",
+    kind: "wallet",
+    inStock: true,
+    blurb: "জেনুইন লেদার লং ওয়ালেট for two phones, premium magnetic close. Black & Olive.",
+  },
+  {
+    slug: "thara-soft-leather-wallet",
+    image: "/catalog/wallet-brown-long.jpg",
+    name: "Thara Soft Leather Wallet",
+    sku: "BL-TH-001",
+    categorySlug: "thara-wallet",
+    pricePaisa: 175_000n,
+    salePaisa: null,
+    colors: ["Black", "Chocolate"],
+    tone: "brown",
+    kind: "wallet",
+    inStock: true,
+    blurb:
+      "১০০% জেনুইন সফট লেদার। ৮ card slots, ২ document gaps, YKK zip coin pocket, large cash chamber with inner zip.",
+  },
+  {
+    slug: "mini-full-leather-wallet",
+    image: "/catalog/wallet-black-semi.jpg",
+    name: "Mini Full Leather Wallet",
+    sku: "BL-MW-002",
+    categorySlug: "mini-wallet",
+    pricePaisa: 85_000n,
+    salePaisa: null,
+    colors: ["Black", "Chocolate"],
+    tone: "black",
+    kind: "wallet",
+    inStock: true,
+    blurb: "৩″ × ৪″. Magnetic coin slot, ২ card slots, ২ document slots. Full leather, no fabric.",
+  },
+  {
+    slug: "three-quarter-multifunction-wallet",
+    image: "/catalog/wallet-espresso.jpg",
+    name: "Three Quarter Multifunction Wallet",
+    sku: "BL-TQ-001",
+    categorySlug: "semi-long-wallet",
+    pricePaisa: 155_000n,
+    salePaisa: null,
+    colors: ["Black", "Chocolate"],
+    tone: "cognac",
+    kind: "wallet",
+    inStock: true,
+    blurb: "থ্রি কোয়ার্টার মাল্টি-ফাংশনাল ওয়ালেট। Genuine leather. Black & Chocolate.",
   },
   {
     slug: "buffalo-wallet",
@@ -191,9 +248,19 @@ export type ProductView = {
   tone: LeatherTone;
   kind: ProductKind;
   inStock: boolean;
+  image: string;
   pricePaisa: string;
   comparePaisa: string | null;
 };
+
+export function galleryFor(product: ShowcaseProduct): string[] {
+  const related = SHOWCASE_PRODUCTS.filter(
+    (item) => item.kind === product.kind && item.slug !== product.slug,
+  )
+    .slice(0, 2)
+    .map((item) => item.image);
+  return [product.image, ...related];
+}
 
 export function toProductView(product: ShowcaseProduct): ProductView {
   return {
@@ -206,6 +273,7 @@ export function toProductView(product: ShowcaseProduct): ProductView {
     tone: product.tone,
     kind: product.kind,
     inStock: product.inStock,
+    image: product.image,
     pricePaisa: (product.salePaisa ?? product.pricePaisa).toString(),
     comparePaisa: product.salePaisa ? product.pricePaisa.toString() : null,
   };

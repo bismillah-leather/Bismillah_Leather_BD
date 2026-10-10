@@ -21,29 +21,58 @@ export async function generateMetadata({
   return { title: category.name, description: category.blurb };
 }
 
-export default function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
+export default function CategoryPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ sort?: string | string[] }>;
+}) {
   return (
     <Suspense fallback={<div className="px-4 py-10 text-muted-foreground">Loading category…</div>}>
-      <CategoryContent params={params} />
+      <CategoryContent params={params} searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function CategoryContent({ params }: { params: Promise<{ slug: string }> }) {
+async function CategoryContent({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ sort?: string | string[] }>;
+}) {
   const { slug } = await params;
+  const query = await searchParams;
   const category = categoryBySlug(slug);
   if (!category) notFound();
-  const products = productsByCategory(slug);
+
+  const sortRaw = Array.isArray(query.sort) ? query.sort[0] : query.sort;
+  const sort = sortRaw ?? "relevant";
+  let products = [...productsByCategory(slug)];
+  if (sort === "price-asc") {
+    products = products.sort((a, b) => Number((a.salePaisa ?? a.pricePaisa) - (b.salePaisa ?? b.pricePaisa)));
+  } else if (sort === "price-desc") {
+    products = products.sort((a, b) => Number((b.salePaisa ?? b.pricePaisa) - (a.salePaisa ?? a.pricePaisa)));
+  } else if (sort === "newest") {
+    products = products.reverse();
+  }
 
   const cover = products[0]?.image;
+  const sorts = [
+    { value: "relevant", label: "Most relevant" },
+    { value: "newest", label: "Newest" },
+    { value: "price-asc", label: "Price: low to high" },
+    { value: "price-desc", label: "Price: high to low" },
+  ] as const;
 
   return (
     <div>
       <div className="relative min-h-72 overflow-hidden bg-foreground text-background sm:min-h-96">
         {cover ? (
-          <Image src={cover} alt="" fill sizes="100vw" className="object-cover opacity-55" priority />
+          <Image src={cover} alt="" fill sizes="100vw" className="object-cover opacity-50" priority />
         ) : null}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/25" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/30" />
         <div className="relative mx-auto flex min-h-72 max-w-7xl flex-col justify-end px-4 py-10 sm:min-h-96 sm:px-6">
           <p className="text-xs tracking-wide text-white/75">
             <Link href="/" className="hover:text-white">
@@ -56,10 +85,31 @@ async function CategoryContent({ params }: { params: Promise<{ slug: string }> }
           <p className="mt-3 max-w-xl text-sm text-white/80">{category.blurb}</p>
         </div>
       </div>
+
+      <div className="border-b border-border bg-white">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
+          <p className="text-sm text-muted-foreground">
+            {products.length} {products.length === 1 ? "product" : "products"}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            {sorts.map((option) => (
+              <Link
+                key={option.value}
+                href={`/category/${slug}?sort=${option.value}`}
+                className={`inline-flex h-10 items-center border px-3 text-xs sm:text-sm ${
+                  sort === option.value
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-input bg-white"
+                }`}
+              >
+                {option.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-        <p className="mb-6 text-sm text-muted-foreground">
-          {products.length} {products.length === 1 ? "product" : "products"}
-        </p>
         <ProductGrid products={products} />
       </div>
     </div>

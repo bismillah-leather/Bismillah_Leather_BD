@@ -36,6 +36,13 @@ export const INITIAL_CATEGORIES = [
     sortOrder: 50,
   },
   {
+    name: "Trifold Wallet",
+    slug: "trifold-wallet",
+    group: "Wallets",
+    blurb: "RFID blocking, genuine leather.",
+    sortOrder: 55,
+  },
+  {
     name: "Buffalo Wallet",
     slug: "buffalo-wallet",
     group: "Wallets",
@@ -48,6 +55,13 @@ export const INITIAL_CATEGORIES = [
     group: "Wallets",
     blurb: "Patterned styles in the LV line.",
     sortOrder: 70,
+  },
+  {
+    name: "Thara Wallet",
+    slug: "thara-wallet",
+    group: "Wallets",
+    blurb: "Soft genuine leather, full function.",
+    sortOrder: 75,
   },
   {
     name: "Formal Belt",

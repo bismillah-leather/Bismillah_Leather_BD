@@ -1,3 +1,4 @@
+import { BRAND } from "@bismillah/shared";
 import type { Metadata } from "next";
 import { Fraunces, Outfit } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
@@ -18,10 +19,10 @@ const fraunces = Fraunces({
 
 export const metadata: Metadata = {
   title: {
-    default: "Bismillah Leather",
-    template: "%s · Bismillah Leather",
+    default: BRAND.name,
+    template: `%s · ${BRAND.name}`,
   },
-  description: "Wallets and belts from Bismillah Leather. Cash on delivery across Bangladesh.",
+  description: `${BRAND.tagline}. ${BRAND.addressLine}. Call ${BRAND.phoneDisplay}. Cash on delivery across Bangladesh.`,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
