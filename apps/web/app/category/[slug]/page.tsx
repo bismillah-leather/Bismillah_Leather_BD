@@ -2,6 +2,7 @@ import { categoryBySlug, INITIAL_CATEGORIES } from "@bismillah/shared";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 export function generateStaticParams() {
   return INITIAL_CATEGORIES.map((category) => ({ slug: category.slug }));
@@ -21,7 +22,15 @@ export async function generateMetadata({
   };
 }
 
-export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
+export default function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-6xl px-4 py-10 text-muted-foreground">Loading category…</div>}>
+      <CategoryContent params={params} />
+    </Suspense>
+  );
+}
+
+async function CategoryContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const category = categoryBySlug(slug);
   if (!category) notFound();

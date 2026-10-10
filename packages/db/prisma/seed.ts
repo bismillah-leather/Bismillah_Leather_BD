@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { Algorithm, hash } from "@node-rs/argon2";
+import { hash } from "@node-rs/argon2";
 import { INITIAL_CATEGORIES, INITIAL_MATERIALS } from "@bismillah/shared";
 import { getPrisma } from "../src/client";
 
@@ -126,11 +126,11 @@ async function seedOwner() {
   const existing = await prisma.adminUser.findUnique({ where: { email } });
   if (existing) return;
 
+  // @node-rs/argon2 defaults to Argon2id.
   const passwordHash = await hash(password, {
     memoryCost: 19456,
     timeCost: 2,
     parallelism: 1,
-    algorithm: Algorithm.Argon2id,
   });
 
   await prisma.adminUser.create({

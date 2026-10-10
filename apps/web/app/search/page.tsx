@@ -1,11 +1,24 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Search",
   robots: { index: false, follow: true },
 };
 
-export default async function SearchPage({
+export default function SearchPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string | string[] }>;
+}) {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-6xl px-4 py-10 text-muted-foreground">Loading search…</div>}>
+      <SearchResults searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function SearchResults({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string | string[] }>;

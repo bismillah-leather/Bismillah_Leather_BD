@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 const POLICIES = {
   shipping: {
@@ -39,7 +40,15 @@ export async function generateMetadata({
   return { title: policy?.title ?? "Policy" };
 }
 
-export default async function PolicyPage({ params }: { params: Promise<{ slug: string }> }) {
+export default function PolicyPage({ params }: { params: Promise<{ slug: string }> }) {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-2xl px-4 py-10 text-muted-foreground">Loading…</div>}>
+      <PolicyContent params={params} />
+    </Suspense>
+  );
+}
+
+async function PolicyContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const policy = POLICIES[slug as keyof typeof POLICIES];
   if (!policy) notFound();
