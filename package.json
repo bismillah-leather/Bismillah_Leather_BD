@@ -1,26 +1,28 @@
 {
-  "name": "bismillah_leather",
+  "name": "bismillah-leather",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+  "packageManager": "pnpm@8.15.9",
+  "engines": {
+    "node": ">=20.19.0"
   },
-  "dependencies": {
-    "next": "16.4.0",
-    "react": "19.3.0",
-    "react-dom": "19.3.0"
+  "scripts": {
+    "dev": "pnpm --filter @bismillah/web dev",
+    "dev:admin": "pnpm --filter @bismillah/admin dev",
+    "dev:api": "pnpm --filter @bismillah/api dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "typecheck": "turbo typecheck",
+    "db:up": "docker compose -f infra/docker-compose.yml up -d",
+    "db:down": "docker compose -f infra/docker-compose.yml down",
+    "db:generate": "pnpm --filter @bismillah/db generate",
+    "db:migrate": "pnpm --filter @bismillah/db migrate",
+    "db:seed": "pnpm --filter @bismillah/db seed",
+    "db:validate": "pnpm --filter @bismillah/db validate",
+    "db:studio": "pnpm --filter @bismillah/db studio"
   },
   "devDependencies": {
-    "@tailwindcss/turbopack": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.4.0",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "turbo": "^2.5.8"
   }
 }

@@ -1,0 +1,194 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Catalog visibility. `scheduled` waits for `scheduled_for`.
+enum ProductStatus {
+  draft
+  scheduled
+  published
+  archived
+
+  @@map("product_status")
+}
+
+enum MediaType {
+  image
+  video
+
+  @@map("media_type")
+}
+
+enum MediaProcessingStatus {
+  pending
+  processing
+  ready
+  failed
+
+  @@map("media_processing_status")
+}
+
+enum InventoryReason {
+  sale
+  return
+  adjustment
+  restock
+
+  @@map("inventory_reason")
+}
+
+/// How the order was placed. Independent from marketing source.
+enum OrderChannel {
+  website
+  facebook_messenger
+  whatsapp
+  phone
+
+  @@map("order_channel")
+}
+
+/// Where the customer came from. First-touch and last-touch live on the order.
+enum AttributionSource {
+  facebook
+  tiktok
+  google
+  whatsapp
+  direct
+  other
+
+  @@map("attribution_source")
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  completed
+  cancelled
+
+  @@map("order_status")
+}
+
+enum PaymentStatus {
+  unpaid
+  pending
+  paid
+  failed
+  refunded
+  partially_refunded
+
+  @@map("payment_status")
+}
+
+enum FulfillmentStatus {
+  unfulfilled
+  packed
+  shipped
+  delivered
+  failed_delivery
+  returned
+
+  @@map("fulfillment_status")
+}
+
+enum PaymentMethod {
+  cod
+  bkash
+  nagad
+  card
+  manual
+
+  @@map("payment_method")
+}
+
+enum CourierCode {
+  steadfast
+  pathao
+  redx
+
+  @@map("courier_code")
+}
+
+enum RefundStatus {
+  pending
+  succeeded
+  failed
+
+  @@map("refund_status")
+}
+
+enum CouponType {
+  percent
+  fixed
+
+  @@map("coupon_type")
+}
+
+enum CouponScope {
+  all
+  category
+  product
+
+  @@map("coupon_scope")
+}
+
+enum ReviewStatus {
+  pending
+  approved
+  rejected
+
+  @@map("review_status")
+}
+
+enum AdminRole {
+  owner
+  manager
+  staff
+  support
+
+  @@map("admin_role")
+}
+
+enum OutboxStatus {
+  pending
+  processing
+  published
+  failed
+  dead
+
+  @@map("outbox_status")
+}
+
+enum DeliveryZoneKind {
+  inside_dhaka
+  outside_dhaka
+  district
+
+  @@map("delivery_zone_kind")
+}
+
+enum BlocklistKind {
+  phone
+  address
+
+  @@map("blocklist_kind")
+}
+
+enum NotificationChannel {
+  sms
+  email
+
+  @@map("notification_channel")
+}
+
+enum OrderHistoryField {
+  status
+  payment_status
+  fulfillment_status
+
+  @@map("order_history_field")
+}

@@ -1,0 +1,72 @@
+model HomeSection {
+  id        String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  key       String   @unique
+  type      String
+  title     String?
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  payload   Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([isActive, sortOrder])
+  @@map("home_sections")
+}
+
+model Page {
+  id             String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  slug           String   @unique
+  title          String
+  body           String   @db.Text
+  seoTitle       String?  @map("seo_title")
+  seoDescription String?  @map("seo_description") @db.Text
+  isPublished    Boolean  @default(false) @map("is_published")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("pages")
+}
+
+model Redirect {
+  id        String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  fromPath  String   @unique @map("from_path")
+  toPath    String   @map("to_path")
+  code      Int      @default(301)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("redirects")
+}
+
+model Review {
+  id                 String       @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  productId          String       @map("product_id") @db.Uuid
+  product            Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customerId         String?      @map("customer_id") @db.Uuid
+  customer           Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  orderId            String?      @map("order_id") @db.Uuid
+  order              Order?       @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  rating             Int
+  title              String?
+  body               String       @db.Text
+  status             ReviewStatus @default(pending)
+  isVerifiedPurchase Boolean      @default(false) @map("is_verified_purchase")
+  createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([productId, status])
+  @@index([customerId])
+  @@index([orderId])
+  @@map("reviews")
+}
+
+model Wishlist {
+  customerId String   @map("customer_id") @db.Uuid
+  productId  String   @map("product_id") @db.Uuid
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@id([customerId, productId])
+  @@index([productId])
+  @@map("wishlists")
+}

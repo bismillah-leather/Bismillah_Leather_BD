@@ -1,0 +1,5 @@
+@import "tailwindcss";
+@import "@bismillah/ui/theme.css";
+
+@source "./**/*.{ts,tsx}";
+@source "../../../packages/ui/src/**/*.{ts,tsx}";
