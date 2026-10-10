@@ -17,6 +17,14 @@ export {
 } from "./order-state";
 export type { FulfillmentStatus, OrderStatus, PaymentStatus } from "./order-state";
 export { categoryBySlug, INITIAL_CATEGORIES, INITIAL_MATERIALS } from "./catalog";
+export {
+  productBySlug,
+  productsByCategory,
+  searchProducts,
+  SHOWCASE_PRODUCTS,
+  toProductView,
+} from "./showcase";
+export type { LeatherTone, ProductKind, ProductView, ShowcaseProduct } from "./showcase";
 export type { InitialCategory } from "./catalog";
 export { QUEUE_NAMES, QUEUES } from "./queues";
 export type { QueueName } from "./queues";

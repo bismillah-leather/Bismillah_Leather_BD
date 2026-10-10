@@ -1,68 +1,106 @@
-import { INITIAL_CATEGORIES } from "@bismillah/shared";
-import { Badge, Button } from "@bismillah/ui";
+import { INITIAL_CATEGORIES, SHOWCASE_PRODUCTS } from "@bismillah/shared";
+import Image from "next/image";
 import Link from "next/link";
+import { ProductGrid } from "@/components/product-grid";
+import { ProductPhoto } from "@/components/leather-visual";
 
-const groups = ["Wallets", "Belts"] as const;
+const featured = [
+  { slug: "long-wallet", name: "Long Wallet", image: "/catalog/wallet-black-long.jpg" },
+  { slug: "short-wallet", name: "Short Wallet", image: "/catalog/wallet-black-short.jpg" },
+  { slug: "formal-belt", name: "Formal Belt", image: "/catalog/belt-black-formal.jpg" },
+  { slug: "jeans-belt", name: "Jeans Belt", image: "/catalog/belt-tan-jeans.jpg" },
+] as const;
+
+const ticker = [...INITIAL_CATEGORIES.map((category) => category.name), ...INITIAL_CATEGORIES.map((category) => category.name)];
 
 export default function HomePage() {
   return (
     <div>
-      <section className="px-4 pt-12 pb-10 sm:px-6 sm:pt-20 sm:pb-16">
-        <div className="mx-auto max-w-6xl">
-          <Badge variant="outline">Cash on delivery</Badge>
-          <h1 className="font-display mt-5 max-w-3xl text-[2.6rem] leading-[0.95] tracking-tight sm:text-7xl">
-            Leather, cut to last.
+      <section className="relative min-h-[78vh] overflow-hidden bg-black text-white sm:min-h-[88vh]">
+        <Image
+          src="/catalog/hero-leather.jpg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/35" />
+        <div className="relative mx-auto flex min-h-[78vh] max-w-7xl flex-col justify-end px-4 pt-16 pb-12 sm:min-h-[88vh] sm:px-6 sm:pb-16">
+          <p className="text-xs tracking-[0.32em] uppercase">Bismillah Leather</p>
+          <h1 className="font-display mt-4 max-w-3xl text-6xl leading-[0.88] tracking-tight sm:text-8xl">
+            Hide, stitch, and carry.
           </h1>
-          <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">
-            Wallets and belts from Bismillah Leather. New pieces are added every day, and checkout
-            stays short: name, phone, district, done.
+          <p className="mt-5 max-w-md text-sm leading-6 text-white/80 sm:text-base">
+            Long wallets, short wallets, and belts. Open a piece, choose the color, and check out
+            with cash on delivery.
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button asChild size="lg">
-              <Link href="/category/long-wallet">Shop wallets</Link>
-            </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link href="/category/formal-belt">Shop belts</Link>
-            </Button>
+          <form action="/search" className="mt-8 max-w-xl">
+            <label className="sr-only" htmlFor="hero-search">
+              Search products
+            </label>
+            <input
+              id="hero-search"
+              name="q"
+              placeholder='Search "long wallet"'
+              className="h-12 w-full rounded-full border border-white/50 bg-white/10 px-5 text-base text-white outline-none backdrop-blur-md placeholder:text-white/70 focus-visible:border-white"
+            />
+          </form>
+          <div className="mt-5 flex gap-3">
+            <Link
+              href="/category/long-wallet"
+              className="inline-flex h-12 items-center bg-white px-5 text-sm font-medium text-black"
+            >
+              Shop wallets
+            </Link>
+            <Link
+              href="/category/formal-belt"
+              className="inline-flex h-12 items-center border border-white/70 px-5 text-sm text-white"
+            >
+              Shop belts
+            </Link>
           </div>
         </div>
       </section>
 
-      <section className="border-y border-border bg-card/40">
-        <ul className="mx-auto grid max-w-6xl gap-4 px-4 py-6 text-sm sm:grid-cols-3 sm:px-6">
-          <li>Cash on delivery nationwide</li>
-          <li>Price and stock checked on the server</li>
-          <li>Orders confirmed by phone before dispatch</li>
+      <div className="overflow-hidden border-y border-foreground/10 bg-foreground text-background">
+        <p className="sr-only">Categories</p>
+        <div className="marquee-track flex w-max gap-8 py-3 text-[11px] tracking-[0.22em] uppercase">
+          {ticker.map((name, index) => (
+            <span key={`${name}-${index}`} className="shrink-0">
+              {name}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
+        <h2 className="text-center text-xs tracking-[0.28em] text-muted-foreground uppercase">
+          Featured categories
+        </h2>
+        <ul className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+          {featured.map((category) => (
+            <li key={category.slug}>
+              <Link href={`/category/${category.slug}`} className="group relative block overflow-hidden">
+                <ProductPhoto src={category.image} alt={category.name} sizes="(min-width: 1024px) 25vw, 50vw" />
+                <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent px-4 pt-16 pb-5 text-lg font-medium text-white sm:text-xl">
+                  {category.name}
+                </span>
+              </Link>
+            </li>
+          ))}
         </ul>
       </section>
 
-      {groups.map((group) => (
-        <section key={group} className="px-4 py-12 sm:px-6">
-          <div className="mx-auto max-w-6xl">
-            <div className="flex items-end justify-between gap-4">
-              <h2 className="font-display text-3xl sm:text-4xl">{group}</h2>
-            </div>
-            <ul className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-              {INITIAL_CATEGORIES.filter((category) => category.group === group).map((category) => (
-                <li key={category.slug}>
-                  <Link
-                    href={`/category/${category.slug}`}
-                    className="flex min-h-36 flex-col justify-between rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/50"
-                  >
-                    <span className="text-xs tracking-[0.16em] text-primary uppercase">
-                      {String(category.sortOrder / 10).padStart(2, "0")}
-                    </span>
-                    <span>
-                      <span className="font-display block text-xl leading-tight">{category.name}</span>
-                      <span className="mt-1 block text-sm text-muted-foreground">{category.blurb}</span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      ))}
+      <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 sm:pb-24">
+        <div className="mb-8 flex items-end justify-between gap-4">
+          <h2 className="font-display text-4xl sm:text-5xl">New and popular</h2>
+          <Link href="/search" className="text-sm tracking-wide underline underline-offset-4">
+            Shop all
+          </Link>
+        </div>
+        <ProductGrid products={SHOWCASE_PRODUCTS} />
+      </section>
     </div>
   );
 }

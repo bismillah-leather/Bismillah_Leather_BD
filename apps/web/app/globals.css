@@ -3,3 +3,48 @@
 
 @source "./**/*.{ts,tsx}";
 @source "../../../packages/ui/src/**/*.{ts,tsx}";
+
+html.storefront {
+  --background: #f6f3ee;
+  --foreground: #16120e;
+  --card: #ffffff;
+  --card-foreground: #16120e;
+  --primary: #16120e;
+  --primary-foreground: #f6f3ee;
+  --secondary: #efeae3;
+  --secondary-foreground: #16120e;
+  --muted: #efeae3;
+  --muted-foreground: #6d645b;
+  --accent: #8c4a32;
+  --accent-foreground: #fff8f3;
+  --border: #e4ddd3;
+  --input: #d9d1c6;
+  --ring: #16120e;
+}
+
+html.storefront body {
+  background: #f6f3ee;
+  color: #16120e;
+}
+
+@keyframes catalog-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  animation: catalog-marquee 42s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+    flex-wrap: wrap;
+    width: auto;
+    padding-inline: 1rem;
+  }
+}

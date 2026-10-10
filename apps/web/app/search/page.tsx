@@ -1,8 +1,10 @@
+import { searchProducts } from "@bismillah/shared";
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { ProductGrid } from "@/components/product-grid";
 
 export const metadata: Metadata = {
-  title: "Search",
+  title: "Shop all",
   robots: { index: false, follow: true },
 };
 
@@ -12,7 +14,7 @@ export default function SearchPage({
   searchParams: Promise<{ q?: string | string[] }>;
 }) {
   return (
-    <Suspense fallback={<div className="mx-auto max-w-6xl px-4 py-10 text-muted-foreground">Loading search…</div>}>
+    <Suspense fallback={<div className="px-4 py-10 text-muted-foreground">Loading…</div>}>
       <SearchResults searchParams={searchParams} />
     </Suspense>
   );
@@ -26,11 +28,12 @@ async function SearchResults({
   const params = await searchParams;
   const raw = params.q;
   const query = (Array.isArray(raw) ? raw[0] : raw)?.trim() ?? "";
+  const products = searchProducts(query);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-      <h1 className="font-display text-4xl">Search</h1>
-      <form action="/search" className="mt-6 max-w-xl">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      <h1 className="font-display text-4xl">{query ? `Results for “${query}”` : "Shop all"}</h1>
+      <form action="/search" className="mt-5 max-w-xl">
         <label className="sr-only" htmlFor="search-q">
           Search products
         </label>
@@ -39,14 +42,12 @@ async function SearchResults({
           name="q"
           defaultValue={query}
           placeholder="Name or SKU"
-          className="h-12 w-full rounded-md border border-input bg-card px-3 text-base outline-none focus-visible:border-ring"
+          className="h-12 w-full rounded-full border border-input bg-white px-4 text-base outline-none focus-visible:border-foreground"
         />
       </form>
-      <p className="mt-8 text-muted-foreground">
-        {query
-          ? `No published products match “${query}” yet.`
-          : "Search by name or SKU once products are published."}
-      </p>
+      <div className="mt-8">
+        <ProductGrid products={products} />
+      </div>
     </div>
   );
 }

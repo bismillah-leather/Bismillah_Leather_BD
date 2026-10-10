@@ -48,3 +48,6 @@ packages/db/src/generated
 
 # turbo
 .turbo
+
+# local engines started without Docker
+.local
