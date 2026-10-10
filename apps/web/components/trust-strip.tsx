@@ -9,13 +9,13 @@ const items = [
 
 export function TrustStrip() {
   return (
-    <ul className="grid gap-6 border-y border-border bg-white py-8 sm:grid-cols-2 lg:grid-cols-4">
+    <ul className="grid grid-cols-2 gap-4 border-y border-border bg-white py-6 sm:gap-6 sm:py-8 lg:grid-cols-4">
       {items.map(({ icon: Icon, title, text }) => (
-        <li key={title} className="flex items-start gap-3 px-4 sm:justify-center sm:px-2">
-          <Icon className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
-          <div>
-            <p className="text-sm font-medium">{title}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{text}</p>
+        <li key={title} className="flex items-start gap-2.5 px-1 sm:justify-center sm:gap-3 sm:px-2">
+          <Icon className="mt-0.5 size-4 shrink-0 sm:size-5" aria-hidden="true" />
+          <div className="min-w-0">
+            <p className="text-xs font-medium sm:text-sm">{title}</p>
+            <p className="mt-1 text-[11px] leading-snug text-muted-foreground sm:text-xs">{text}</p>
           </div>
         </li>
       ))}

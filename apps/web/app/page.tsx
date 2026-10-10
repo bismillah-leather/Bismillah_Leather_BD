@@ -1,4 +1,4 @@
-import { BRAND, INITIAL_CATEGORIES, SHOWCASE_PRODUCTS } from "@bismillah/shared";
+import { BRAND, SHOWCASE_PRODUCTS } from "@bismillah/shared";
 import Link from "next/link";
 import { HeroSlider } from "@/components/hero-slider";
 import { ProductGrid } from "@/components/product-grid";
@@ -20,11 +20,6 @@ const moreCategories = [
   { slug: "jeans-belt", name: "Jeans Belt", image: "/catalog/belt-tan-jeans.jpg" },
 ] as const;
 
-const ticker = [
-  ...INITIAL_CATEGORIES.map((category) => category.name),
-  ...INITIAL_CATEGORIES.map((category) => category.name),
-];
-
 const newArrivals = SHOWCASE_PRODUCTS.slice(0, 4);
 const bestSellers = SHOWCASE_PRODUCTS.filter((product) => product.salePaisa).slice(0, 4);
 const saleItems = SHOWCASE_PRODUCTS.filter((product) => product.salePaisa);
@@ -40,25 +35,14 @@ export default function HomePage() {
     <div>
       <HeroSlider />
 
-      <div className="overflow-hidden bg-foreground text-background">
-        <p className="sr-only">Categories</p>
-        <div className="marquee-track flex w-max gap-8 py-3 text-[11px] tracking-[0.22em] uppercase">
-          {ticker.map((name, index) => (
-            <span key={`${name}-${index}`} className="shrink-0">
-              {name}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
+      <section className="mx-auto max-w-7xl px-3 py-10 sm:px-6 sm:py-20">
         <CenteredRuleHeading>Featured categories</CenteredRuleHeading>
-        <ul className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+        <ul className="mt-6 grid grid-cols-2 gap-2 sm:mt-8 sm:gap-3 lg:grid-cols-4 lg:gap-4">
           {featured.map((category) => (
             <li key={category.slug}>
               <Link href={`/category/${category.slug}`} className="group relative block overflow-hidden">
                 <ProductPhoto src={category.image} alt={category.name} sizes="(min-width: 1024px) 25vw, 50vw" />
-                <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent px-4 pt-16 pb-5 text-lg font-medium tracking-wide text-white sm:text-xl">
+                <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent px-2.5 pt-12 pb-3 text-sm font-medium tracking-wide text-white sm:px-4 sm:pt-16 sm:pb-5 sm:text-xl">
                   {category.name}
                 </span>
               </Link>
@@ -67,16 +51,16 @@ export default function HomePage() {
         </ul>
       </section>
 
-      <section className="bg-white py-14 sm:py-16">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+      <section className="bg-white py-10 sm:py-16">
+        <div className="mx-auto max-w-7xl px-3 sm:px-6">
           <CenteredRuleHeading>Why shop with us</CenteredRuleHeading>
-          <div className="mt-8">
+          <div className="mt-6 sm:mt-8">
             <TrustStrip />
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
+      <section className="mx-auto max-w-7xl px-3 py-10 sm:px-6 sm:py-20">
         <SectionHeading
           title="New arrivals"
           action={
@@ -88,7 +72,7 @@ export default function HomePage() {
         <ProductGrid products={newArrivals} />
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 sm:pb-20">
+      <section className="mx-auto max-w-7xl px-3 pb-10 sm:px-6 sm:pb-20">
         <SectionHeading
           title="Best sellers"
           action={
@@ -100,15 +84,15 @@ export default function HomePage() {
         <ProductGrid products={bestSellers} />
       </section>
 
-      <section className="bg-[#efeae3] py-14 sm:py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+      <section className="bg-secondary py-10 sm:py-20">
+        <div className="mx-auto max-w-7xl px-3 sm:px-6">
           <CenteredRuleHeading>Shop by style</CenteredRuleHeading>
-          <ul className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <ul className="mt-6 grid grid-cols-2 gap-2 sm:mt-8 sm:gap-3 lg:grid-cols-4">
             {moreCategories.map((category) => (
               <li key={category.slug}>
                 <Link href={`/category/${category.slug}`} className="group relative block overflow-hidden">
                   <ProductPhoto src={category.image} alt={category.name} />
-                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-4 pt-14 pb-4 text-base font-medium text-white">
+                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-2.5 pt-12 pb-3 text-sm font-medium text-white sm:px-4 sm:pt-14 sm:pb-4 sm:text-base">
                     {category.name}
                   </span>
                 </Link>
@@ -118,7 +102,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
+      <section className="mx-auto max-w-7xl px-3 py-10 sm:px-6 sm:py-20">
         <SectionHeading
           title="New and popular"
           action={
@@ -127,12 +111,12 @@ export default function HomePage() {
             </Link>
           }
         />
-        <div className="mb-8 flex gap-2 overflow-x-auto pb-1">
+        <div className="-mx-3 mb-6 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:mb-8 sm:px-0">
           {popularChips.map((chip, index) => (
             <Link
               key={chip.href}
               href={chip.href}
-              className={`inline-flex h-11 shrink-0 items-center border px-4 text-sm ${
+              className={`inline-flex h-10 shrink-0 items-center border px-3.5 text-sm sm:h-11 sm:px-4 ${
                 index === 0
                   ? "border-foreground bg-foreground text-background"
                   : "border-input bg-white"
@@ -145,11 +129,11 @@ export default function HomePage() {
         <ProductGrid products={SHOWCASE_PRODUCTS} />
       </section>
 
-      <section className="border-y border-border bg-[#1a1511] text-white">
-        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
-          <div className="mb-10 max-w-xl">
+      <section className="border-y border-border bg-black text-white">
+        <div className="mx-auto max-w-7xl px-3 py-10 sm:px-6 sm:py-20">
+          <div className="mb-8 max-w-xl sm:mb-10">
             <p className="text-xs tracking-[0.28em] text-white/65 uppercase">On sale</p>
-            <h2 className="font-display mt-3 text-4xl sm:text-6xl">Marked down this week</h2>
+            <h2 className="font-display mt-3 text-3xl sm:text-6xl">Marked down this week</h2>
             <p className="mt-4 text-sm leading-6 text-white/75">
               Sale prices on selected wallets and belts. Share the product link from Facebook or
               TikTok and customers land on the same page.
@@ -161,17 +145,17 @@ export default function HomePage() {
               Shop sale
             </Link>
           </div>
-          <div className="rounded-sm bg-[#f6f3ee] p-4 text-foreground sm:p-6">
+          <div className="rounded-sm bg-white p-3 text-foreground sm:p-6">
             <ProductGrid products={saleItems.slice(0, 4)} />
           </div>
         </div>
       </section>
 
       <section className="border-t border-border bg-white">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:py-24">
+        <div className="mx-auto grid max-w-7xl gap-8 px-3 py-12 sm:gap-10 sm:px-6 sm:py-16 lg:grid-cols-2 lg:py-24">
           <div>
             <p className="text-xs tracking-[0.28em] text-muted-foreground uppercase">Visit us</p>
-            <h2 className="font-display mt-3 text-4xl sm:text-5xl">Mirpur-10 showroom</h2>
+            <h2 className="font-display mt-3 text-3xl sm:text-5xl">Mirpur-10 showroom</h2>
             <p className="mt-4 max-w-md text-sm leading-7 text-muted-foreground">
               {BRAND.addressLine}. Same genuine leather pieces you see on Facebook Reels — RFID
               trifold, magnetic long wallet, thara soft leather, mini magnetic, belts.
@@ -203,7 +187,7 @@ export default function HomePage() {
               </li>
             </ul>
           </div>
-          <div className="border border-border bg-[#f6f3ee] p-6 sm:p-8">
+          <div className="border border-border bg-secondary p-6 sm:p-8">
             <p className="text-xs tracking-[0.28em] text-muted-foreground uppercase">Stay close</p>
             <h3 className="font-display mt-3 text-3xl">New drop alerts</h3>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">

@@ -5,26 +5,36 @@
 @source "../../../packages/ui/src/**/*.{ts,tsx}";
 
 html.storefront {
-  --background: #f6f3ee;
-  --foreground: #16120e;
+  --background: #ffffff;
+  --foreground: #000000;
   --card: #ffffff;
-  --card-foreground: #16120e;
-  --primary: #16120e;
-  --primary-foreground: #f6f3ee;
-  --secondary: #efeae3;
-  --secondary-foreground: #16120e;
-  --muted: #efeae3;
-  --muted-foreground: #6d645b;
-  --accent: #8c4a32;
-  --accent-foreground: #fff8f3;
-  --border: #e4ddd3;
-  --input: #d9d1c6;
-  --ring: #16120e;
+  --card-foreground: #000000;
+  --primary: #000000;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #000000;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+  --accent: #000000;
+  --accent-foreground: #ffffff;
+  --border: #e5e5e5;
+  --input: #d4d4d4;
+  --ring: #000000;
+  --site-header-offset: 7rem;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 html.storefront body {
-  background: #f6f3ee;
-  color: #16120e;
+  background: #ffffff;
+  color: #000000;
+  overflow-x: clip;
+}
+
+html.storefront img,
+html.storefront video {
+  max-width: 100%;
+  height: auto;
 }
 
 @keyframes catalog-marquee {
@@ -37,7 +47,9 @@ html.storefront body {
 }
 
 .marquee-track {
-  animation: catalog-marquee 42s linear infinite;
+  width: max-content;
+  animation: catalog-marquee 26s linear infinite;
+  will-change: transform;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -45,6 +57,7 @@ html.storefront body {
     animation: none;
     flex-wrap: wrap;
     width: auto;
+    max-width: 100%;
     padding-inline: 1rem;
   }
 }

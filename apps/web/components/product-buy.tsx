@@ -152,7 +152,7 @@ export function ProductBuy({ product }: { product: ProductView }) {
         </details>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 gap-2 border-t border-border bg-background p-3 sm:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 gap-2 border-t border-border bg-background/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] backdrop-blur-md sm:hidden">
         <Link
           href={product.inStock ? `/checkout?${query}` : "#"}
           className={`inline-flex h-12 items-center justify-center border text-sm font-medium ${

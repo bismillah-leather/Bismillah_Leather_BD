@@ -10,14 +10,14 @@ export function SectionHeading({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-8 flex items-end justify-between gap-4">
-      <div>
+    <div className="mb-6 flex items-end justify-between gap-3 sm:mb-8 sm:gap-4">
+      <div className="min-w-0">
         {eyebrow ? (
           <p className="text-xs tracking-[0.28em] text-muted-foreground uppercase">{eyebrow}</p>
         ) : null}
-        <h2 className={`font-display ${eyebrow ? "mt-2" : ""} text-3xl sm:text-5xl`}>{title}</h2>
+        <h2 className={`font-display ${eyebrow ? "mt-2" : ""} text-2xl sm:text-5xl`}>{title}</h2>
       </div>
-      {action}
+      {action ? <div className="shrink-0">{action}</div> : null}
     </div>
   );
 }

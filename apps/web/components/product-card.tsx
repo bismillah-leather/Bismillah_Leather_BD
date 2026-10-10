@@ -7,26 +7,28 @@ export function ProductCard({ product }: { product: ShowcaseProduct }) {
 
   return (
     <Link href={`/product/${product.slug}`} className="group block">
-      <div className="relative overflow-hidden bg-[#efeae3]">
+      <div className="relative overflow-hidden bg-secondary">
         <ProductPhoto src={product.image} alt={product.name} />
         {product.inStock ? null : (
-          <span className="absolute top-3 right-3 bg-foreground px-2.5 py-1 text-[11px] tracking-wide text-background uppercase">
+          <span className="absolute top-2 right-2 bg-foreground px-2 py-0.5 text-[10px] tracking-wide text-background uppercase sm:top-3 sm:right-3 sm:px-2.5 sm:py-1 sm:text-[11px]">
             Sold out
           </span>
         )}
         {product.salePaisa ? (
-          <span className="absolute top-3 left-3 bg-accent px-2.5 py-1 text-[11px] tracking-wide text-accent-foreground uppercase">
+          <span className="absolute top-2 left-2 bg-accent px-2 py-0.5 text-[10px] tracking-wide text-accent-foreground uppercase sm:top-3 sm:left-3 sm:px-2.5 sm:py-1 sm:text-[11px]">
             Sale
           </span>
         ) : null}
       </div>
-      <h3 className="mt-3 text-sm leading-5 tracking-wide text-foreground group-hover:underline">
+      <h3 className="mt-2 text-[13px] leading-snug tracking-wide text-foreground group-hover:underline sm:mt-3 sm:text-sm sm:leading-5">
         {product.name}
       </h3>
-      <p className="mt-1 text-sm">
+      <p className="mt-1 text-[13px] sm:text-sm">
         <span>{formatPaisa(price)}</span>
         {product.salePaisa ? (
-          <span className="ml-2 text-muted-foreground line-through">{formatPaisa(product.pricePaisa)}</span>
+          <span className="ml-1.5 text-muted-foreground line-through sm:ml-2">
+            {formatPaisa(product.pricePaisa)}
+          </span>
         ) : null}
       </p>
     </Link>

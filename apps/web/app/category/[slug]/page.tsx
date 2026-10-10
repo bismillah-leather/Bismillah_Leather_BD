@@ -68,12 +68,12 @@ async function CategoryContent({
 
   return (
     <div>
-      <div className="relative min-h-72 overflow-hidden bg-foreground text-background sm:min-h-96">
+      <div className="relative min-h-[55vh] overflow-hidden bg-black text-white sm:min-h-[60vh]">
         {cover ? (
-          <Image src={cover} alt="" fill sizes="100vw" className="object-cover opacity-50" priority />
+          <Image src={cover} alt="" fill sizes="100vw" className="object-cover opacity-55" priority />
         ) : null}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/30" />
-        <div className="relative mx-auto flex min-h-72 max-w-7xl flex-col justify-end px-4 py-10 sm:min-h-96 sm:px-6">
+        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/25 to-black/80" />
+        <div className="relative mx-auto flex min-h-[55vh] max-w-7xl flex-col justify-end px-4 pt-32 pb-10 sm:min-h-[60vh] sm:px-6 sm:pt-36 sm:pb-14">
           <p className="text-xs tracking-wide text-white/75">
             <Link href="/" className="hover:text-white">
               Home
@@ -81,22 +81,24 @@ async function CategoryContent({
             <span aria-hidden="true"> / </span>
             {category.name}
           </p>
-          <h1 className="font-display mt-2 text-5xl sm:text-7xl">{category.name}</h1>
+          <h1 className="font-display mt-2 text-4xl leading-none tracking-tight sm:text-6xl lg:text-7xl">
+            {category.name}
+          </h1>
           <p className="mt-3 max-w-xl text-sm text-white/80">{category.blurb}</p>
         </div>
       </div>
 
-      <div className="border-b border-border bg-white">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
-          <p className="text-sm text-muted-foreground">
+      <div className="sticky top-[var(--site-header-offset,7rem)] z-40 border-b border-border bg-white/95 backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-3 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:px-6">
+          <p className="shrink-0 text-sm text-muted-foreground">
             {products.length} {products.length === 1 ? "product" : "products"}
           </p>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-0.5 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
             {sorts.map((option) => (
               <Link
                 key={option.value}
                 href={`/category/${slug}?sort=${option.value}`}
-                className={`inline-flex h-10 items-center border px-3 text-xs sm:text-sm ${
+                className={`inline-flex h-9 shrink-0 items-center border px-3 text-xs whitespace-nowrap sm:h-10 sm:text-sm ${
                   sort === option.value
                     ? "border-foreground bg-foreground text-background"
                     : "border-input bg-white"
