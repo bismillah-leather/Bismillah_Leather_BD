@@ -24,9 +24,10 @@ export function createPrismaClient(connectionString: string): PrismaClient {
 export function getPrisma(): PrismaClient {
   if (globalForPrisma.prisma) return globalForPrisma.prisma;
 
-  const connectionString = process.env.DATABASE_URL;
+  // Prefer pooled URL at runtime (Prisma Postgres / PgBouncer). Fall back to DATABASE_URL.
+  const connectionString = process.env.DATABASE_POOL_URL ?? process.env.DATABASE_URL;
   if (!connectionString) {
-    throw new Error("DATABASE_URL is not set");
+    throw new Error("DATABASE_URL (or DATABASE_POOL_URL) is not set");
   }
 
   const client = createPrismaClient(connectionString);
