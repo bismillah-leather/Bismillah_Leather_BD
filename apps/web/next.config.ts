@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
   },
   cacheComponents: true,
   partialPrefetching: true,
+  // Vercel multi-service currently 404s /_next/image; serve public/catalog directly.
+  images: {
+    unoptimized: true,
+    localPatterns: [{ pathname: "/catalog/**" }],
+  },
   turbopack: {
     rules: {
       "*.css": {
