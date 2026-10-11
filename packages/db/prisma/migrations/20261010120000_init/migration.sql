@@ -1,6 +1,28 @@
 -- CreateSchema
 CREATE SCHEMA IF NOT EXISTS "public";
 
+-- Prisma Postgres is below PG18 (no native uuidv7). Provide a compatible default.
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+CREATE OR REPLACE FUNCTION uuidv7() RETURNS uuid
+LANGUAGE plpgsql
+VOLATILE
+PARALLEL SAFE
+AS $$
+DECLARE
+  unix_ts_ms bytea;
+  uuid_bytes bytea;
+BEGIN
+  unix_ts_ms := substring(int8send(floor(extract(epoch from clock_timestamp()) * 1000)::bigint) from 3);
+  uuid_bytes := unix_ts_ms || gen_random_bytes(10);
+  -- version 7
+  uuid_bytes := set_byte(uuid_bytes, 6, (get_byte(uuid_bytes, 6) & 15) | 112);
+  -- RFC variant
+  uuid_bytes := set_byte(uuid_bytes, 8, (get_byte(uuid_bytes, 8) & 63) | 128);
+  RETURN encode(uuid_bytes, 'hex')::uuid;
+END
+$$;
+
 -- CreateEnum
 CREATE TYPE "product_status" AS ENUM ('draft', 'scheduled', 'published', 'archived');
 
