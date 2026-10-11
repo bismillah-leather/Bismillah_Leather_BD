@@ -55,6 +55,11 @@ app.use((_req, res) => {
   });
 });
 
-app.listen(env.PORT, () => {
-  log.info({ port: env.PORT }, "api listening");
-});
+export default app;
+
+// Local / Docker: listen on a port. On Vercel the platform invokes the export.
+if (!process.env.VERCEL) {
+  app.listen(env.PORT, () => {
+    log.info({ port: env.PORT }, "api listening");
+  });
+}
