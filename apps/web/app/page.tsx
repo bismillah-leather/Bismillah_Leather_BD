@@ -3,13 +3,12 @@ import Link from "next/link";
 import { AllProductsSection } from "@/components/all-products-section";
 import { BestSellersSection } from "@/components/best-sellers-section";
 import { FeaturedCategoryRail } from "@/components/featured-category-rail";
-import { FlashSaleSection } from "@/components/flash-sale-section";
+import { HomeFlashSale } from "@/components/home-flash-sale";
 import { HeroSlider } from "@/components/hero-slider";
 import { NewArrivalsSection } from "@/components/new-arrivals-section";
 import { ProductPhoto } from "@/components/leather-visual";
 import { CenteredRuleHeading } from "@/components/section-heading";
 import { TrustStrip } from "@/components/trust-strip";
-import { readFlashSale } from "@/lib/flash-sale-store";
 
 const featuredCategories = [
   { slug: "long-wallet", name: "Long Wallet", image: "/catalog/wallet-black-long.jpg" },
@@ -32,9 +31,7 @@ const moreCategories = [
   { slug: "jeans-belt", name: "Jeans Belt", image: "/catalog/belt-tan-jeans.jpg" },
 ] as const;
 
-export default async function HomePage() {
-  const flashSale = await readFlashSale();
-
+export default function HomePage() {
   return (
     <div>
       <HeroSlider />
@@ -52,7 +49,7 @@ export default async function HomePage() {
 
       <NewArrivalsSection />
 
-      <FlashSaleSection sale={flashSale} />
+      <HomeFlashSale />
 
       <BestSellersSection />
 

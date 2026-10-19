@@ -13,24 +13,21 @@ export async function writeFlashSale(sale: FlashSaleConfig): Promise<void> {
   await fs.writeFile(DATA_PATH, `${JSON.stringify(serializeFlashSale(sale), null, 2)}\n`, "utf8");
 }
 
+/** Read-only load for render paths. Avoids filesystem writes during prerender. */
 export async function readFlashSale(): Promise<FlashSaleConfig> {
   try {
     const raw = await fs.readFile(DATA_PATH, "utf8");
     const parsed = serializeFlashSale(JSON.parse(raw) as FlashSaleConfig);
     if (parsed.isActive && Date.parse(parsed.endsAt) <= Date.now()) {
       const fresh = defaultFlashSale();
-      const rolled: FlashSaleConfig = {
+      return {
         ...parsed,
         startsAt: fresh.startsAt,
         endsAt: fresh.endsAt,
       };
-      await writeFlashSale(rolled).catch(() => undefined);
-      return rolled;
     }
     return parsed;
   } catch {
-    const fresh = defaultFlashSale();
-    await writeFlashSale(fresh).catch(() => undefined);
-    return fresh;
+    return defaultFlashSale();
   }
 }
