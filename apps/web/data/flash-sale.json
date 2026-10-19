@@ -1,0 +1,18 @@
+{
+  "id": "demo-flash",
+  "title": "Flash Sale",
+  "subtitle": "Limited time · Mirpur leather picks",
+  "isActive": true,
+  "startsAt": "2026-10-19T00:00:00.000Z",
+  "endsAt": "2026-10-26T18:00:00.000Z",
+  "discountKind": "fixed",
+  "discountValue": "20000",
+  "productSlugs": [
+    "black-long-wallet",
+    "black-short-wallet",
+    "buffalo-wallet",
+    "black-formal-belt",
+    "tan-jeans-belt",
+    "rfid-trifold-wallet"
+  ]
+}

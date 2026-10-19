@@ -21,8 +21,14 @@ html.storefront {
   --input: #d4d4d4;
   --ring: #000000;
   --site-header-offset: 7rem;
+  scroll-padding-top: calc(var(--site-header-offset) + 0.75rem);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+}
+
+/* Home sections under the solid sticky nav — keep headings clear of the bar */
+html.storefront main > section {
+  scroll-margin-top: calc(var(--site-header-offset) + 0.5rem);
 }
 
 html.storefront body {
@@ -59,5 +65,22 @@ html.storefront video {
     width: auto;
     max-width: 100%;
     padding-inline: 1rem;
+  }
+}
+
+@keyframes flash-tick {
+  from {
+    transform: translateY(30%);
+    opacity: 0.35;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-\[flash-tick_0\.35s_ease-out\] {
+    animation: none !important;
   }
 }

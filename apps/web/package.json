@@ -13,6 +13,7 @@
     "@bismillah/shared": "workspace:*",
     "@bismillah/ui": "workspace:*",
     "lucide-react": "^0.544.0",
+    "motion": "^14.4.0",
     "next": "16.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"

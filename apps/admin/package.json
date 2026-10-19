@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@bismillah/shared": "workspace:*",
     "@bismillah/ui": "workspace:*",
     "next": "16.4.0",
     "react": "19.3.0",

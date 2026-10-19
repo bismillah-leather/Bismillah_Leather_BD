@@ -1,16 +1,28 @@
-import { BRAND, SHOWCASE_PRODUCTS } from "@bismillah/shared";
+import { BRAND } from "@bismillah/shared";
 import Link from "next/link";
+import { AllProductsSection } from "@/components/all-products-section";
+import { BestSellersSection } from "@/components/best-sellers-section";
+import { FeaturedCategoryRail } from "@/components/featured-category-rail";
+import { FlashSaleSection } from "@/components/flash-sale-section";
 import { HeroSlider } from "@/components/hero-slider";
-import { ProductGrid } from "@/components/product-grid";
+import { NewArrivalsSection } from "@/components/new-arrivals-section";
 import { ProductPhoto } from "@/components/leather-visual";
-import { CenteredRuleHeading, SectionHeading } from "@/components/section-heading";
+import { CenteredRuleHeading } from "@/components/section-heading";
 import { TrustStrip } from "@/components/trust-strip";
+import { readFlashSale } from "@/lib/flash-sale-store";
 
-const featured = [
+const featuredCategories = [
   { slug: "long-wallet", name: "Long Wallet", image: "/catalog/wallet-black-long.jpg" },
-  { slug: "trifold-wallet", name: "RFID Trifold", image: "/catalog/wallet-black-short.jpg" },
-  { slug: "formal-belt", name: "Formal Belt", image: "/catalog/belt-black-formal.jpg" },
+  { slug: "short-wallet", name: "Short Wallet", image: "/catalog/wallet-black-short.jpg" },
+  { slug: "formal-wallet", name: "Formal Wallet", image: "/catalog/wallet-tan-formal.jpg" },
   { slug: "mini-wallet", name: "Mini Wallet", image: "/catalog/wallet-cognac-mini.jpg" },
+  { slug: "trifold-wallet", name: "Trifold", image: "/catalog/wallet-black-short.jpg" },
+  { slug: "semi-long-wallet", name: "Three Quarter", image: "/catalog/wallet-espresso.jpg" },
+  { slug: "buffalo-wallet", name: "Buffalo", image: "/catalog/wallet-buffalo.jpg" },
+  { slug: "thara-wallet", name: "Thara", image: "/catalog/wallet-brown-long.jpg" },
+  { slug: "formal-belt", name: "Formal Belt", image: "/catalog/belt-black-formal.jpg" },
+  { slug: "jeans-belt", name: "Jeans Belt", image: "/catalog/belt-tan-jeans.jpg" },
+  { slug: "lv-wallet", name: "LV Wallet", image: "/catalog/wallet-espresso.jpg" },
 ] as const;
 
 const moreCategories = [
@@ -20,68 +32,37 @@ const moreCategories = [
   { slug: "jeans-belt", name: "Jeans Belt", image: "/catalog/belt-tan-jeans.jpg" },
 ] as const;
 
-const newArrivals = SHOWCASE_PRODUCTS.slice(0, 4);
-const bestSellers = SHOWCASE_PRODUCTS.filter((product) => product.salePaisa).slice(0, 4);
-const saleItems = SHOWCASE_PRODUCTS.filter((product) => product.salePaisa);
-const popularChips = [
-  { href: "/search", label: "All" },
-  { href: "/category/long-wallet", label: "Wallets" },
-  { href: "/category/formal-belt", label: "Belts" },
-  { href: "/search?q=sale", label: "Sale" },
-] as const;
+export default async function HomePage() {
+  const flashSale = await readFlashSale();
 
-export default function HomePage() {
   return (
     <div>
       <HeroSlider />
 
-      <section className="mx-auto max-w-7xl px-3 py-10 sm:px-6 sm:py-20">
-        <CenteredRuleHeading>Featured categories</CenteredRuleHeading>
-        <ul className="mt-6 grid grid-cols-2 gap-2 sm:mt-8 sm:gap-3 lg:grid-cols-4 lg:gap-4">
-          {featured.map((category) => (
-            <li key={category.slug}>
-              <Link href={`/category/${category.slug}`} className="group relative block overflow-hidden">
-                <ProductPhoto src={category.image} alt={category.name} sizes="(min-width: 1024px) 25vw, 50vw" />
-                <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent px-2.5 pt-12 pb-3 text-sm font-medium tracking-wide text-white sm:px-4 sm:pt-16 sm:pb-5 sm:text-xl">
-                  {category.name}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="bg-white py-10 sm:py-16">
+      <section className="bg-secondary py-12 sm:py-20">
         <div className="mx-auto max-w-7xl px-3 sm:px-6">
-          <CenteredRuleHeading>Why shop with us</CenteredRuleHeading>
-          <div className="mt-6 sm:mt-8">
-            <TrustStrip />
+          <CenteredRuleHeading size="lg">Featured categories</CenteredRuleHeading>
+          <div className="mt-8 sm:mt-12">
+            <FeaturedCategoryRail items={featuredCategories} />
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-3 py-10 sm:px-6 sm:py-20">
-        <SectionHeading
-          title="New arrivals"
-          action={
-            <Link href="/search" className="text-sm tracking-wide underline underline-offset-4">
-              Shop all
-            </Link>
-          }
-        />
-        <ProductGrid products={newArrivals} />
-      </section>
+      <AllProductsSection />
 
-      <section className="mx-auto max-w-7xl px-3 pb-10 sm:px-6 sm:pb-20">
-        <SectionHeading
-          title="Best sellers"
-          action={
-            <Link href="/search?q=sale" className="text-sm tracking-wide underline underline-offset-4">
-              View sale
-            </Link>
-          }
-        />
-        <ProductGrid products={bestSellers} />
+      <NewArrivalsSection />
+
+      <FlashSaleSection sale={flashSale} />
+
+      <BestSellersSection />
+
+      <section className="border-y border-border bg-white py-14 sm:py-24">
+        <div className="mx-auto max-w-7xl px-3 sm:px-6">
+          <CenteredRuleHeading size="lg">Why shop with us</CenteredRuleHeading>
+          <div className="mt-10 sm:mt-14">
+            <TrustStrip />
+          </div>
+        </div>
       </section>
 
       <section className="bg-secondary py-10 sm:py-20">
@@ -99,55 +80,6 @@ export default function HomePage() {
               </li>
             ))}
           </ul>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-3 py-10 sm:px-6 sm:py-20">
-        <SectionHeading
-          title="New and popular"
-          action={
-            <Link href="/search" className="text-sm tracking-wide underline underline-offset-4">
-              Shop all
-            </Link>
-          }
-        />
-        <div className="-mx-3 mb-6 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:mb-8 sm:px-0">
-          {popularChips.map((chip, index) => (
-            <Link
-              key={chip.href}
-              href={chip.href}
-              className={`inline-flex h-10 shrink-0 items-center border px-3.5 text-sm sm:h-11 sm:px-4 ${
-                index === 0
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-input bg-white"
-              }`}
-            >
-              {chip.label}
-            </Link>
-          ))}
-        </div>
-        <ProductGrid products={SHOWCASE_PRODUCTS} />
-      </section>
-
-      <section className="border-y border-border bg-black text-white">
-        <div className="mx-auto max-w-7xl px-3 py-10 sm:px-6 sm:py-20">
-          <div className="mb-8 max-w-xl sm:mb-10">
-            <p className="text-xs tracking-[0.28em] text-white/65 uppercase">On sale</p>
-            <h2 className="font-display mt-3 text-3xl sm:text-6xl">Marked down this week</h2>
-            <p className="mt-4 text-sm leading-6 text-white/75">
-              Sale prices on selected wallets and belts. Share the product link from Facebook or
-              TikTok and customers land on the same page.
-            </p>
-            <Link
-              href="/search?q=sale"
-              className="mt-8 inline-flex h-12 items-center bg-white px-5 text-sm font-medium text-black"
-            >
-              Shop sale
-            </Link>
-          </div>
-          <div className="rounded-sm bg-white p-3 text-foreground sm:p-6">
-            <ProductGrid products={saleItems.slice(0, 4)} />
-          </div>
         </div>
       </section>
 
