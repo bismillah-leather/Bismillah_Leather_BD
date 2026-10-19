@@ -22,11 +22,23 @@ export function SectionHeading({
   );
 }
 
-export function CenteredRuleHeading({ children }: { children: ReactNode }) {
+export function CenteredRuleHeading({
+  children,
+  size = "sm",
+}: {
+  children: ReactNode;
+  size?: "sm" | "lg";
+}) {
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-4 sm:gap-6">
       <span className="h-px flex-1 bg-border" />
-      <h2 className="text-center text-xs tracking-[0.28em] text-muted-foreground uppercase">
+      <h2
+        className={
+          size === "lg"
+            ? "font-display text-center text-2xl tracking-[0.12em] text-foreground uppercase sm:text-4xl md:text-5xl"
+            : "text-center text-xs tracking-[0.28em] text-muted-foreground uppercase"
+        }
+      >
         {children}
       </h2>
       <span className="h-px flex-1 bg-border" />

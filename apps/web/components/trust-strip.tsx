@@ -1,3 +1,5 @@
+"use client";
+
 import { Package, RefreshCcw, ShieldCheck, Truck } from "lucide-react";
 
 const items = [
@@ -9,14 +11,17 @@ const items = [
 
 export function TrustStrip() {
   return (
-    <ul className="grid grid-cols-2 gap-4 border-y border-border bg-white py-6 sm:gap-6 sm:py-8 lg:grid-cols-4">
+    <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
       {items.map(({ icon: Icon, title, text }) => (
-        <li key={title} className="flex items-start gap-2.5 px-1 sm:justify-center sm:gap-3 sm:px-2">
-          <Icon className="mt-0.5 size-4 shrink-0 sm:size-5" aria-hidden="true" />
-          <div className="min-w-0">
-            <p className="text-xs font-medium sm:text-sm">{title}</p>
-            <p className="mt-1 text-[11px] leading-snug text-muted-foreground sm:text-xs">{text}</p>
+        <li
+          key={title}
+          className="border border-border bg-white px-5 py-6 transition duration-300 hover:-translate-y-1 hover:border-foreground sm:px-6 sm:py-8"
+        >
+          <div className="flex size-12 items-center justify-center border border-border bg-secondary sm:size-14">
+            <Icon className="size-5 sm:size-6" strokeWidth={1.6} aria-hidden="true" />
           </div>
+          <p className="font-display mt-5 text-xl tracking-tight sm:text-2xl">{title}</p>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">{text}</p>
         </li>
       ))}
     </ul>
