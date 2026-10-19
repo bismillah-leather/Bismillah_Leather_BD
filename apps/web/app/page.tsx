@@ -1,14 +1,15 @@
-import { BRAND, SHOWCASE_PRODUCTS } from "@bismillah/shared";
+import { BRAND } from "@bismillah/shared";
 import Link from "next/link";
 import { AllProductsSection } from "@/components/all-products-section";
 import { BestSellersSection } from "@/components/best-sellers-section";
 import { FeaturedCategoryRail } from "@/components/featured-category-rail";
+import { FlashSaleSection } from "@/components/flash-sale-section";
 import { HeroSlider } from "@/components/hero-slider";
 import { NewArrivalsSection } from "@/components/new-arrivals-section";
-import { ProductGrid } from "@/components/product-grid";
 import { ProductPhoto } from "@/components/leather-visual";
 import { CenteredRuleHeading } from "@/components/section-heading";
 import { TrustStrip } from "@/components/trust-strip";
+import { readFlashSale } from "@/lib/flash-sale-store";
 
 const featuredCategories = [
   { slug: "long-wallet", name: "Long Wallet", image: "/catalog/wallet-black-long.jpg" },
@@ -31,9 +32,9 @@ const moreCategories = [
   { slug: "jeans-belt", name: "Jeans Belt", image: "/catalog/belt-tan-jeans.jpg" },
 ] as const;
 
-const saleItems = SHOWCASE_PRODUCTS.filter((product) => product.salePaisa);
+export default async function HomePage() {
+  const flashSale = await readFlashSale();
 
-export default function HomePage() {
   return (
     <div>
       <HeroSlider />
@@ -58,6 +59,8 @@ export default function HomePage() {
 
       <NewArrivalsSection />
 
+      <FlashSaleSection sale={flashSale} />
+
       <BestSellersSection />
 
       <section className="bg-secondary py-10 sm:py-20">
@@ -79,28 +82,6 @@ export default function HomePage() {
       </section>
 
       <AllProductsSection />
-
-      <section className="border-y border-border bg-black text-white">
-        <div className="mx-auto max-w-7xl px-3 py-10 sm:px-6 sm:py-20">
-          <div className="mb-8 max-w-xl sm:mb-10">
-            <p className="text-xs tracking-[0.28em] text-white/65 uppercase">On sale</p>
-            <h2 className="font-display mt-3 text-3xl sm:text-6xl">Marked down this week</h2>
-            <p className="mt-4 text-sm leading-6 text-white/75">
-              Sale prices on selected wallets and belts. Share the product link from Facebook or
-              TikTok and customers land on the same page.
-            </p>
-            <Link
-              href="/search?q=sale"
-              className="mt-8 inline-flex h-12 items-center bg-white px-5 text-sm font-medium text-black"
-            >
-              Shop sale
-            </Link>
-          </div>
-          <div className="rounded-sm bg-white p-3 text-foreground sm:p-6">
-            <ProductGrid products={saleItems.slice(0, 4)} />
-          </div>
-        </div>
-      </section>
 
       <section className="border-t border-border bg-white">
         <div className="mx-auto grid max-w-7xl gap-8 px-3 py-12 sm:gap-10 sm:px-6 sm:py-16 lg:grid-cols-2 lg:py-24">

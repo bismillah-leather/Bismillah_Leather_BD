@@ -14,6 +14,9 @@ importers:
 
   apps/admin:
     dependencies:
+      '@bismillah/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@bismillah/ui':
         specifier: workspace:*
         version: link:../../packages/ui

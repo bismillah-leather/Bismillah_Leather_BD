@@ -67,3 +67,20 @@ html.storefront video {
     padding-inline: 1rem;
   }
 }
+
+@keyframes flash-tick {
+  from {
+    transform: translateY(30%);
+    opacity: 0.35;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-\[flash-tick_0\.35s_ease-out\] {
+    animation: none !important;
+  }
+}
