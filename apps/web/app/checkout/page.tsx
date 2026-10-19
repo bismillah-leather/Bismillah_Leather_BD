@@ -14,7 +14,13 @@ export default function CheckoutPage({
   searchParams: Promise<{ product?: string | string[]; color?: string | string[] }>;
 }) {
   return (
-    <Suspense fallback={<div className="px-4 py-10 text-muted-foreground">Loading checkout…</div>}>
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-5xl px-4 py-10 text-sm text-muted-foreground sm:px-6">
+          Loading checkout…
+        </div>
+      }
+    >
       <CheckoutContent searchParams={searchParams} />
     </Suspense>
   );
@@ -31,12 +37,17 @@ async function CheckoutContent({
   const product = slug ? productBySlug(slug) : undefined;
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-8 sm:px-6">
-      <h1 className="font-display text-4xl">Checkout</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Name, phone, and district. Cash on delivery. We call before the parcel goes out.
+    <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
+      <p className="text-xs tracking-[0.28em] text-muted-foreground uppercase">Cash on delivery</p>
+      <h1 className="font-display mt-2 text-4xl tracking-tight sm:text-5xl">Checkout</h1>
+      <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
+        Pick your color and district, then leave name, phone, and address. We call before the
+        parcel goes out.
       </p>
-      <CheckoutForm product={product ? toProductView(product) : undefined} color={color ?? product?.colors[0] ?? ""} />
+      <CheckoutForm
+        product={product ? toProductView(product) : undefined}
+        color={color ?? product?.colors[0] ?? ""}
+      />
     </div>
   );
 }

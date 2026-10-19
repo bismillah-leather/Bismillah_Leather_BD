@@ -13,11 +13,13 @@ export function SiteHeader() {
   const headerRef = useRef<HTMLElement>(null);
   const isHome = pathname === "/";
   const [open, setOpen] = useState(false);
-  const [pastHero, setPastHero] = useState(!isHome);
+  // Home starts in hero mode; non-home starts solid. Scroll measure corrects home.
+  const [pastHero, setPastHero] = useState(() => pathname !== "/");
   const [offset, setOffset] = useState(112);
-  /** Transparent brand + search over the hero image. */
+
+  /** Transparent brand + search over the hero — no category strip. */
   const overHero = isHome && !pastHero && !open;
-  /** Solid Urbaland-style bar after the hero (or on every other page). */
+  /** Solid bar + category nav after the hero (or on every other page). */
   const solidNav = !overHero;
 
   useEffect(() => {
@@ -26,24 +28,41 @@ export function SiteHeader() {
       return;
     }
 
-    const hero = document.getElementById("site-hero");
-    if (!hero) {
-      setPastHero(true);
-      return;
-    }
+    // Assume over-hero until the first real measure proves otherwise.
+    setPastHero(false);
 
-    // Full solid nav (categories included) only after the hero has left the viewport.
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setPastHero(!entry?.isIntersecting);
-      },
-      { threshold: 0, rootMargin: "0px" },
-    );
+    let raf = 0;
+    let tries = 0;
+    let found = false;
 
-    observer.observe(hero);
-    setPastHero(hero.getBoundingClientRect().bottom <= 0);
+    const measure = () => {
+      const hero = document.getElementById("site-hero");
+      if (!hero) {
+        tries += 1;
+        if (tries < 120) raf = window.requestAnimationFrame(measure);
+        return;
+      }
+      found = true;
+      // Solid nav + categories only after the hero has fully scrolled away.
+      const past = hero.getBoundingClientRect().bottom <= 8;
+      setPastHero((prev) => (prev === past ? prev : past));
+    };
 
-    return () => observer.disconnect();
+    measure();
+    window.addEventListener("scroll", measure, { passive: true });
+    window.addEventListener("resize", measure);
+    // Short poll while the home hero streams in after the layout header.
+    const poll = window.setInterval(() => {
+      measure();
+      if (found) window.clearInterval(poll);
+    }, 100);
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.clearInterval(poll);
+      window.removeEventListener("scroll", measure);
+      window.removeEventListener("resize", measure);
+    };
   }, [isHome, pathname]);
 
   useEffect(() => {
@@ -75,13 +94,15 @@ export function SiteHeader() {
       observer.disconnect();
       window.removeEventListener("orientationchange", publish);
     };
-  }, [overHero, solidNav, open]);
+  }, [overHero, solidNav, open, pastHero]);
 
   return (
     <>
       <header
         ref={headerRef}
-        className={`fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,box-shadow,color,transform] duration-300 ${
+        data-over-hero={overHero ? "true" : "false"}
+        data-past-hero={pastHero ? "true" : "false"}
+        className={`fixed inset-x-0 top-0 z-[200] transition-[background-color,border-color,box-shadow,color] duration-300 ${
           overHero
             ? "border-b border-transparent bg-transparent text-white"
             : "border-b border-border bg-white text-foreground shadow-[0_4px_24px_rgba(0,0,0,0.06)]"
@@ -89,25 +110,25 @@ export function SiteHeader() {
       >
         {overHero ? (
           <div className="pt-[max(10px,env(safe-area-inset-top,0px))]">
-            <div className="mx-auto flex max-w-7xl items-center gap-3 px-3 py-3 sm:gap-4 sm:px-6 sm:py-4">
+            <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-3 py-3 sm:gap-4 sm:px-6 sm:py-4">
               <Link
                 href="/"
-                className="font-display shrink-0 text-lg tracking-tight drop-shadow-sm sm:text-2xl md:text-[1.65rem]"
+                className="font-display shrink-0 text-lg tracking-tight text-white sm:text-xl md:text-2xl"
               >
                 {BRAND.name}
               </Link>
 
-              <form action="/search" className="ml-auto min-w-0 flex-1 sm:max-w-md">
+              <form action="/search" className="w-[min(100%,16rem)] sm:w-[min(100%,20rem)] md:w-[22rem]">
                 <label className="sr-only" htmlFor="hero-search">
                   Search products
                 </label>
                 <div className="relative">
-                  <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-white/75" />
+                  <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-white/70" />
                   <input
                     id="hero-search"
                     name="q"
                     placeholder='Search "long wallet"'
-                    className="h-10 w-full rounded-full border border-white/50 bg-black/25 pr-4 pl-10 text-sm text-white outline-none backdrop-blur-sm placeholder:text-white/65 focus-visible:border-white sm:h-11"
+                    className="h-11 w-full rounded-full border border-white/35 bg-white/10 pr-4 pl-11 text-sm text-white outline-none backdrop-blur-md placeholder:text-white/55 transition focus-visible:border-white focus-visible:bg-white/15"
                   />
                 </div>
               </form>
@@ -178,9 +199,14 @@ export function SiteHeader() {
               </div>
             </div>
 
+            {/* Category strip — only after leaving the hero (or on non-home pages). */}
             <nav
               aria-label="Categories"
-              className="hidden border-t border-border lg:block"
+              className={`hidden overflow-hidden border-t border-border transition-[max-height,opacity] duration-300 ease-out lg:block ${
+                isHome && !pastHero
+                  ? "max-h-0 border-transparent opacity-0"
+                  : "max-h-14 opacity-100"
+              }`}
             >
               <ul className="mx-auto flex max-w-7xl items-center justify-center gap-1 overflow-x-auto px-4 py-2.5 text-sm sm:px-6">
                 {categoryLinks.map((category) => (
@@ -246,12 +272,20 @@ export function SiteHeader() {
                   Sale
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/#flash-sale"
+                  className="flex h-11 items-center"
+                  onClick={() => setOpen(false)}
+                >
+                  Flash sale
+                </Link>
+              </li>
             </ul>
           </nav>
         ) : null}
       </header>
 
-      {/* Non-home: push content below fixed header. Home hero stays full-bleed. */}
       <div
         aria-hidden="true"
         className={isHome ? "h-0" : undefined}

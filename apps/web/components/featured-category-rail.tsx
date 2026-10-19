@@ -195,15 +195,15 @@ export function FeaturedCategoryRail({ items }: Props) {
             const offset = shortestOffset(index - visualActive, items.length);
             const abs = Math.abs(offset);
             const facing = hover === index;
-            const yaw = reduceMotion ? 0 : facing ? 0 : clamp(offset * -22, -52, 52);
-            const tilt = reduceMotion || facing ? 0 : clamp(abs * 2.2, 0, 8);
-            const scale = clamp(1.12 - abs * 0.13, 0.66, 1.16);
-            const x = offset * spacing * (reduceMotion ? 1 : 0.9);
-            const y = reduceMotion ? 0 : abs * abs * 4;
-            const z = reduceMotion ? 0 : clamp(110 - abs * 60, -50, 130);
-            const opacity = clamp(1.25 - abs * 0.17, 0.38, 1);
+            const yaw = reduceMotion ? 0 : facing ? 0 : clamp(offset * -12, -28, 28);
+            const tilt = 0;
+            const scale = clamp(1.06 - abs * 0.1, 0.72, 1.08);
+            const x = offset * spacing;
+            const y = 0;
+            const z = reduceMotion ? 0 : clamp(60 - abs * 40, -20, 80);
+            const opacity = clamp(1.15 - abs * 0.14, 0.45, 1);
             const zIndex = Math.round(140 - abs * 14);
-            const isCenter = abs < 0.45;
+            const isCenter = abs < 0.55;
 
             return (
               <li
@@ -259,16 +259,21 @@ export function FeaturedCategoryRail({ items }: Props) {
                     alt=""
                     fill
                     sizes="(min-width: 1024px) 280px, 200px"
-                    className="object-cover transition duration-700 ease-out group-hover:scale-[1.05]"
+                    className="object-cover transition duration-700 ease-out group-hover:scale-[1.04]"
                     draggable={false}
                     priority={abs < 1.5}
                   />
-                  <span className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/5" />
-                  <span className="absolute inset-x-0 bottom-0 flex justify-center p-3.5 sm:p-5">
-                    <span className="bg-black px-3.5 py-2 text-xs font-medium tracking-[0.16em] text-white uppercase sm:px-4 sm:py-2.5 sm:text-sm">
-                      {item.name}
+                  <span className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                  {/* Label only on the front card — avoids badge overlap */}
+                  {isCenter ? (
+                    <span className="absolute inset-x-0 bottom-0 flex justify-center p-3 sm:p-4">
+                      <span className="bg-black px-3 py-1.5 text-[11px] font-medium tracking-[0.14em] text-white uppercase sm:px-4 sm:py-2 sm:text-xs">
+                        {item.name}
+                      </span>
                     </span>
-                  </span>
+                  ) : (
+                    <span className="sr-only">{item.name}</span>
+                  )}
                 </Link>
               </li>
             );
@@ -312,19 +317,19 @@ export function FeaturedCategoryRail({ items }: Props) {
 
       <style>{`
         .featured-rail-scope {
-          --featured-card-w: 11.5rem;
-          --featured-card-h: 16.5rem;
+          --featured-card-w: 10rem;
+          --featured-card-h: 14.5rem;
         }
         @media (min-width: 640px) {
           .featured-rail-scope {
-            --featured-card-w: 14.5rem;
-            --featured-card-h: 21rem;
+            --featured-card-w: 12.5rem;
+            --featured-card-h: 18rem;
           }
         }
         @media (min-width: 1024px) {
           .featured-rail-scope {
-            --featured-card-w: 17rem;
-            --featured-card-h: 24.5rem;
+            --featured-card-w: 14.5rem;
+            --featured-card-h: 21rem;
           }
         }
       `}</style>
@@ -342,10 +347,11 @@ function shortestOffset(raw: number, length: number) {
 }
 
 function cardSpacing() {
-  if (typeof window === "undefined") return 150;
-  if (window.matchMedia("(min-width: 1024px)").matches) return 178;
-  if (window.matchMedia("(min-width: 640px)").matches) return 150;
-  return 118;
+  // Keep spacing close to card width so labels and edges do not pile on each other.
+  if (typeof window === "undefined") return 175;
+  if (window.matchMedia("(min-width: 1024px)").matches) return 250;
+  if (window.matchMedia("(min-width: 640px)").matches) return 210;
+  return 165;
 }
 
 function clamp(value: number, min: number, max: number) {

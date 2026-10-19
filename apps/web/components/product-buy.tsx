@@ -1,7 +1,7 @@
 "use client";
 
 import { BRAND, formatPaisa, type ProductView } from "@bismillah/shared";
-import { ChevronDown, Heart } from "lucide-react";
+import { ChevronDown, Heart, Phone, ShoppingBag, Zap } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { PaymentStrip } from "./payment-strip";
@@ -14,56 +14,87 @@ export function ProductBuy({ product }: { product: ProductView }) {
   const price = BigInt(product.pricePaisa);
   const compare = product.comparePaisa ? BigInt(product.comparePaisa) : null;
   const query = `product=${product.slug}&color=${encodeURIComponent(color)}&qty=${qty}`;
+  const checkoutHref = product.inStock ? `/checkout?${query}` : "#";
+  const whatsappHref = `${BRAND.whatsappUrl}?text=${encodeURIComponent(
+    `আসসালামু আলাইকুম, ${product.name} (${product.sku}) · ${color} × ${qty} নিতে চাই।`,
+  )}`;
+  const tags = [
+    product.kind,
+    product.categorySlug.replaceAll("-", " "),
+    ...product.colors.slice(0, 2),
+  ];
 
   return (
-    <div>
-      <p className="text-sm text-muted-foreground">{product.sku}</p>
-      <h1 className="font-display mt-2 text-4xl leading-[0.95] sm:text-5xl lg:text-6xl">
+    <div className="lg:sticky lg:top-[calc(var(--site-header-offset,7rem)+0.75rem)]">
+      <div className="flex flex-wrap items-center gap-2">
+        {compare ? (
+          <span className="inline-flex bg-foreground px-2 py-1 text-[10px] tracking-[0.14em] text-background uppercase">
+            Sale
+          </span>
+        ) : null}
+        <span className="inline-flex border border-border px-2 py-1 text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
+          {product.inStock ? "In stock" : "Sold out"}
+        </span>
+        <span className="text-xs tracking-[0.12em] text-muted-foreground uppercase">
+          {product.sku}
+        </span>
+      </div>
+
+      <h1 className="font-display mt-4 text-4xl leading-[0.98] tracking-tight sm:text-5xl lg:text-[3.35rem]">
         {product.name}
       </h1>
-      <p className="mt-4 text-xl">
+
+      <p className="mt-4 text-2xl tracking-tight">
         <span className="font-medium">{formatPaisa(price)}</span>
         {compare ? (
-          <span className="ml-2 text-sm text-muted-foreground line-through">
+          <span className="ml-3 text-base text-muted-foreground line-through">
             {formatPaisa(compare)}
           </span>
         ) : null}
       </p>
+      <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">{product.blurb}</p>
 
-      <p className="mt-6 text-xs tracking-[0.16em] uppercase">Color · {color}</p>
-      <div className="mt-2 flex flex-wrap gap-2">
-        {product.colors.map((option) => (
-          <button
-            key={option}
-            type="button"
-            onClick={() => setColor(option)}
-            className={`h-11 border px-4 text-sm ${
-              option === color ? "border-foreground bg-foreground text-background" : "border-input bg-white"
-            }`}
-          >
-            {option}
-          </button>
-        ))}
+      <div className="mt-7">
+        <p className="text-xs tracking-[0.16em] text-muted-foreground uppercase">
+          Color · {color}
+        </p>
+        <div className="mt-2.5 flex flex-wrap gap-2">
+          {product.colors.map((option) => {
+            const selected = option === color;
+            return (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setColor(option)}
+                className={`inline-flex h-11 items-center border px-4 text-sm transition ${
+                  selected
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-input bg-white hover:border-foreground"
+                }`}
+              >
+                {option}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <p className="mt-5 text-sm">
-        {product.inStock ? "In stock · we pack after a confirmation call" : "Sold out"}
-      </p>
-
-      <div className="mt-5 flex items-center gap-3">
-        <div className="inline-flex h-12 items-center border border-input bg-white">
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <div className="inline-flex h-12 items-stretch border border-input bg-white">
           <button
             type="button"
-            className="size-12 text-lg"
+            className="w-11 text-lg transition hover:bg-secondary"
             aria-label="Decrease quantity"
             onClick={() => setQty((value) => Math.max(1, value - 1))}
           >
             −
           </button>
-          <span className="w-10 text-center text-sm">{qty}</span>
+          <span className="flex w-12 items-center justify-center border-x border-input text-sm tabular-nums">
+            {qty}
+          </span>
           <button
             type="button"
-            className="size-12 text-lg"
+            className="w-11 text-lg transition hover:bg-secondary"
             aria-label="Increase quantity"
             onClick={() => setQty((value) => Math.min(5, value + 1))}
           >
@@ -73,50 +104,73 @@ export function ProductBuy({ product }: { product: ProductView }) {
         <button
           type="button"
           onClick={() => setSaved((value) => !value)}
-          className="inline-flex h-12 items-center gap-2 border border-input bg-white px-4 text-sm"
+          className="inline-flex h-12 items-center gap-2 border border-input bg-white px-4 text-sm transition hover:border-foreground"
           aria-pressed={saved}
         >
-          <Heart className={`size-4 ${saved ? "fill-accent text-accent" : ""}`} />
+          <Heart className={`size-4 ${saved ? "fill-foreground text-foreground" : ""}`} />
           Wishlist
         </button>
       </div>
 
-      <div className="mt-4 hidden gap-3 sm:grid">
+      <div className="mt-5 hidden gap-3 sm:grid sm:grid-cols-2">
         <Link
-          href={product.inStock ? `/checkout?${query}` : "#"}
+          href={checkoutHref}
           aria-disabled={!product.inStock}
-          className={`inline-flex h-12 items-center justify-center text-sm font-medium tracking-wide uppercase ${
+          className={`inline-flex h-12 items-center justify-center gap-2 text-sm font-medium tracking-wide uppercase transition ${
             product.inStock
-              ? "border border-foreground bg-white text-foreground"
+              ? "bg-foreground text-background hover:opacity-90"
               : "pointer-events-none bg-secondary text-muted-foreground"
           }`}
         >
+          <Zap className="size-4" strokeWidth={1.75} />
+          Buy now
+        </Link>
+        <Link
+          href={checkoutHref}
+          aria-disabled={!product.inStock}
+          className={`inline-flex h-12 items-center justify-center gap-2 border text-sm font-medium tracking-wide uppercase transition ${
+            product.inStock
+              ? "border-foreground bg-white text-foreground hover:bg-foreground hover:text-background"
+              : "pointer-events-none border-border bg-secondary text-muted-foreground"
+          }`}
+        >
+          <ShoppingBag className="size-4" strokeWidth={1.75} />
           Add to cart
         </Link>
-        <Link
-          href={product.inStock ? `/checkout?${query}` : "#"}
-          aria-disabled={!product.inStock}
-          className={`inline-flex h-12 items-center justify-center text-sm font-medium tracking-wide uppercase ${
-            product.inStock
-              ? "bg-foreground text-background"
-              : "pointer-events-none bg-secondary text-muted-foreground"
-          }`}
+        <a
+          href={whatsappHref}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex min-h-12 items-center justify-center gap-2 border border-[#128C7E]/35 bg-[#128C7E] text-sm font-medium tracking-wide text-white uppercase transition hover:bg-[#0e7a6e]"
         >
-          Buy it now
-        </Link>
+          Order on WhatsApp
+        </a>
+        <a
+          href={`tel:${BRAND.phoneE164}`}
+          className="inline-flex min-h-12 items-center justify-center gap-2 border border-foreground/80 bg-neutral-900 text-sm font-medium tracking-wide text-white uppercase transition hover:bg-black"
+        >
+          <Phone className="size-4" strokeWidth={1.75} />
+          Call to order
+        </a>
       </div>
 
       <div className="mt-6">
+        <p className="text-xs tracking-[0.16em] text-muted-foreground uppercase">Tags</p>
+        <ul className="mt-2.5 flex flex-wrap gap-2">
+          {tags.map((tag) => (
+            <li
+              key={tag}
+              className="inline-flex h-8 items-center border border-border bg-secondary/60 px-3 text-xs tracking-wide text-muted-foreground lowercase"
+            >
+              #{tag.replaceAll(" ", "")}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="mt-7">
         <PaymentStrip />
       </div>
-      <a
-        href={`${BRAND.whatsappUrl}?text=${encodeURIComponent(`আসসালামু আলাইকুম, ${product.name} (${product.sku}) · ${color} নিতে চাই।`)}`}
-        target="_blank"
-        rel="noreferrer"
-        className="mt-4 inline-flex h-11 w-full items-center justify-center border border-input bg-white text-sm"
-      >
-        WhatsApp · {BRAND.phoneDisplay}
-      </a>
 
       <div className="mt-6 border-t border-border">
         <button
@@ -129,11 +183,11 @@ export function ProductBuy({ product }: { product: ProductView }) {
           <ChevronDown className={`size-4 transition ${openDesc ? "rotate-180" : ""}`} />
         </button>
         {openDesc ? (
-          <div className="pb-4 text-sm leading-7 text-muted-foreground">
+          <div className="pb-5 text-sm leading-7 text-muted-foreground">
             <p>{product.blurb}</p>
-            <ul className="mt-3 grid gap-1">
+            <ul className="mt-3 grid gap-1.5">
               <li>Full-grain leather feel, cut for daily carry</li>
-              <li>Color options ready for Facebook and TikTok share links</li>
+              <li>Packed after a confirmation call · Mirpur-10 showroom</li>
               <li>Cash on delivery across Bangladesh</li>
             </ul>
           </div>
@@ -152,9 +206,9 @@ export function ProductBuy({ product }: { product: ProductView }) {
         </details>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 gap-2 border-t border-border bg-background/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] backdrop-blur-md sm:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 gap-2 border-t border-border bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] backdrop-blur-md sm:hidden">
         <Link
-          href={product.inStock ? `/checkout?${query}` : "#"}
+          href={checkoutHref}
           className={`inline-flex h-12 items-center justify-center border text-sm font-medium ${
             product.inStock
               ? "border-foreground"
@@ -164,7 +218,7 @@ export function ProductBuy({ product }: { product: ProductView }) {
           Add to cart
         </Link>
         <Link
-          href={product.inStock ? `/checkout?${query}` : "#"}
+          href={checkoutHref}
           className={`inline-flex h-12 items-center justify-center text-sm font-medium ${
             product.inStock
               ? "bg-foreground text-background"

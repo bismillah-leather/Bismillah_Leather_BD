@@ -48,6 +48,14 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <AllProductsSection />
+
+      <NewArrivalsSection />
+
+      <FlashSaleSection sale={flashSale} />
+
+      <BestSellersSection />
+
       <section className="border-y border-border bg-white py-14 sm:py-24">
         <div className="mx-auto max-w-7xl px-3 sm:px-6">
           <CenteredRuleHeading size="lg">Why shop with us</CenteredRuleHeading>
@@ -56,12 +64,6 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-
-      <NewArrivalsSection />
-
-      <FlashSaleSection sale={flashSale} />
-
-      <BestSellersSection />
 
       <section className="bg-secondary py-10 sm:py-20">
         <div className="mx-auto max-w-7xl px-3 sm:px-6">
@@ -80,8 +82,6 @@ export default async function HomePage() {
           </ul>
         </div>
       </section>
-
-      <AllProductsSection />
 
       <section className="border-t border-border bg-white">
         <div className="mx-auto grid max-w-7xl gap-8 px-3 py-12 sm:gap-10 sm:px-6 sm:py-16 lg:grid-cols-2 lg:py-24">
