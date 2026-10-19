@@ -5,8 +5,23 @@ import { Menu, Search, ShoppingBag, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useCart } from "@/hooks/use-cart";
 
 const categoryLinks = INITIAL_CATEGORIES;
+
+function CartLink({ className }: { className: string }) {
+  const { count, hydrated } = useCart();
+  return (
+    <Link href="/cart" className={`relative ${className}`} aria-label="Cart">
+      <ShoppingBag className="size-5" />
+      {hydrated && count > 0 ? (
+        <span className="absolute top-1 right-1 flex size-4 items-center justify-center rounded-full bg-foreground text-[9px] font-medium text-background">
+          {count > 9 ? "9+" : count}
+        </span>
+      ) : null}
+    </Link>
+  );
+}
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -189,13 +204,7 @@ export function SiteHeader() {
                 >
                   <Search className="size-5" />
                 </Link>
-                <Link
-                  href="/checkout"
-                  className="inline-flex size-10 items-center justify-center rounded-full hover:bg-secondary"
-                  aria-label="Cart"
-                >
-                  <ShoppingBag className="size-5" />
-                </Link>
+                <CartLink className="inline-flex size-10 items-center justify-center rounded-full hover:bg-secondary" />
               </div>
             </div>
 

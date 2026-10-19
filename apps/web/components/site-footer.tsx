@@ -59,8 +59,8 @@ export function SiteFooter() {
               </Link>
             </li>
             <li>
-              <Link className="hover:text-foreground" href="/checkout">
-                Checkout
+              <Link className="hover:text-foreground" href="/cart">
+                Cart
               </Link>
             </li>
           </ul>

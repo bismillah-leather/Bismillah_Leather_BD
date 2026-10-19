@@ -4,6 +4,7 @@ import { BRAND, formatPaisa, type ProductView } from "@bismillah/shared";
 import { ChevronDown, Heart, Phone, ShoppingBag, Zap } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { addToCart } from "@/lib/cart";
 import { PaymentStrip } from "./payment-strip";
 
 export function ProductBuy({ product }: { product: ProductView }) {
@@ -11,6 +12,7 @@ export function ProductBuy({ product }: { product: ProductView }) {
   const [qty, setQty] = useState(1);
   const [openDesc, setOpenDesc] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [added, setAdded] = useState(false);
   const price = BigInt(product.pricePaisa);
   const compare = product.comparePaisa ? BigInt(product.comparePaisa) : null;
   const query = `product=${product.slug}&color=${encodeURIComponent(color)}&qty=${qty}`;
@@ -125,18 +127,25 @@ export function ProductBuy({ product }: { product: ProductView }) {
           <Zap className="size-4" strokeWidth={1.75} />
           Buy now
         </Link>
-        <Link
-          href={checkoutHref}
-          aria-disabled={!product.inStock}
+        <button
+          type="button"
+          disabled={!product.inStock}
+          onClick={() => {
+            addToCart(product.slug, color, qty);
+            setAdded(true);
+            window.setTimeout(() => setAdded(false), 1400);
+          }}
           className={`inline-flex h-12 items-center justify-center gap-2 border text-sm font-medium tracking-wide uppercase transition ${
             product.inStock
-              ? "border-foreground bg-white text-foreground hover:bg-foreground hover:text-background"
+              ? added
+                ? "border-foreground bg-foreground text-background"
+                : "border-foreground bg-white text-foreground hover:bg-foreground hover:text-background"
               : "pointer-events-none border-border bg-secondary text-muted-foreground"
           }`}
         >
           <ShoppingBag className="size-4" strokeWidth={1.75} />
-          Add to cart
-        </Link>
+          {added ? "Added" : "Add to cart"}
+        </button>
         <a
           href={whatsappHref}
           target="_blank"
@@ -207,16 +216,22 @@ export function ProductBuy({ product }: { product: ProductView }) {
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 gap-2 border-t border-border bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] backdrop-blur-md sm:hidden">
-        <Link
-          href={checkoutHref}
+        <button
+          type="button"
+          disabled={!product.inStock}
+          onClick={() => {
+            addToCart(product.slug, color, qty);
+            setAdded(true);
+            window.setTimeout(() => setAdded(false), 1400);
+          }}
           className={`inline-flex h-12 items-center justify-center border text-sm font-medium ${
             product.inStock
               ? "border-foreground"
               : "pointer-events-none border-border text-muted-foreground"
           }`}
         >
-          Add to cart
-        </Link>
+          {added ? "Added" : "Add to cart"}
+        </button>
         <Link
           href={checkoutHref}
           className={`inline-flex h-12 items-center justify-center text-sm font-medium ${

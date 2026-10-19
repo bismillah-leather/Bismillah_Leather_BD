@@ -1,57 +1,94 @@
 "use client";
 
-import { formatPaisa, normalizeBdPhone, type ProductView } from "@bismillah/shared";
+import { formatPaisa, normalizeBdPhone } from "@bismillah/shared";
+import { Minus, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useCart } from "@/hooks/use-cart";
+import { addToCart, clearCart, type CartItemView } from "@/lib/cart";
 
-const DISTRICTS = [
-  "Dhaka",
-  "Gazipur",
-  "Narayanganj",
-  "Chattogram",
-  "Sylhet",
-  "Rajshahi",
-  "Khulna",
-  "Barishal",
-  "Rangpur",
-  "Mymensingh",
-] as const;
+type ShippingZone = "inside" | "outside";
 
-export function CheckoutForm({
-  product,
-  color: initialColor,
-}: {
-  product: ProductView | undefined;
-  color: string;
-}) {
-  const colors = useMemo(() => [...(product?.colors ?? [])], [product]);
-  const [color, setColor] = useState(initialColor || colors[0] || "");
-  const [district, setDistrict] = useState("");
-  const [customDistrict, setCustomDistrict] = useState(false);
+const SHIPPING = {
+  inside: { label: "Inside Dhaka", paisa: 8_000n },
+  outside: { label: "Outside Dhaka", paisa: 13_000n },
+} as const;
+
+export function CheckoutForm() {
+  const { hydrated, items, count, setQty, remove } = useCart();
+  const [querySeeded, setQuerySeeded] = useState(false);
+  const [shipping, setShipping] = useState<ShippingZone>("inside");
+  const [payment, setPayment] = useState<"cod" | "ssl">("cod");
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
+  const [orderItems, setOrderItems] = useState<CartItemView[]>([]);
+  const [doneTotal, setDoneTotal] = useState(0n);
+  const [doneShipping, setDoneShipping] = useState<ShippingZone>("inside");
+  const [donePayment, setDonePayment] = useState<"cod" | "ssl">("cod");
 
-  const price = product ? BigInt(product.pricePaisa) : 0n;
-  const compare = product?.comparePaisa ? BigInt(product.comparePaisa) : null;
-  const delivery = district === "Dhaka" ? 8_000n : district ? 13_000n : 8_000n;
-  const total = price + delivery;
+  useEffect(() => {
+    if (!hydrated || querySeeded) return;
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get("product");
+    if (slug) {
+      const color = params.get("color") ?? "Black";
+      const qty = Math.max(1, Math.min(5, Number(params.get("qty") ?? "1") || 1));
+      addToCart(slug, color, qty);
+    }
+    setQuerySeeded(true);
+  }, [hydrated, querySeeded]);
 
-  if (done && product) {
+  const lines = items;
+  const subtotal = useMemo(
+    () => lines.reduce((sum, item) => sum + BigInt(item.linePaisa), 0n),
+    [lines],
+  );
+  const shipFee = SHIPPING[shipping].paisa;
+  const total = subtotal + shipFee;
+
+  if (done) {
     return (
-      <div className="mt-8 border border-border bg-white p-6 sm:p-8">
-        <p className="text-xs tracking-[0.2em] text-muted-foreground uppercase">Request received</p>
-        <h2 className="font-display mt-2 text-3xl sm:text-4xl">We will call to confirm.</h2>
-        <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          {product.name} · {color}
-          {district ? ` · ${district}` : ""}. Cash on delivery — we confirm before the parcel goes
-          out.
-        </p>
+      <div className="mx-auto max-w-xl border border-border bg-white">
+        <div className="bg-black px-6 py-10 text-white sm:px-8">
+          <p className="text-[11px] tracking-[0.22em] text-white/50 uppercase">Thank you</p>
+          <h2 className="font-display mt-3 text-4xl tracking-tight">We will call to confirm.</h2>
+          <p className="mt-4 text-sm leading-6 text-white/65">
+            {orderItems.length} item{orderItems.length === 1 ? "" : "s"} ·{" "}
+            {SHIPPING[doneShipping].label} ·{" "}
+            {donePayment === "cod" ? "Cash on delivery" : "Online pay"} after confirmation.
+          </p>
+          <p className="mt-4 text-lg font-medium tabular-nums">{formatPaisa(doneTotal)}</p>
+        </div>
+        <div className="flex flex-wrap gap-3 p-6 sm:p-8">
+          <Link
+            href="/"
+            className="inline-flex h-12 items-center bg-foreground px-5 text-sm font-medium text-background"
+          >
+            Back to shop
+          </Link>
+          <Link href="/cart" className="inline-flex h-12 items-center border border-foreground px-5 text-sm">
+            View cart
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hydrated) {
+    return <p className="text-sm text-muted-foreground">Loading checkout…</p>;
+  }
+
+  if (lines.length === 0) {
+    return (
+      <div className="mx-auto max-w-xl border border-border bg-white px-6 py-14 text-center">
+        <p className="font-display text-3xl tracking-tight">Your cart is empty</p>
+        <p className="mt-2 text-sm text-muted-foreground">Add a product before checkout.</p>
         <Link
-          href="/"
-          className="mt-6 inline-flex h-11 items-center border border-foreground px-4 text-sm transition hover:bg-foreground hover:text-background"
+          href="/#all-products"
+          className="mt-6 inline-flex h-12 items-center bg-foreground px-5 text-sm font-medium text-background"
         >
-          Back to shop
+          Browse products
         </Link>
       </div>
     );
@@ -59,241 +96,361 @@ export function CheckoutForm({
 
   return (
     <form
-      className="mt-8 grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10"
+      className="mx-auto grid max-w-5xl gap-0 overflow-hidden border border-border bg-white lg:grid-cols-[minmax(0,1fr)_22.5rem]"
       onSubmit={(event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
-        const phone = normalizeBdPhone(String(data.get("phone") ?? ""));
-        const name = String(data.get("name") ?? "").trim();
+        const contact = String(data.get("contact") ?? "").trim();
+        const phoneRaw = String(data.get("phone") ?? "").trim() || contact;
+        const phoneDigits = phoneRaw.replace(/\D/g, "");
+        const phoneCandidate =
+          phoneDigits.startsWith("01") || phoneDigits.startsWith("880")
+            ? phoneDigits
+            : phoneDigits.length === 10
+              ? `0${phoneDigits}`
+              : phoneDigits;
+        const phone = normalizeBdPhone(phoneCandidate);
+        const lastName = String(data.get("lastName") ?? "").trim();
         const address = String(data.get("address") ?? "").trim();
-        const selectedDistrict = String(data.get("district") ?? district).trim();
-        if (!product) {
-          setError("Choose a product, then come back to check out.");
-          return;
-        }
-        if (!name || !phone || !selectedDistrict) {
-          setError(phone ? "Fill in name, phone, and district." : "Enter a Bangladesh mobile number.");
-          return;
-        }
-        if (!address) {
-          setError("Add your full delivery address.");
+        const city = String(data.get("city") ?? "").trim();
+        if (!phone || !lastName || !address || !city) {
+          setError(
+            !phone
+              ? "Enter a valid Bangladesh mobile number."
+              : "Fill in name, address, city, and phone.",
+          );
           return;
         }
         setError("");
+        setOrderItems(lines);
+        setDoneTotal(total);
+        setDoneShipping(shipping);
+        setDonePayment(payment);
+        clearCart();
         setDone(true);
       }}
     >
-      <div className="grid gap-5">
-        {product ? (
-          <div className="border border-border bg-white">
-            <div className="grid gap-4 p-4 sm:grid-cols-[7.5rem_1fr] sm:p-5">
-              <Link
-                href={`/product/${product.slug}`}
-                className="relative aspect-[3/4] overflow-hidden bg-secondary sm:aspect-square"
-              >
-                <Image
-                  src={product.image}
-                  alt={product.name}
-                  fill
-                  sizes="160px"
-                  className="object-cover"
-                />
-              </Link>
-              <div className="min-w-0">
-                <div className="flex flex-wrap gap-2">
-                  <span className="inline-flex bg-foreground px-2 py-1 text-[10px] tracking-[0.14em] text-background uppercase">
-                    COD
-                  </span>
-                  {compare ? (
-                    <span className="inline-flex border border-border px-2 py-1 text-[10px] tracking-[0.14em] uppercase">
-                      Sale
-                    </span>
-                  ) : null}
-                  <span className="inline-flex border border-border px-2 py-1 text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
-                    {product.kind}
-                  </span>
-                </div>
-                <Link href={`/product/${product.slug}`}>
-                  <h2 className="font-display mt-3 text-2xl leading-tight tracking-tight">
-                    {product.name}
-                  </h2>
-                </Link>
-                <p className="mt-1 text-xs tracking-[0.12em] text-muted-foreground uppercase">
-                  {product.sku}
-                </p>
-                <p className="mt-3 text-sm">
-                  <span className="font-medium">{formatPaisa(price)}</span>
-                  {compare ? (
-                    <span className="ml-2 text-muted-foreground line-through">
-                      {formatPaisa(compare)}
-                    </span>
-                  ) : null}
-                </p>
-              </div>
-            </div>
+      <div className="order-2 border-t border-border lg:order-1 lg:border-t-0 lg:border-r">
+        <div className="border-b border-border px-5 py-5 sm:px-8">
+          <Link href="/" className="font-display text-2xl tracking-tight">
+            Bismillah Leather
+          </Link>
+          <p className="mt-1 text-xs tracking-[0.16em] text-muted-foreground uppercase">
+            Cart · Information · Shipping · Payment
+          </p>
+        </div>
 
-            {colors.length > 0 ? (
-              <div className="border-t border-border px-4 py-4 sm:px-5">
-                <p className="text-xs tracking-[0.16em] text-muted-foreground uppercase">Color</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {colors.map((option) => {
-                    const selected = option === color;
-                    return (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => setColor(option)}
-                        className={`inline-flex h-10 items-center border px-3.5 text-sm transition ${
-                          selected
-                            ? "border-foreground bg-foreground text-background"
-                            : "border-input bg-white hover:border-foreground"
+        <div className="grid gap-8 px-5 py-7 sm:px-8 sm:py-9">
+          <section>
+            <div className="mb-3 flex items-baseline justify-between gap-3">
+              <h2 className="text-lg font-medium">Contact</h2>
+              <Link href="/cart" className="text-sm text-muted-foreground underline underline-offset-4">
+                Cart ({count})
+              </Link>
+            </div>
+            <label className="grid gap-1.5 text-sm">
+              <span className="sr-only">Email or mobile phone number</span>
+              <input
+                name="contact"
+                required
+                autoComplete="tel"
+                placeholder="Email or mobile phone number"
+                className="h-12 rounded-md border border-input bg-white px-3 outline-none focus-visible:border-foreground"
+              />
+            </label>
+            <label className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+              <input type="checkbox" name="offers" className="size-4 rounded border-input" />
+              Email / SMS me with news and offers
+            </label>
+          </section>
+
+          <section>
+            <h2 className="mb-3 text-lg font-medium">Delivery</h2>
+            <div className="grid gap-3">
+              <label className="grid gap-1.5 text-sm">
+                <span className="sr-only">Country/Region</span>
+                <select
+                  name="country"
+                  defaultValue="BD"
+                  className="h-12 rounded-md border border-input bg-white px-3 outline-none focus-visible:border-foreground"
+                >
+                  <option value="BD">Bangladesh</option>
+                </select>
+              </label>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <input
+                  name="firstName"
+                  autoComplete="given-name"
+                  placeholder="First name (optional)"
+                  className="h-12 rounded-md border border-input bg-white px-3 outline-none focus-visible:border-foreground"
+                />
+                <input
+                  name="lastName"
+                  required
+                  autoComplete="family-name"
+                  placeholder="Last name"
+                  className="h-12 rounded-md border border-input bg-white px-3 outline-none focus-visible:border-foreground"
+                />
+              </div>
+              <input
+                name="address"
+                required
+                autoComplete="street-address"
+                placeholder="Address"
+                className="h-12 rounded-md border border-input bg-white px-3 outline-none focus-visible:border-foreground"
+              />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <input
+                  name="city"
+                  required
+                  autoComplete="address-level2"
+                  placeholder="City"
+                  className="h-12 rounded-md border border-input bg-white px-3 outline-none focus-visible:border-foreground"
+                />
+                <input
+                  name="postal"
+                  autoComplete="postal-code"
+                  placeholder="Postal code (optional)"
+                  className="h-12 rounded-md border border-input bg-white px-3 outline-none focus-visible:border-foreground"
+                />
+              </div>
+              <input
+                name="phone"
+                required
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="Phone"
+                className="h-12 rounded-md border border-input bg-white px-3 outline-none focus-visible:border-foreground"
+              />
+            </div>
+          </section>
+
+          <section>
+            <h2 className="mb-3 text-lg font-medium">Shipping method</h2>
+            <div className="overflow-hidden rounded-md border border-input">
+              {(Object.keys(SHIPPING) as ShippingZone[]).map((zone, index) => {
+                const option = SHIPPING[zone];
+                const selected = shipping === zone;
+                return (
+                  <label
+                    key={zone}
+                    className={`flex cursor-pointer items-center justify-between gap-3 px-4 py-3.5 transition ${
+                      index > 0 ? "border-t border-input" : ""
+                    } ${selected ? "bg-secondary/50" : "bg-white hover:bg-secondary/30"}`}
+                  >
+                    <span className="flex items-center gap-3">
+                      <span
+                        className={`flex size-4 items-center justify-center rounded-full border ${
+                          selected ? "border-foreground" : "border-input"
                         }`}
                       >
-                        {option}
-                      </button>
-                    );
-                  })}
-                </div>
-                <input type="hidden" name="color" value={color} />
-              </div>
-            ) : null}
-          </div>
-        ) : (
-          <div className="border border-border bg-secondary/50 p-5 text-sm text-muted-foreground">
-            No product selected.{" "}
-            <Link href="/#all-products" className="text-foreground underline underline-offset-4">
-              Browse the catalog
-            </Link>{" "}
-            and tap Buy now.
-          </div>
-        )}
-
-        <div className="border border-border bg-secondary/40 p-4 text-sm sm:p-5">
-          <p className="text-xs tracking-[0.16em] text-muted-foreground uppercase">Order total</p>
-          <dl className="mt-3 grid gap-2">
-            <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Item</dt>
-              <dd>{product ? formatPaisa(price) : "—"}</dd>
+                        {selected ? <span className="size-2 rounded-full bg-foreground" /> : null}
+                      </span>
+                      <span className="text-sm font-medium">{option.label}</span>
+                    </span>
+                    <span className="text-sm tabular-nums">{formatPaisa(option.paisa)}</span>
+                    <input
+                      type="radio"
+                      name="shipping"
+                      value={zone}
+                      checked={selected}
+                      onChange={() => setShipping(zone)}
+                      className="sr-only"
+                    />
+                  </label>
+                );
+              })}
             </div>
-            <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Delivery</dt>
-              <dd>{formatPaisa(delivery)}</dd>
-            </div>
-            <div className="flex justify-between gap-4 border-t border-border pt-2 font-medium">
-              <dt>Total</dt>
-              <dd>{product ? formatPaisa(total) : "—"}</dd>
-            </div>
-          </dl>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Dhaka ৳80 · Outside Dhaka ৳130 · pay cash on delivery
-          </p>
-        </div>
-      </div>
+          </section>
 
-      <div className="grid gap-4 self-start">
-        <div>
-          <p className="text-xs tracking-[0.16em] text-muted-foreground uppercase">Delivery details</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            We call this number before dispatch.
-          </p>
-        </div>
-
-        <label className="grid gap-1.5 text-sm">
-          <span className="text-xs tracking-[0.12em] text-muted-foreground uppercase">Name</span>
-          <input
-            name="name"
-            required
-            autoComplete="name"
-            placeholder="Your full name"
-            className="h-12 border border-input bg-white px-3 outline-none focus-visible:border-foreground"
-          />
-        </label>
-
-        <label className="grid gap-1.5 text-sm">
-          <span className="text-xs tracking-[0.12em] text-muted-foreground uppercase">Phone</span>
-          <input
-            name="phone"
-            required
-            inputMode="tel"
-            autoComplete="tel"
-            placeholder="01XXXXXXXXX"
-            className="h-12 border border-input bg-white px-3 outline-none focus-visible:border-foreground"
-          />
-        </label>
-
-        <fieldset className="grid gap-1.5">
-          <legend className="text-xs tracking-[0.12em] text-muted-foreground uppercase">
-            District
-          </legend>
-          <div className="flex flex-wrap gap-2">
-            {DISTRICTS.map((item) => {
-              const selected = !customDistrict && district === item;
-              return (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => {
-                    setCustomDistrict(false);
-                    setDistrict(item);
-                  }}
-                  className={`inline-flex h-10 items-center border px-3 text-sm transition ${
-                    selected
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-input bg-white hover:border-foreground"
+          <section>
+            <h2 className="text-lg font-medium">Payment</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              All transactions are secure. COD is confirmed by phone.
+            </p>
+            <div className="mt-3 overflow-hidden rounded-md border border-input">
+              <label
+                className={`flex cursor-pointer items-center gap-3 px-4 py-3.5 ${
+                  payment === "cod" ? "bg-secondary/50" : "bg-white"
+                }`}
+              >
+                <span
+                  className={`flex size-4 items-center justify-center rounded-full border ${
+                    payment === "cod" ? "border-foreground" : "border-input"
                   }`}
                 >
-                  {item}
-                </button>
-              );
-            })}
-            <button
-              type="button"
-              onClick={() => {
-                setCustomDistrict(true);
-                setDistrict("");
-              }}
-              className={`inline-flex h-10 items-center border px-3 text-sm transition ${
-                customDistrict
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-input bg-white hover:border-foreground"
-              }`}
-            >
-              Other
-            </button>
+                  {payment === "cod" ? <span className="size-2 rounded-full bg-foreground" /> : null}
+                </span>
+                <span className="text-sm font-medium">Cash on Delivery (COD)</span>
+                <input
+                  type="radio"
+                  name="payment"
+                  value="cod"
+                  checked={payment === "cod"}
+                  onChange={() => setPayment("cod")}
+                  className="sr-only"
+                />
+              </label>
+              <label
+                className={`flex cursor-pointer items-center gap-3 border-t border-input px-4 py-3.5 ${
+                  payment === "ssl" ? "bg-secondary/50" : "bg-white"
+                }`}
+              >
+                <span
+                  className={`flex size-4 items-center justify-center rounded-full border ${
+                    payment === "ssl" ? "border-foreground" : "border-input"
+                  }`}
+                >
+                  {payment === "ssl" ? <span className="size-2 rounded-full bg-foreground" /> : null}
+                </span>
+                <span className="text-sm">
+                  <span className="font-medium">Online pay</span>
+                  <span className="ml-2 text-xs text-muted-foreground">bKash / card · soon</span>
+                </span>
+                <input
+                  type="radio"
+                  name="payment"
+                  value="ssl"
+                  checked={payment === "ssl"}
+                  onChange={() => setPayment("ssl")}
+                  className="sr-only"
+                />
+              </label>
+            </div>
+          </section>
+
+          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+
+          <button
+            type="submit"
+            className="inline-flex h-12 w-full items-center justify-center rounded-md bg-foreground text-sm font-medium text-background transition hover:opacity-90 lg:hidden"
+          >
+            Place order · {formatPaisa(total)}
+          </button>
+          <div className="flex items-start gap-2 text-xs leading-5 text-muted-foreground lg:hidden">
+            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-foreground" strokeWidth={1.5} />
+            <p>Secure COD · we confirm by phone before dispatch · easy returns within 7 days.</p>
           </div>
-          <input type="hidden" name="district" value={district} />
-          {customDistrict ? (
-            <input
-              value={district}
-              onChange={(event) => setDistrict(event.target.value)}
-              placeholder="Type your district"
-              className="mt-1 h-12 border border-input bg-white px-3 outline-none focus-visible:border-foreground"
-            />
-          ) : null}
-        </fieldset>
-
-        <label className="grid gap-1.5 text-sm">
-          <span className="text-xs tracking-[0.12em] text-muted-foreground uppercase">Address</span>
-          <textarea
-            name="address"
-            required
-            rows={3}
-            autoComplete="street-address"
-            placeholder="House, road, area"
-            className="resize-y border border-input bg-white px-3 py-3 outline-none focus-visible:border-foreground"
-          />
-        </label>
-
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
-
-        <button
-          type="submit"
-          disabled={!product}
-          className="h-12 bg-foreground text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-50"
-        >
-          Place COD order
-        </button>
+        </div>
       </div>
+
+      <aside className="order-1 bg-secondary/45 lg:order-2">
+        <div className="border-b border-border px-5 py-4 lg:border-b-0 lg:px-6 lg:pt-8">
+          <p className="text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
+            Order summary
+          </p>
+        </div>
+        <ul className="grid gap-5 px-5 py-5 lg:px-6">
+          {lines.map((item) => {
+            const unit = BigInt(item.unitPaisa);
+            const compare = item.comparePaisa ? BigInt(item.comparePaisa) : null;
+            return (
+              <li key={`${item.slug}-${item.color}`} className="grid gap-3">
+                <div className="flex gap-3">
+                  <Link
+                    href={`/product/${item.slug}`}
+                    className="relative size-16 shrink-0 overflow-hidden rounded-md border border-border bg-white"
+                  >
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      fill
+                      sizes="64px"
+                      className="object-cover"
+                    />
+                    <span className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-foreground text-[10px] font-medium text-background">
+                      {item.qty}
+                    </span>
+                  </Link>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <Link href={`/product/${item.slug}`} className="min-w-0">
+                        <p className="text-sm font-medium leading-snug">{item.name}</p>
+                      </Link>
+                      <p className="shrink-0 text-sm font-medium tabular-nums">
+                        {formatPaisa(BigInt(item.linePaisa))}
+                      </p>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {item.color} · SKU {item.sku}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                      {formatPaisa(unit)} each
+                      {compare ? (
+                        <span className="ml-1.5 line-through">{formatPaisa(compare)}</span>
+                      ) : null}
+                      {compare ? (
+                        <span className="ml-1.5 text-foreground">Sale</span>
+                      ) : null}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 pl-[4.75rem]">
+                  <div className="inline-flex h-8 items-stretch border border-input bg-white">
+                    <button
+                      type="button"
+                      aria-label={`Decrease ${item.name}`}
+                      className="inline-flex w-8 items-center justify-center hover:bg-secondary"
+                      onClick={() => setQty(item.slug, item.color, item.qty - 1)}
+                    >
+                      <Minus className="size-3.5" strokeWidth={1.75} />
+                    </button>
+                    <span className="flex w-8 items-center justify-center border-x border-input text-xs tabular-nums">
+                      {item.qty}
+                    </span>
+                    <button
+                      type="button"
+                      aria-label={`Increase ${item.name}`}
+                      className="inline-flex w-8 items-center justify-center hover:bg-secondary"
+                      onClick={() => setQty(item.slug, item.color, item.qty + 1)}
+                    >
+                      <Plus className="size-3.5" strokeWidth={1.75} />
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => remove(item.slug, item.color)}
+                    className="inline-flex items-center gap-1 text-[11px] tracking-wide text-muted-foreground uppercase hover:text-foreground"
+                  >
+                    <Trash2 className="size-3" />
+                    Remove
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="grid gap-2.5 border-t border-border px-5 py-5 text-sm lg:px-6">
+          <div className="flex justify-between gap-4">
+            <span className="text-muted-foreground">Subtotal · {count} item{count === 1 ? "" : "s"}</span>
+            <span className="tabular-nums">{formatPaisa(subtotal)}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-muted-foreground">Shipping · {SHIPPING[shipping].label}</span>
+            <span className="tabular-nums">{formatPaisa(shipFee)}</span>
+          </div>
+          <div className="flex justify-between gap-4 border-t border-border pt-3 text-base font-medium">
+            <span>Total</span>
+            <span className="tabular-nums">
+              <span className="mr-1 text-xs font-normal text-muted-foreground">BDT</span>
+              {formatPaisa(total)}
+            </span>
+          </div>
+        </div>
+        <div className="hidden border-t border-border px-6 py-5 lg:block">
+          <button
+            type="submit"
+            className="inline-flex h-12 w-full items-center justify-center rounded-md bg-foreground text-sm font-medium text-background transition hover:opacity-90"
+          >
+            Place order · {formatPaisa(total)}
+          </button>
+          <div className="mt-4 flex items-start gap-2 text-xs leading-5 text-muted-foreground">
+            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-foreground" strokeWidth={1.5} />
+            <p>Secure COD · we confirm by phone before dispatch · easy returns within 7 days.</p>
+          </div>
+        </div>
+      </aside>
     </form>
   );
 }

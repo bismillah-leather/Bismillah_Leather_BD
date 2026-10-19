@@ -2,6 +2,8 @@
 
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import { addToCart } from "@/lib/cart";
 
 export function ProductCardActions({
   slug,
@@ -18,6 +20,7 @@ export function ProductCardActions({
   tone?: "light" | "dark";
   flush?: boolean;
 }) {
+  const [added, setAdded] = useState(false);
   const checkoutHref = `/checkout?product=${encodeURIComponent(slug)}&color=${encodeURIComponent(color)}`;
   const dark = tone === "dark";
 
@@ -37,19 +40,28 @@ export function ProductCardActions({
       >
         Buy now
       </Link>
-      <Link
-        href={checkoutHref}
+      <button
+        type="button"
         aria-label="Add to cart"
+        onClick={() => {
+          addToCart(slug, color, 1);
+          setAdded(true);
+          window.setTimeout(() => setAdded(false), 1200);
+        }}
         className={`inline-flex shrink-0 items-center justify-center border transition ${
           compact ? "size-9 sm:size-10" : "size-10 sm:size-11"
         } ${
-          dark
-            ? "border-white/50 text-white hover:bg-white hover:text-black"
-            : "border-foreground bg-white text-foreground hover:bg-foreground hover:text-background"
+          added
+            ? dark
+              ? "border-white bg-white text-black"
+              : "border-foreground bg-foreground text-background"
+            : dark
+              ? "border-white/50 text-white hover:bg-white hover:text-black"
+              : "border-foreground bg-white text-foreground hover:bg-foreground hover:text-background"
         }`}
       >
         <ShoppingBag className="size-4" strokeWidth={1.75} />
-      </Link>
+      </button>
     </div>
   );
 }
