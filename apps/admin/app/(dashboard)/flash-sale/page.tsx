@@ -1,10 +1,8 @@
 "use client";
 
-import {
-  SHOWCASE_PRODUCTS,
-  type FlashSaleConfig,
-} from "@bismillah/shared";
+import { SHOWCASE_PRODUCTS, type FlashSaleConfig } from "@bismillah/shared";
 import { useEffect, useMemo, useState } from "react";
+import { AdminPageHeader } from "@/components/admin-page-header";
 
 const STORE_API =
   process.env.NEXT_PUBLIC_STORE_URL?.replace(/\/$/, "") || "http://localhost:3000";
@@ -15,7 +13,6 @@ type FormState = {
   isActive: boolean;
   durationHours: string;
   discountKind: "fixed" | "percent";
-  /** Taka for fixed; percent number for percent (e.g. 15) */
   discountInput: string;
   productSlugs: string[];
 };
@@ -157,8 +154,8 @@ export default function FlashSaleAdminPage() {
   if (status === "loading" || !form) {
     return (
       <div>
-        <h1 className="font-display text-4xl">Flash Sale</h1>
-        <p className="mt-3 text-sm text-muted-foreground">
+        <AdminPageHeader eyebrow="Merchandising" title="Flash Sale" />
+        <p className="mt-6 text-sm text-muted-foreground">
           {status === "error" ? message : "Loading current sale…"}
         </p>
       </div>
@@ -167,31 +164,33 @@ export default function FlashSaleAdminPage() {
 
   return (
     <div>
-      <h1 className="font-display text-4xl">Flash Sale</h1>
-      <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-        Set how long the sale runs and how much to cut (taka or %). The storefront shows a live
-        reverse countdown and discounted prices.
-      </p>
+      <AdminPageHeader
+        eyebrow="Merchandising"
+        title="Flash Sale"
+        description="Set duration and discount. Storefront shows a live countdown with sale prices."
+      />
 
       <form onSubmit={onSave} className="mt-8 grid max-w-2xl gap-6">
-        <label className="grid gap-1.5 text-sm">
-          <span className="text-xs tracking-[0.14em] text-muted-foreground uppercase">Title</span>
+        <label className="grid gap-2 text-sm">
+          <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
+            Title
+          </span>
           <input
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
-            className="h-11 border border-input bg-white px-3 outline-none focus-visible:border-foreground"
+            className="admin-field"
             required
           />
         </label>
 
-        <label className="grid gap-1.5 text-sm">
-          <span className="text-xs tracking-[0.14em] text-muted-foreground uppercase">
+        <label className="grid gap-2 text-sm">
+          <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
             Subtitle
           </span>
           <input
             value={form.subtitle}
             onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
-            className="h-11 border border-input bg-white px-3 outline-none focus-visible:border-foreground"
+            className="admin-field"
           />
         </label>
 
@@ -200,13 +199,13 @@ export default function FlashSaleAdminPage() {
             type="checkbox"
             checked={form.isActive}
             onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-            className="size-4"
+            className="size-4 accent-primary"
           />
           <span>Active on storefront</span>
         </label>
 
-        <label className="grid gap-1.5 text-sm">
-          <span className="text-xs tracking-[0.14em] text-muted-foreground uppercase">
+        <label className="grid gap-2 text-sm">
+          <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
             Duration (hours from now)
           </span>
           <input
@@ -215,22 +214,20 @@ export default function FlashSaleAdminPage() {
             step={0.25}
             value={form.durationHours}
             onChange={(e) => setForm({ ...form, durationHours: e.target.value })}
-            className="h-11 border border-input bg-white px-3 outline-none focus-visible:border-foreground"
+            className="admin-field"
             required
           />
           <span className="text-xs text-muted-foreground">
-            Saving restarts the countdown from now for this many hours.
-            {previewEndsAt
-              ? ` Current end: ${new Date(previewEndsAt).toLocaleString()}`
-              : null}
+            Saving restarts the countdown from now.
+            {previewEndsAt ? ` Current end: ${new Date(previewEndsAt).toLocaleString()}` : null}
           </span>
         </label>
 
         <fieldset className="grid gap-3">
-          <legend className="text-xs tracking-[0.14em] text-muted-foreground uppercase">
+          <legend className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
             Discount type
           </legend>
-          <div className="flex flex-wrap gap-2">
+          <div className="admin-segment">
             {(
               [
                 ["fixed", "Taka off"],
@@ -240,12 +237,8 @@ export default function FlashSaleAdminPage() {
               <button
                 key={value}
                 type="button"
+                data-active={form.discountKind === value}
                 onClick={() => setForm({ ...form, discountKind: value })}
-                className={`h-10 px-4 text-sm ${
-                  form.discountKind === value
-                    ? "bg-foreground text-background"
-                    : "border border-border text-muted-foreground"
-                }`}
               >
                 {label}
               </button>
@@ -253,37 +246,37 @@ export default function FlashSaleAdminPage() {
           </div>
         </fieldset>
 
-        <label className="grid gap-1.5 text-sm">
-          <span className="text-xs tracking-[0.14em] text-muted-foreground uppercase">
+        <label className="grid gap-2 text-sm">
+          <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
             {form.discountKind === "percent" ? "Percent (%)" : "Amount (৳)"}
           </span>
           <input
             type="number"
             min={1}
-            step={form.discountKind === "percent" ? 1 : 1}
+            step={1}
             value={form.discountInput}
             onChange={(e) => setForm({ ...form, discountInput: e.target.value })}
-            className="h-11 border border-input bg-white px-3 outline-none focus-visible:border-foreground"
+            className="admin-field"
             required
           />
           <span className="text-xs text-muted-foreground">{discountHint}</span>
         </label>
 
         <fieldset className="grid gap-3">
-          <legend className="text-xs tracking-[0.14em] text-muted-foreground uppercase">
+          <legend className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
             Products ({selectedCount})
           </legend>
-          <ul className="max-h-72 overflow-y-auto border border-border">
+          <ul className="admin-panel max-h-72 overflow-y-auto">
             {SHOWCASE_PRODUCTS.map((product) => {
               const checked = form.productSlugs.includes(product.slug);
               return (
                 <li key={product.slug} className="border-b border-border last:border-b-0">
-                  <label className="flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm hover:bg-secondary">
+                  <label className="flex cursor-pointer items-center gap-3 px-3.5 py-3 text-sm transition hover:bg-secondary/60">
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={() => toggleSlug(product.slug)}
-                      className="size-4"
+                      className="size-4 accent-primary"
                     />
                     <span className="flex-1">{product.name}</span>
                     <span className="text-xs text-muted-foreground">{product.sku}</span>
@@ -294,17 +287,15 @@ export default function FlashSaleAdminPage() {
           </ul>
         </fieldset>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="submit"
-            disabled={status === "saving"}
-            className="h-11 bg-foreground px-5 text-sm font-medium text-background disabled:opacity-60"
-          >
+        <div className="flex flex-wrap items-center gap-3 pt-1">
+          <button type="submit" disabled={status === "saving"} className="admin-btn-primary">
             {status === "saving" ? "Saving…" : "Save flash sale"}
           </button>
           {message ? (
             <p
-              className={`text-sm ${status === "error" ? "text-red-600" : "text-muted-foreground"}`}
+              className={`text-sm ${
+                status === "error" ? "text-destructive" : "text-muted-foreground"
+              }`}
             >
               {message}
             </p>

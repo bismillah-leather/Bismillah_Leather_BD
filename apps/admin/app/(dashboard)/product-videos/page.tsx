@@ -1,8 +1,8 @@
 "use client";
 
 import { SHOWCASE_PRODUCTS, isSupportedVideoUrl } from "@bismillah/shared";
-import { Button, Input } from "@bismillah/ui";
 import { useEffect, useMemo, useState } from "react";
+import { AdminPageHeader } from "@/components/admin-page-header";
 
 const STORE_API =
   process.env.NEXT_PUBLIC_STORE_URL?.replace(/\/$/, "") || "http://localhost:3000";
@@ -12,7 +12,9 @@ type VideoMap = Record<string, string>;
 export default function ProductVideosPage() {
   const [map, setMap] = useState<VideoMap>({});
   const [draft, setDraft] = useState<VideoMap>({});
-  const [status, setStatus] = useState<"idle" | "loading" | "saving" | "saved" | "error">("loading");
+  const [status, setStatus] = useState<"idle" | "loading" | "saving" | "saved" | "error">(
+    "loading",
+  );
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
 
@@ -87,35 +89,45 @@ export default function ProductVideosPage() {
 
   return (
     <div>
-      <h1 className="font-display text-4xl">Product videos</h1>
-      <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-        Paste a YouTube or Facebook video / live / reel URL. Products with a link show a film
-        section on the details page.
-      </p>
+      <AdminPageHeader
+        eyebrow="Content"
+        title="Product videos"
+        description="Paste a YouTube or Facebook video / live / reel URL. Linked products show a film block on PDP."
+        action={
+          <button
+            type="button"
+            onClick={save}
+            disabled={status === "saving" || status === "loading"}
+            className="admin-btn-primary"
+          >
+            {status === "saving" ? "Saving…" : status === "saved" ? "Saved" : "Save videos"}
+          </button>
+        }
+      />
 
-      <div className="mt-6 flex flex-wrap items-center gap-3">
-        <Input
+      <div className="mt-6">
+        <input
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           placeholder="Filter by name, SKU…"
-          className="max-w-xs"
+          className="admin-field max-w-xs"
         />
-        <Button type="button" onClick={save} disabled={status === "saving" || status === "loading"}>
-          {status === "saving" ? "Saving…" : status === "saved" ? "Saved" : "Save videos"}
-        </Button>
         {error ? (
-          <p className="text-sm text-destructive" role="alert">
+          <p className="mt-3 text-sm text-destructive" role="alert">
             {error}
           </p>
         ) : null}
       </div>
 
-      <ul className="mt-8 divide-y divide-border border-y border-border">
+      <ul className="admin-panel mt-8 divide-y divide-border">
         {products.map((product) => {
           const value = draft[product.slug] ?? "";
           const live = map[product.slug];
           return (
-            <li key={product.slug} className="grid gap-2 py-4 sm:grid-cols-[minmax(0,14rem)_1fr] sm:items-start sm:gap-4">
+            <li
+              key={product.slug}
+              className="grid gap-2 px-4 py-4 sm:grid-cols-[minmax(0,14rem)_1fr] sm:items-center sm:gap-4"
+            >
               <div>
                 <p className="text-sm font-medium">{product.name}</p>
                 <p className="text-xs text-muted-foreground">
@@ -123,7 +135,7 @@ export default function ProductVideosPage() {
                   {live ? " · live" : ""}
                 </p>
               </div>
-              <Input
+              <input
                 value={value}
                 onChange={(e) =>
                   setDraft((prev) => ({
@@ -132,6 +144,7 @@ export default function ProductVideosPage() {
                   }))
                 }
                 placeholder="https://youtube.com/… or facebook.com/…/videos/…"
+                className="admin-field"
               />
             </li>
           );

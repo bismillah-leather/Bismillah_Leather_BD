@@ -1,6 +1,7 @@
 import { getPrisma } from "@bismillah/db";
-import { requireAdmin, isMasterKeyConfigured } from "@/lib/admin-auth";
 import { RegisterForm } from "@/app/register/register-form";
+import { AdminPageHeader } from "@/components/admin-page-header";
+import { isMasterKeyConfigured, requireAdmin } from "@/lib/admin-auth";
 
 export default async function TeamPage() {
   const session = await requireAdmin();
@@ -22,18 +23,17 @@ export default async function TeamPage() {
 
   return (
     <div>
-      <h1 className="font-display text-4xl">Team</h1>
-      <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-        Admin accounts for the console. Public register is at{" "}
-        <code className="text-foreground">/admin/register</code> with master key; owners can
-        invite here without the key.
-      </p>
+      <AdminPageHeader
+        eyebrow="Access"
+        title="Team"
+        description="Staff accounts for this console. Public register needs the master key; owners can invite here without it."
+      />
 
       <section className="mt-8">
-        <h2 className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
+        <h2 className="text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
           Accounts
         </h2>
-        <ul className="mt-3 divide-y divide-border border border-border bg-card">
+        <ul className="admin-panel mt-3 divide-y divide-border">
           {staff.map((u) => (
             <li
               key={u.id}
@@ -60,7 +60,7 @@ export default async function TeamPage() {
       </section>
 
       {canInvite ? (
-        <section className="mt-10 max-w-md border border-border bg-card p-6">
+        <section className="admin-panel mt-10 max-w-md p-6">
           <h2 className="font-display text-2xl tracking-tight">Invite staff</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Creates a new admin. They sign in with email + password.

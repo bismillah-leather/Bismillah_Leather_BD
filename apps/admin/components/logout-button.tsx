@@ -23,9 +23,9 @@ export function LogoutButton() {
       type="button"
       onClick={logout}
       disabled={pending}
-      className="mt-3 text-left text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50"
+      className="mt-3 inline-flex h-9 w-full items-center justify-center rounded-md border border-border px-3 text-xs tracking-[0.08em] text-muted-foreground uppercase transition hover:border-primary/40 hover:text-foreground disabled:opacity-50"
     >
-      {pending ? "Signing out…" : "Sign out"}
+      {pending ? "…" : "Sign out"}
     </button>
   );
 }

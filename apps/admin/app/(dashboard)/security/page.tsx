@@ -1,5 +1,5 @@
 import { getPrisma } from "@bismillah/db";
-import { Card, CardDescription, CardHeader, CardTitle } from "@bismillah/ui";
+import { AdminPageHeader } from "@/components/admin-page-header";
 import { requireAdmin } from "@/lib/admin-auth";
 import { listSecurityAlerts } from "@/lib/security-alerts";
 
@@ -23,31 +23,26 @@ export default async function SecurityPage() {
 
   return (
     <div>
-      <h1 className="font-display text-4xl">Security</h1>
-      <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-        Rate-limit hits, lockouts, and failed admin sign-ins. Login is capped at 10
-        attempts / 15 min per IP; accounts lock after 5 bad passwords.
-      </p>
+      <AdminPageHeader
+        eyebrow="Protection"
+        title="Security"
+        description="Rate-limit hits, lockouts, and failed admin sign-ins. Login capped at 10 / 15 min per IP; lock after 5 bad passwords."
+      />
 
       <section className="mt-8">
-        <h2 className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
+        <h2 className="text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
           Locked accounts
         </h2>
         {locked.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">None right now.</p>
+          <p className="mt-3 text-sm text-muted-foreground">None right now.</p>
         ) : (
           <ul className="mt-3 grid gap-2">
             {locked.map((u) => (
-              <li key={u.email}>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">{u.email}</CardTitle>
-                    <CardDescription>
-                      Locked until {u.lockedUntil?.toLocaleString()} · fails{" "}
-                      {u.failedLoginCount}
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
+              <li key={u.email} className="admin-metric">
+                <p className="text-sm font-medium">{u.email}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Locked until {u.lockedUntil?.toLocaleString()} · fails {u.failedLoginCount}
+                </p>
               </li>
             ))}
           </ul>
@@ -55,15 +50,15 @@ export default async function SecurityPage() {
       </section>
 
       <section className="mt-10">
-        <h2 className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
+        <h2 className="text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
           Rate & alert feed
         </h2>
         {alerts.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">No alerts yet.</p>
+          <p className="mt-3 text-sm text-muted-foreground">No alerts yet.</p>
         ) : (
-          <ul className="mt-3 divide-y divide-border border-y border-border">
+          <ul className="admin-panel mt-3 divide-y divide-border">
             {alerts.map((a) => (
-              <li key={a.id} className="py-3 text-sm">
+              <li key={a.id} className="px-4 py-3.5 text-sm">
                 <p className="font-medium">{a.detail}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {a.kind}
@@ -76,15 +71,15 @@ export default async function SecurityPage() {
       </section>
 
       <section className="mt-10">
-        <h2 className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
+        <h2 className="text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
           Recent failed logins
         </h2>
         {recentFails.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Clean slate.</p>
+          <p className="mt-3 text-sm text-muted-foreground">Clean slate.</p>
         ) : (
-          <ul className="mt-3 divide-y divide-border border-y border-border">
+          <ul className="admin-panel mt-3 divide-y divide-border">
             {recentFails.map((f, i) => (
-              <li key={`${f.createdAt.toISOString()}-${i}`} className="py-3 text-sm">
+              <li key={`${f.createdAt.toISOString()}-${i}`} className="px-4 py-3.5 text-sm">
                 <p className="font-medium">Login failed</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {f.ip ?? "no-ip"} · {f.createdAt.toLocaleString()}
