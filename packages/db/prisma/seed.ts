@@ -123,8 +123,6 @@ async function seedTemplates() {
 async function seedOwner() {
   const email = process.env.SEED_ADMIN_EMAIL ?? "owner@bismillah.local";
   const password = process.env.SEED_ADMIN_PASSWORD ?? "dev-only-change-me";
-  const existing = await prisma.adminUser.findUnique({ where: { email } });
-  if (existing) return;
 
   // @node-rs/argon2 defaults to Argon2id.
   const passwordHash = await hash(password, {
@@ -133,13 +131,22 @@ async function seedOwner() {
     parallelism: 1,
   });
 
-  await prisma.adminUser.create({
-    data: {
+  // Keep owner in sync with .env so SEED_ADMIN_* always logs in after seed.
+  await prisma.adminUser.upsert({
+    where: { email },
+    create: {
       email,
       name: "Owner",
       passwordHash,
       role: "owner",
       isActive: true,
+    },
+    update: {
+      passwordHash,
+      isActive: true,
+      role: "owner",
+      failedLoginCount: 0,
+      lockedUntil: null,
     },
   });
 }

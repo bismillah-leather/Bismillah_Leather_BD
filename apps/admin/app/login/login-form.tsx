@@ -4,9 +4,9 @@ import { Button, Input } from "@bismillah/ui";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function LoginForm() {
+export function LoginForm({ defaultEmail = "" }: { defaultEmail?: string }) {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(defaultEmail);
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -47,7 +47,7 @@ export function LoginForm() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="owner@bismillah.local"
+          placeholder={defaultEmail || "staff@bismillah.local"}
           className="h-12 border-white/18 bg-card/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] focus-visible:border-primary"
         />
       </label>

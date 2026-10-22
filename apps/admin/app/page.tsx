@@ -28,7 +28,7 @@ export default async function AdminRootPage() {
         </p>
       }
     >
-      <LoginForm />
+      <LoginForm defaultEmail={process.env.SEED_ADMIN_EMAIL?.trim() || ""} />
     </AdminAuthShell>
   );
 }
