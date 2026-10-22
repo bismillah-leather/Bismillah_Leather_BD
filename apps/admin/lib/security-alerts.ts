@@ -3,7 +3,13 @@ import { getPrisma } from "@bismillah/db";
 export type SecurityAlert = {
   id: string;
   at: string;
-  kind: "admin_login_fail" | "admin_lockout" | "admin_rate_limit" | "customer_rate_limit";
+  kind:
+    | "admin_login_fail"
+    | "admin_lockout"
+    | "admin_rate_limit"
+    | "admin_master_login"
+    | "admin_register"
+    | "customer_rate_limit";
   ip?: string;
   detail: string;
 };

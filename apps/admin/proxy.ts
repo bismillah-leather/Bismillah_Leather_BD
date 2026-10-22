@@ -1,11 +1,33 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { ADMIN_SESSION_COOKIE } from "@/lib/session";
+import { ADMIN_SESSION_COOKIE, verifyAdminToken } from "@/lib/session";
 
-const PUBLIC = new Set(["/login", "/api/auth/login"]);
+const PUBLIC = new Set(["/", "/login", "/register", "/api/auth/login", "/api/auth/register"]);
 
-export function proxy(request: NextRequest) {
+function clearSessionCookie(res: NextResponse) {
+  res.cookies.set(ADMIN_SESSION_COOKIE, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/admin",
+    maxAge: 0,
+  });
+}
+
+async function readSession(request: NextRequest) {
+  const token = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
+  if (!token) return { token: null as string | null, session: null };
+  try {
+    const session = await verifyAdminToken(token);
+    return { token, session };
+  } catch {
+    return { token, session: null };
+  }
+}
+
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const { token, session } = await readSession(request);
 
   if (
     pathname.startsWith("/_next") ||
@@ -15,19 +37,22 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (PUBLIC.has(pathname) || pathname.startsWith("/api/auth/login")) {
-    // Logged-in users hitting login → dashboard
-    if (pathname === "/login" && request.cookies.get(ADMIN_SESSION_COOKIE)?.value) {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
+  if (
+    PUBLIC.has(pathname) ||
+    pathname.startsWith("/api/auth/login") ||
+    pathname.startsWith("/api/auth/register")
+  ) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
-  if (!token) {
-    const login = new URL("/login", request.url);
-    login.searchParams.set("next", pathname);
-    return NextResponse.redirect(login);
+  if (!session) {
+    const home = request.nextUrl.clone();
+    home.pathname = "/";
+    home.search = "";
+    if (pathname !== "/") home.searchParams.set("next", pathname);
+    const res = NextResponse.redirect(home);
+    if (token) clearSessionCookie(res);
+    return res;
   }
 
   return NextResponse.next();

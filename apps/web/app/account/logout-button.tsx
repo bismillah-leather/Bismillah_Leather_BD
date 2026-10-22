@@ -3,9 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function AccountLogoutButton() {
+export function AccountLogoutButton({ tone = "light" }: { tone?: "light" | "dark" }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
+  const dark = tone === "dark";
 
   async function logout() {
     setPending(true);
@@ -23,7 +24,11 @@ export function AccountLogoutButton() {
       type="button"
       onClick={logout}
       disabled={pending}
-      className="inline-flex h-11 items-center border border-border px-4 text-sm transition hover:border-foreground disabled:opacity-50"
+      className={`inline-flex h-11 items-center px-4 text-sm transition disabled:opacity-50 ${
+        dark
+          ? "border border-white/35 text-white hover:bg-white hover:text-black"
+          : "border border-border hover:border-foreground"
+      }`}
     >
       {pending ? "Signing out…" : "Sign out"}
     </button>

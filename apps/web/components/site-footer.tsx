@@ -63,6 +63,16 @@ export function SiteFooter() {
                 Cart
               </Link>
             </li>
+            <li>
+              <Link className="hover:text-foreground" href="/account">
+                My account
+              </Link>
+            </li>
+            <li>
+              <a className="hover:text-foreground" href="/admin">
+                Staff / admin
+              </a>
+            </li>
           </ul>
         </div>
         <div>

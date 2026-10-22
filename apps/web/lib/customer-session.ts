@@ -33,7 +33,11 @@ export async function signCustomerSession(
 
 export async function verifyCustomerToken(token: string): Promise<CustomerSession | null> {
   try {
-    const { payload } = await jwtVerify(token, secretKey(), { algorithms: ["HS256"] });
+    const secret = process.env.SESSION_SECRET;
+    if (!secret || secret.length < 16) return null;
+    const { payload } = await jwtVerify(token, new TextEncoder().encode(secret), {
+      algorithms: ["HS256"],
+    });
     if (typeof payload.sub !== "string") return null;
     return {
       sub: payload.sub,

@@ -13,6 +13,7 @@ import {
 
 export async function requireCustomer(): Promise<CustomerSession> {
   const session = await getCustomerSession();
+  // Cookie clear happens in logout / auth routes — not in RSC.
   if (!session) redirect("/account/login");
 
   const prisma = getPrisma();
@@ -21,7 +22,6 @@ export async function requireCustomer(): Promise<CustomerSession> {
     select: { id: true, name: true, phone: true, isBlocked: true },
   });
   if (!customer || customer.isBlocked) {
-    await clearCustomerSessionCookie();
     redirect("/account/login");
   }
   return { sub: customer.id, name: customer.name, phone: customer.phone };

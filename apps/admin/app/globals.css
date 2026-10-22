@@ -4,10 +4,10 @@
 @source "./**/*.{ts,tsx}";
 @source "../../../packages/ui/src/**/*.{ts,tsx}";
 
-@keyframes admin-login-in {
+@keyframes admin-auth-rise {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(18px);
   }
   to {
     opacity: 1;
@@ -15,12 +15,35 @@
   }
 }
 
-.admin-login-card {
-  animation: admin-login-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+@keyframes admin-auth-ken {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1.02);
+  }
+}
+
+.admin-auth-rise {
+  animation: admin-auth-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.admin-auth-rise-delay {
+  animation-delay: 0.12s;
+}
+
+.admin-auth-ken {
+  animation: admin-auth-ken 14s ease-out both;
+}
+
+.admin-auth-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .admin-login-card {
+  .admin-auth-rise,
+  .admin-auth-ken {
     animation: none;
   }
 }

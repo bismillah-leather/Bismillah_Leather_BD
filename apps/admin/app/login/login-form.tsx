@@ -26,7 +26,7 @@ export function LoginForm() {
         setError(data.error ?? "Sign in failed.");
         return;
       }
-      router.replace("/");
+      router.replace("/dashboard");
       router.refresh();
     } catch {
       setError("Network error. Try again.");
@@ -36,9 +36,11 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-4">
+    <form onSubmit={onSubmit} className="grid gap-5">
       <label className="grid gap-2 text-sm">
-        <span className="text-xs tracking-[0.14em] text-muted-foreground uppercase">Email</span>
+        <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
+          Email
+        </span>
         <Input
           type="email"
           autoComplete="username"
@@ -46,11 +48,11 @@ export function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="owner@bismillah.local"
-          className="h-12"
+          className="h-12 border-white/18 bg-card/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] focus-visible:border-primary"
         />
       </label>
       <label className="grid gap-2 text-sm">
-        <span className="text-xs tracking-[0.14em] text-muted-foreground uppercase">
+        <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
           Password
         </span>
         <Input
@@ -59,18 +61,24 @@ export function LoginForm() {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="h-12"
+          className="h-12 border-white/18 bg-card/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] focus-visible:border-primary"
         />
       </label>
+
       {error ? (
         <p
-          className="border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
+          className="border border-destructive/40 bg-destructive/10 px-3.5 py-3 text-sm text-destructive"
           role="alert"
         >
           {error}
         </p>
       ) : null}
-      <Button type="submit" disabled={pending} className="mt-1 h-12 tracking-[0.06em] uppercase">
+
+      <Button
+        type="submit"
+        disabled={pending}
+        className="mt-1 h-12 bg-primary text-primary-foreground tracking-[0.12em] uppercase hover:bg-primary/90"
+      >
         {pending ? "Signing in…" : "Sign in"}
       </Button>
     </form>

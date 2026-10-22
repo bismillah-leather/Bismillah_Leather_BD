@@ -3,9 +3,10 @@ import type { ReactNode } from "react";
 import { LogoutButton } from "./logout-button";
 
 const NAV = [
-  { label: "Dashboard", href: "/" },
+  { label: "Dashboard", href: "/dashboard" },
   { label: "Flash Sale", href: "/flash-sale" },
   { label: "Product videos", href: "/product-videos" },
+  { label: "Team", href: "/team" },
   { label: "Security", href: "/security" },
   { label: "Products", href: null },
   { label: "Orders", href: null },
@@ -26,37 +27,41 @@ export function AdminShell({
   userRole: string;
 }) {
   return (
-    <div className="mx-auto grid min-h-full max-w-6xl md:grid-cols-[220px_1fr]">
-      <aside className="border-b border-border px-4 py-5 md:border-r md:border-b-0">
-        <p className="font-display text-xl">Bismillah</p>
-        <p className="text-xs tracking-[0.16em] text-muted-foreground uppercase">Admin</p>
-        <nav className="mt-6 flex gap-2 overflow-x-auto md:grid">
+    <div className="mx-auto grid min-h-dvh max-w-6xl md:grid-cols-[240px_1fr]">
+      <aside className="border-b border-border bg-card/40 px-5 py-6 md:border-r md:border-b-0">
+        <p className="font-display text-2xl tracking-tight">Bismillah</p>
+        <p className="mt-1 text-[11px] tracking-[0.22em] text-primary uppercase">Staff console</p>
+        <nav className="mt-8 flex gap-1 overflow-x-auto md:grid md:gap-0.5">
           {NAV.map((item) =>
             item.href ? (
               <Link
                 key={item.label}
                 href={item.href}
-                className="inline-flex h-11 shrink-0 items-center rounded-md px-3 text-sm text-foreground md:px-2 hover:bg-secondary"
+                className="inline-flex h-10 shrink-0 items-center rounded-md px-3 text-sm text-foreground/90 transition hover:bg-secondary hover:text-foreground md:px-2.5"
               >
                 {item.label}
               </Link>
             ) : (
               <span
                 key={item.label}
-                className="inline-flex h-11 shrink-0 items-center rounded-md px-3 text-sm text-muted-foreground md:px-2"
+                className="inline-flex h-10 shrink-0 items-center rounded-md px-3 text-sm text-muted-foreground/55 md:px-2.5"
               >
                 {item.label}
               </span>
             ),
           )}
         </nav>
-        <div className="mt-8 border-t border-border pt-4">
+        <div className="mt-10 border-t border-border pt-5">
           <p className="truncate text-sm font-medium">{userName}</p>
-          <p className="text-xs text-muted-foreground capitalize">{userRole}</p>
-          <LogoutButton />
+          <p className="mt-0.5 text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
+            {userRole}
+          </p>
+          <div className="mt-3">
+            <LogoutButton />
+          </div>
         </div>
       </aside>
-      <div className="px-4 py-6 sm:px-6">{children}</div>
+      <div className="px-5 py-7 sm:px-8">{children}</div>
     </div>
   );
 }
