@@ -1,8 +1,8 @@
 "use client";
 
-import { BRAND } from "@bismillah/shared";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { useStoreBrand } from "./brand-provider";
 
 const slides = [
   { src: "/catalog/hero-leather.jpg", focus: "object-[center_38%]" },
@@ -15,6 +15,7 @@ const INTERVAL_MS = 6000;
 
 /** Balanced banner height; brand copy stays compact. */
 export function HeroSlider() {
+  const brand = useStoreBrand();
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
@@ -61,10 +62,10 @@ export function HeroSlider() {
 
       <div className="relative z-10 flex h-full flex-col items-center justify-end px-4 pb-4 text-center sm:pb-5 md:pb-6">
         <h1 className="font-display max-w-2xl text-[1.2rem] leading-[0.95] tracking-tight drop-shadow-[0_2px_18px_rgba(0,0,0,0.45)] sm:text-xl md:text-2xl">
-          {BRAND.name}
+          {brand.name}
         </h1>
         <p className="mt-1 max-w-sm text-[9px] leading-snug tracking-wide text-white/75 uppercase sm:text-[10px]">
-          {BRAND.tagline}
+          {brand.tagline}
         </p>
 
         <div className="mt-2.5 flex items-center gap-1.5" role="tablist" aria-label="Hero slides">

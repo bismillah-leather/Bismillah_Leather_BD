@@ -17,6 +17,12 @@ export {
 } from "./order-state";
 export type { FulfillmentStatus, OrderStatus, PaymentStatus } from "./order-state";
 export { BRAND } from "./brand";
+export {
+  contactFromPhoneFields,
+  defaultStoreBrand,
+  digitsOnly,
+} from "./store-brand";
+export type { StoreBrand } from "./store-brand";
 export { categoryBySlug, INITIAL_CATEGORIES, INITIAL_MATERIALS } from "./catalog";
 export {
   galleryFor,

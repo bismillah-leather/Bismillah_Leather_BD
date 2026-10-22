@@ -8,10 +8,14 @@ const STORE_API =
   process.env.NEXT_PUBLIC_STORE_URL?.replace(/\/$/, "") || "http://localhost:3000";
 
 type VideoMap = Record<string, string>;
+type ProductOption = { name: string; slug: string; sku: string };
 
 export default function ProductVideosPage() {
   const [map, setMap] = useState<VideoMap>({});
   const [draft, setDraft] = useState<VideoMap>({});
+  const [catalog, setCatalog] = useState<ProductOption[]>(() =>
+    SHOWCASE_PRODUCTS.map((p) => ({ name: p.name, slug: p.slug, sku: p.sku })),
+  );
   const [status, setStatus] = useState<"idle" | "loading" | "saving" | "saved" | "error">(
     "loading",
   );
@@ -22,8 +26,15 @@ export default function ProductVideosPage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`${STORE_API}/api/product-videos`, { cache: "no-store" });
-        const data = (await res.json()) as VideoMap;
+        const [videosRes, productsRes] = await Promise.all([
+          fetch(`${STORE_API}/api/product-videos`, { cache: "no-store" }),
+          fetch("/admin/api/products", { cache: "no-store" }),
+        ]);
+        const data = (await videosRes.json()) as VideoMap;
+        if (productsRes.ok) {
+          const list = (await productsRes.json()) as { products?: ProductOption[] };
+          if (list.products?.length) setCatalog(list.products);
+        }
         if (cancelled) return;
         setMap(data);
         setDraft(data);
@@ -42,14 +53,14 @@ export default function ProductVideosPage() {
 
   const products = useMemo(() => {
     const q = filter.trim().toLowerCase();
-    if (!q) return SHOWCASE_PRODUCTS;
-    return SHOWCASE_PRODUCTS.filter(
+    if (!q) return catalog;
+    return catalog.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.slug.includes(q) ||
         p.sku.toLowerCase().includes(q),
     );
-  }, [filter]);
+  }, [filter, catalog]);
 
   async function save() {
     setStatus("saving");

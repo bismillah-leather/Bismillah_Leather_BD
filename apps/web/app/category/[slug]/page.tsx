@@ -1,10 +1,11 @@
-import { categoryBySlug, INITIAL_CATEGORIES, productsByCategory } from "@bismillah/shared";
+import { categoryBySlug, INITIAL_CATEGORIES } from "@bismillah/shared";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ProductGrid } from "@/components/product-grid";
+import { productsByCategorySlug } from "@/lib/catalog";
 
 export function generateStaticParams() {
   return INITIAL_CATEGORIES.map((category) => ({ slug: category.slug }));
@@ -49,7 +50,7 @@ async function CategoryContent({
 
   const sortRaw = Array.isArray(query.sort) ? query.sort[0] : query.sort;
   const sort = sortRaw ?? "relevant";
-  let products = [...productsByCategory(slug)];
+  let products = [...(await productsByCategorySlug(slug))];
   if (sort === "price-asc") {
     products = products.sort((a, b) => Number((a.salePaisa ?? a.pricePaisa) - (b.salePaisa ?? b.pricePaisa)));
   } else if (sort === "price-desc") {

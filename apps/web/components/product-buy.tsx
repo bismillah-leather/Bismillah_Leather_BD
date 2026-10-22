@@ -1,12 +1,14 @@
 "use client";
 
-import { BRAND, formatPaisa, type ProductView } from "@bismillah/shared";
+import { formatPaisa, type ProductView } from "@bismillah/shared";
 import { Heart, Phone, ShoppingBag, Zap } from "lucide-react";
 import { useState } from "react";
 import { addToCart, buyNow } from "@/lib/cart";
+import { useStoreBrand } from "./brand-provider";
 import { PaymentStrip } from "./payment-strip";
 
 export function ProductBuy({ product }: { product: ProductView }) {
+  const brand = useStoreBrand();
   const [color, setColor] = useState(product.colors[0] ?? "Black");
   const [qty, setQty] = useState(1);
   const [saved, setSaved] = useState(false);
@@ -14,7 +16,7 @@ export function ProductBuy({ product }: { product: ProductView }) {
   const [busy, setBusy] = useState(false);
   const price = BigInt(product.pricePaisa);
   const compare = product.comparePaisa ? BigInt(product.comparePaisa) : null;
-  const whatsappHref = `${BRAND.whatsappUrl}?text=${encodeURIComponent(
+  const whatsappHref = `${brand.whatsappUrl}?text=${encodeURIComponent(
     `আসসালামু আলাইকুম, ${product.name} (${product.sku}) · ${color} × ${qty} নিতে চাই।`,
   )}`;
   const tags = [
@@ -163,7 +165,7 @@ export function ProductBuy({ product }: { product: ProductView }) {
           Order on WhatsApp
         </a>
         <a
-          href={`tel:${BRAND.phoneE164}`}
+          href={`tel:${brand.phoneE164}`}
           className="inline-flex min-h-12 items-center justify-center gap-2 border border-foreground/80 bg-neutral-900 text-sm font-medium tracking-wide text-white uppercase transition hover:bg-black"
         >
           <Phone className="size-4" strokeWidth={1.75} />

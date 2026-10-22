@@ -1,10 +1,10 @@
 "use client";
 
-import { BRAND } from "@bismillah/shared";
 import { Phone, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import { useEffect, useId, useState } from "react";
+import { useStoreBrand } from "./brand-provider";
 import { useCartUi } from "./cart-provider";
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -19,13 +19,14 @@ const spring = { type: "spring" as const, stiffness: 420, damping: 28, mass: 0.8
 const soft = { type: "spring" as const, stiffness: 320, damping: 26 };
 
 export function FloatingContact() {
+  const brand = useStoreBrand();
   const { open: cartOpen } = useCartUi();
   const [open, setOpen] = useState(false);
   const reduce = useReducedMotion();
   const panelId = useId();
 
-  const whatsappHref = `${BRAND.whatsappUrl}?text=${encodeURIComponent(
-    `আসসালামু আলাইকুম, ${BRAND.name} থেকে অর্ডার / প্রশ্ন করতে চাই।`,
+  const whatsappHref = `${brand.whatsappUrl}?text=${encodeURIComponent(
+    `আসসালামু আলাইকুম, ${brand.name} থেকে অর্ডার / প্রশ্ন করতে চাই।`,
   )}`;
 
   useEffect(() => {
@@ -56,13 +57,13 @@ export function FloatingContact() {
     },
     {
       key: "call",
-      href: `tel:${BRAND.phoneE164}`,
+      href: `tel:${brand.phoneE164}`,
       external: false,
-      label: `Call ${BRAND.phoneDisplay}`,
+      label: `Call ${brand.phoneDisplay}`,
       className:
         "bg-[#15803d] shadow-[0_12px_28px_rgba(21,128,61,0.4)] hover:brightness-110",
       icon: <Phone className="size-[1.15rem]" strokeWidth={2.25} />,
-      sr: `Call ${BRAND.phoneDisplay}`,
+      sr: `Call ${brand.phoneDisplay}`,
     },
   ] as const;
 

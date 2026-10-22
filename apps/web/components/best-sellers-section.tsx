@@ -1,14 +1,14 @@
 "use client";
 
-import { formatPaisa, galleryFor, SHOWCASE_PRODUCTS, type ShowcaseProduct } from "@bismillah/shared";
+import { formatPaisa, galleryFor, type ShowcaseProduct } from "@bismillah/shared";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ProductCardActions } from "./product-card-actions";
 
-function pickBestSellers(): ShowcaseProduct[] {
-  const onSale = SHOWCASE_PRODUCTS.filter((product) => product.salePaisa);
-  const rest = SHOWCASE_PRODUCTS.filter((product) => !product.salePaisa);
+function pickBestSellers(catalog: ShowcaseProduct[]): ShowcaseProduct[] {
+  const onSale = catalog.filter((product) => product.salePaisa);
+  const rest = catalog.filter((product) => !product.salePaisa);
   const merged = [...onSale, ...rest];
   const seen = new Set<string>();
   return merged
@@ -20,24 +20,27 @@ function pickBestSellers(): ShowcaseProduct[] {
     .slice(0, 8);
 }
 
-const BEST = pickBestSellers();
 const ROTATE_MS = 4200;
 
-export function BestSellersSection() {
+export function BestSellersSection({ products }: { products: ShowcaseProduct[] }) {
+  const best = useMemo(() => pickBestSellers(products), [products]);
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
-  const featured = BEST[active] ?? BEST[0]!;
-  const faces = useMemo(() => [...new Set(galleryFor(featured))].slice(0, 4), [featured]);
+  const featured = best[active] ?? best[0];
+  const faces = useMemo(
+    () => (featured ? [...new Set(galleryFor(featured))].slice(0, 4) : []),
+    [featured],
+  );
   const [face, setFace] = useState(0);
 
   useEffect(() => {
-    if (paused || BEST.length < 2) return;
+    if (paused || best.length < 2) return;
     const timer = window.setInterval(() => {
-      setActive((value) => (value + 1) % BEST.length);
+      setActive((value) => (value + 1) % best.length);
       setFace(0);
     }, ROTATE_MS);
     return () => window.clearInterval(timer);
-  }, [paused]);
+  }, [paused, best.length]);
 
   useEffect(() => {
     if (paused || faces.length < 2) return;
@@ -45,7 +48,9 @@ export function BestSellersSection() {
       setFace((value) => (value + 1) % faces.length);
     }, 1200);
     return () => window.clearInterval(timer);
-  }, [faces.length, featured.slug, paused]);
+  }, [faces.length, featured?.slug, paused]);
+
+  if (!featured) return null;
 
   return (
     <section className="bg-black py-10 text-white sm:py-14">
@@ -100,7 +105,7 @@ export function BestSellersSection() {
             </div>
 
             <div className="absolute top-4 right-4 flex gap-1">
-              {BEST.map((product, index) => (
+              {best.map((product, index) => (
                 <button
                   key={product.slug}
                   type="button"
@@ -144,7 +149,7 @@ export function BestSellersSection() {
           </div>
 
           <ul className="flex max-h-[32rem] flex-col gap-2 overflow-y-auto lg:max-h-none">
-            {BEST.map((product, index) => {
+            {best.map((product, index) => {
               const selected = index === active;
               const price = product.salePaisa ?? product.pricePaisa;
               return (
@@ -185,7 +190,7 @@ export function BestSellersSection() {
         </div>
 
         <ul className="mt-8 grid grid-cols-2 gap-3 sm:mt-10 sm:grid-cols-4 sm:gap-4">
-          {BEST.slice(0, 4).map((product, index) => (
+          {best.slice(0, 4).map((product, index) => (
             <li key={`grid-${product.slug}`}>
               <BestGridCard product={product} rank={index + 1} />
             </li>

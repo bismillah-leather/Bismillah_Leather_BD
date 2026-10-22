@@ -140,7 +140,12 @@ export default async function ProductsPage({
               >
                 <div>
                   <p className="text-sm font-medium">
-                    {p.name}
+                    <Link
+                      href={`/products/${p.id}`}
+                      className="transition hover:text-primary"
+                    >
+                      {p.name}
+                    </Link>
                     {p.isFeatured ? (
                       <span className="ml-2 text-[10px] tracking-wide text-primary uppercase">
                         Featured
@@ -154,6 +159,10 @@ export default async function ProductsPage({
                       : ""}
                     · {p._count.variants} variant{p._count.variants === 1 ? "" : "s"} · sold{" "}
                     {p.soldCount}
+                    {" · "}
+                    <Link href={`/products/${p.id}`} className="text-primary hover:underline">
+                      Details / video
+                    </Link>
                   </p>
                 </div>
                 <StatusSelect

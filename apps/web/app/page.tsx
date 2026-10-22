@@ -1,4 +1,3 @@
-import { BRAND } from "@bismillah/shared";
 import Link from "next/link";
 import { AllProductsSection } from "@/components/all-products-section";
 import { BestSellersSection } from "@/components/best-sellers-section";
@@ -11,6 +10,8 @@ import { NewArrivalsSection } from "@/components/new-arrivals-section";
 import { ProductPhoto } from "@/components/leather-visual";
 import { CenteredRuleHeading } from "@/components/section-heading";
 import { TrustStrip } from "@/components/trust-strip";
+import { listPublishedProducts } from "@/lib/catalog";
+import { getStoreBrand } from "@/lib/store-brand";
 
 const featuredCategories = [
   { slug: "long-wallet", name: "Long Wallet", image: "/catalog/wallet-black-long.jpg" },
@@ -33,7 +34,9 @@ const moreCategories = [
   { slug: "jeans-belt", name: "Jeans Belt", image: "/catalog/belt-tan-jeans.jpg" },
 ] as const;
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [brand, products] = await Promise.all([getStoreBrand(), listPublishedProducts()]);
+
   return (
     <div>
       <HeroSlider />
@@ -50,13 +53,13 @@ export default function HomePage() {
           </div>
         </section>
 
-        <AllProductsSection />
+        <AllProductsSection products={products} />
 
-        <NewArrivalsSection />
+        <NewArrivalsSection products={products} />
 
         <HomeFlashSale />
 
-        <BestSellersSection />
+        <BestSellersSection products={products} />
 
         <section className="border-y border-border bg-white py-8 sm:py-12">
           <div className="mx-auto max-w-7xl px-3 sm:px-6">
@@ -95,21 +98,21 @@ export default function HomePage() {
                 Mirpur-10 showroom
               </h2>
               <p className="mt-3 max-w-md text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">
-                {BRAND.addressLine}. Same genuine leather pieces you see on Facebook Reels — RFID
+                {brand.addressLine}. Same genuine leather pieces you see on Facebook Reels — RFID
                 trifold, magnetic long wallet, thara soft leather, mini magnetic, belts.
               </p>
               <ul className="mt-4 grid gap-1.5 text-xs sm:text-sm">
                 <li>
                   Phone:{" "}
-                  <a className="underline underline-offset-4" href={`tel:${BRAND.phoneE164}`}>
-                    {BRAND.phoneDisplay}
+                  <a className="underline underline-offset-4" href={`tel:${brand.phoneE164}`}>
+                    {brand.phoneDisplay}
                   </a>
                 </li>
                 <li>
                   WhatsApp:{" "}
                   <a
                     className="underline underline-offset-4"
-                    href={BRAND.whatsappUrl}
+                    href={brand.whatsappUrl}
                     target="_blank"
                     rel="noreferrer"
                   >
@@ -118,15 +121,15 @@ export default function HomePage() {
                 </li>
                 <li>
                   Email:{" "}
-                  <a className="underline underline-offset-4" href={`mailto:${BRAND.email}`}>
-                    {BRAND.email}
+                  <a className="underline underline-offset-4" href={`mailto:${brand.email}`}>
+                    {brand.email}
                   </a>
                 </li>
                 <li>
                   Facebook:{" "}
                   <a
                     className="underline underline-offset-4"
-                    href={BRAND.facebookUrl}
+                    href={brand.facebookUrl}
                     target="_blank"
                     rel="noreferrer"
                   >
@@ -141,9 +144,12 @@ export default function HomePage() {
               </p>
               <h3 className="font-display mt-2 text-xl tracking-tight sm:text-2xl">New drop alerts</h3>
               <p className="mt-2 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">
-                {BRAND.taglineBn}. Share any product link from Messenger or WhatsApp — customer lands
+                {brand.taglineBn}. Share any product link from Messenger or WhatsApp — customer lands
                 on the same page.
               </p>
+              {brand.announcement ? (
+                <p className="mt-3 text-xs font-medium text-foreground sm:text-sm">{brand.announcement}</p>
+              ) : null}
               <form className="mt-4 flex flex-col gap-2.5 sm:flex-row" action="/search">
                 <label className="sr-only" htmlFor="newsletter">
                   Email or phone
@@ -152,11 +158,11 @@ export default function HomePage() {
                   id="newsletter"
                   name="q"
                   placeholder="Email or phone"
-                  className="h-10 flex-1 border border-input bg-white px-3 text-sm outline-none focus-visible:border-foreground"
+                  className="h-10 flex-1 border border-border bg-white px-3 text-sm outline-none focus:border-foreground"
                 />
                 <button
                   type="submit"
-                  className="h-10 bg-foreground px-4 text-xs font-medium text-background sm:text-sm"
+                  className="h-10 bg-foreground px-4 text-xs font-medium tracking-wide text-background uppercase"
                 >
                   Notify me
                 </button>

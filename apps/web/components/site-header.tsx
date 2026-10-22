@@ -1,11 +1,12 @@
 "use client";
 
-import { BRAND, INITIAL_CATEGORIES } from "@bismillah/shared";
+import { INITIAL_CATEGORIES, type StoreBrand } from "@bismillah/shared";
 import { Menu, Search, ShoppingBag, User, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/hooks/use-cart";
+import { useStoreBrand } from "./brand-provider";
 import { useCartUi } from "./cart-provider";
 
 const categoryLinks = INITIAL_CATEGORIES;
@@ -30,7 +31,9 @@ function CartLink({ className }: { className: string }) {
   );
 }
 
-export function SiteHeader() {
+export function SiteHeader({ brand: brandProp }: { brand?: StoreBrand }) {
+  const brandFromCtx = useStoreBrand();
+  const brand = brandProp ?? brandFromCtx;
   const pathname = usePathname();
   const headerRef = useRef<HTMLElement>(null);
   const isHome = pathname === "/";
@@ -137,7 +140,7 @@ export function SiteHeader() {
                 href="/"
                 className="font-display shrink-0 text-base tracking-tight text-white sm:text-lg md:text-xl"
               >
-                {BRAND.name}
+                {brand.name}
               </Link>
 
               <form action="/search" className="w-[min(100%,16rem)] sm:w-[min(100%,20rem)] md:w-[22rem]">
@@ -160,9 +163,11 @@ export function SiteHeader() {
           <>
             <div className="bg-black text-white pt-[max(0px,env(safe-area-inset-top,0px))]">
               <p className="truncate px-3 py-2 text-center text-[10px] leading-4 tracking-wide sm:px-4 sm:text-[11px] md:text-xs">
-                <span className="sm:hidden">COD · Dhaka ৳80 · Outside ৳130 · {BRAND.phoneDisplay}</span>
+                <span className="sm:hidden">
+                  COD · Dhaka ৳80 · Outside ৳130 · {brand.phoneDisplay}
+                </span>
                 <span className="hidden sm:inline">
-                  COD · Dhaka ৳80 · Outside ৳130 · {BRAND.addressShort} · {BRAND.phoneDisplay}
+                  COD · Dhaka ৳80 · Outside ৳130 · {brand.addressShort} · {brand.phoneDisplay}
                 </span>
               </p>
             </div>
@@ -200,7 +205,7 @@ export function SiteHeader() {
                 href="/"
                 className="font-display max-w-[11rem] truncate text-center text-base tracking-tight sm:max-w-none sm:text-lg md:text-xl"
               >
-                {BRAND.name}
+                {brand.name}
               </Link>
 
               <div className="flex items-center justify-end gap-0.5 sm:gap-1">

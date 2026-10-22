@@ -1,8 +1,9 @@
 "use client";
 
-import { BRAND, type ProductView } from "@bismillah/shared";
+import { type ProductView } from "@bismillah/shared";
 import { ChevronDown, MapPin, Package, ShieldCheck, Truck } from "lucide-react";
 import { useId, useState } from "react";
+import { useStoreBrand } from "./brand-provider";
 import { ProductVideo } from "./product-video";
 
 type TabId = "description" | "shipping" | "care" | "returns";
@@ -117,6 +118,7 @@ function DescriptionTabs({ product }: { product: ProductView }) {
 }
 
 export function ProductInfoSection({ product }: { product: ProductView }) {
+  const brand = useStoreBrand();
   const hasVideo = Boolean(product.videoUrl?.trim());
 
   return (
@@ -126,7 +128,7 @@ export function ProductInfoSection({ product }: { product: ProductView }) {
           { icon: Package, title: "Handmade", sub: "Mirpur-10 pack" },
           { icon: Truck, title: "COD ready", sub: "All Bangladesh" },
           { icon: ShieldCheck, title: "Confirm call", sub: "Before courier" },
-          { icon: MapPin, title: "Showroom", sub: BRAND.addressShort },
+          { icon: MapPin, title: "Showroom", sub: brand.addressShort },
         ].map((item) => (
           <li
             key={item.title}

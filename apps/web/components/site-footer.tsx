@@ -1,29 +1,39 @@
-import { BRAND, INITIAL_CATEGORIES } from "@bismillah/shared";
+import { INITIAL_CATEGORIES, type StoreBrand } from "@bismillah/shared";
 import Link from "next/link";
 
-export function SiteFooter() {
+export function SiteFooter({ brand }: { brand: StoreBrand }) {
   return (
     <footer className="mt-8 border-t border-border bg-white">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-4">
         <div>
-          <p className="font-display text-lg sm:text-xl">{BRAND.name}</p>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">{BRAND.tagline}</p>
-          <p className="mt-4 text-sm text-muted-foreground">{BRAND.addressLine}</p>
+          <p className="font-display text-lg sm:text-xl">{brand.name}</p>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">{brand.tagline}</p>
+          <p className="mt-4 text-sm text-muted-foreground">{brand.addressLine}</p>
           <p className="mt-2 text-sm">
-            <a className="hover:underline" href={`tel:${BRAND.phoneE164}`}>
-              {BRAND.phoneDisplay}
+            <a className="hover:underline" href={`tel:${brand.phoneE164}`}>
+              {brand.phoneDisplay}
             </a>
           </p>
           <p className="mt-1 text-sm">
-            <a className="hover:underline" href={`mailto:${BRAND.email}`}>
-              {BRAND.email}
+            <a className="hover:underline" href={`mailto:${brand.email}`}>
+              {brand.email}
             </a>
           </p>
           <div className="mt-4 flex flex-wrap gap-3 text-sm">
-            <a className="underline underline-offset-4" href={BRAND.whatsappUrl} target="_blank" rel="noreferrer">
+            <a
+              className="underline underline-offset-4"
+              href={brand.whatsappUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
               WhatsApp
             </a>
-            <a className="underline underline-offset-4" href={BRAND.facebookUrl} target="_blank" rel="noreferrer">
+            <a
+              className="underline underline-offset-4"
+              href={brand.facebookUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
               Facebook
             </a>
           </div>
@@ -78,11 +88,14 @@ export function SiteFooter() {
         <div>
           <p className="text-xs tracking-[0.16em] uppercase">Visit & order</p>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            {BRAND.followersLabel} · {BRAND.recommendLabel}. Cash on delivery across Bangladesh. Visit
-            the Mirpur shop or order online and we call to confirm.
+            {brand.followersLabel} · {brand.recommendLabel}. {brand.codNote || "Cash on delivery across Bangladesh."}{" "}
+            Visit the Mirpur shop or order online and we call to confirm.
           </p>
+          {brand.shippingNote ? (
+            <p className="mt-2 text-sm text-muted-foreground">{brand.shippingNote}</p>
+          ) : null}
           <a
-            href={BRAND.whatsappUrl}
+            href={brand.whatsappUrl}
             target="_blank"
             rel="noreferrer"
             className="mt-4 inline-flex h-11 items-center bg-foreground px-4 text-sm font-medium text-background"
@@ -92,7 +105,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-border px-4 py-4 text-center text-xs text-muted-foreground">
-        © 2026 {BRAND.name} · {BRAND.addressShort} · COD · bKash · Nagad · Card
+        © 2026 {brand.name} · {brand.addressShort} · COD · bKash · Nagad · Card
       </div>
     </footer>
   );

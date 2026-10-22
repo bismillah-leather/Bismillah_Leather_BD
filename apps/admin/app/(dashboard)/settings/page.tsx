@@ -1,3 +1,4 @@
+import { BRAND } from "@bismillah/shared";
 import { getPrisma } from "@bismillah/db";
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin-page-header";
@@ -17,12 +18,16 @@ export default async function SettingsPage() {
     where: {
       key: {
         in: [
+          "store.name",
           "store.supportPhone",
           "store.supportWhatsapp",
+          "store.email",
+          "store.facebookUrl",
           "store.codNote",
           "store.announcement",
           "store.shippingNote",
           "store.address",
+          "store.addressShort",
         ],
       },
     },
@@ -34,11 +39,15 @@ export default async function SettingsPage() {
       <AdminPageHeader
         eyebrow="Store"
         title="Settings"
-        description="Support contacts and storefront notes. Password and staff live under Account / Team."
+        description="Phone, WhatsApp, email, Facebook, address — these drive the storefront FAB, footer, and product contact buttons."
       />
       <p className="mt-4 text-sm text-muted-foreground">
+        <Link href="/products" className="text-primary hover:underline">
+          Manage products
+        </Link>
+        {" · "}
         <Link href="/account" className="text-primary hover:underline">
-          Change your password
+          Change password
         </Link>
         {" · "}
         <Link href="/team" className="text-primary hover:underline">
@@ -47,8 +56,11 @@ export default async function SettingsPage() {
       </p>
       <SettingsForm
         initial={{
-          supportPhone: asString(map["store.supportPhone"], "01700000000"),
-          supportWhatsapp: asString(map["store.supportWhatsapp"], "8801700000000"),
+          name: asString(map["store.name"], BRAND.name),
+          supportPhone: asString(map["store.supportPhone"], BRAND.phoneDisplay),
+          supportWhatsapp: asString(map["store.supportWhatsapp"], "8801957876157"),
+          email: asString(map["store.email"], BRAND.email),
+          facebookUrl: asString(map["store.facebookUrl"], BRAND.facebookUrl),
           codNote: asString(
             map["store.codNote"],
             "Cash on delivery available in Dhaka. We call before packing.",
@@ -58,7 +70,8 @@ export default async function SettingsPage() {
             map["store.shippingNote"],
             "Dhaka delivery 1–2 days. Outside Dhaka 2–4 days after confirmation.",
           ),
-          address: asString(map["store.address"], "Mirpur-10, Dhaka"),
+          address: asString(map["store.address"], BRAND.addressLine),
+          addressShort: asString(map["store.addressShort"], BRAND.addressShort),
         }}
       />
     </div>

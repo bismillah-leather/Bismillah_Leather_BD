@@ -1,12 +1,12 @@
 "use client";
 
-import { SHOWCASE_PRODUCTS } from "@bismillah/shared";
+import { type ShowcaseProduct } from "@bismillah/shared";
 import Link from "next/link";
 import { ProductGrid } from "./product-grid";
 
-const ARRIVALS = SHOWCASE_PRODUCTS.slice(0, 12);
+export function NewArrivalsSection({ products }: { products: ShowcaseProduct[] }) {
+  const arrivals = products.slice(0, 12);
 
-export function NewArrivalsSection() {
   return (
     <section className="bg-white py-10 sm:py-14">
       <div className="mx-auto max-w-7xl px-3 sm:px-6">
@@ -19,14 +19,11 @@ export function NewArrivalsSection() {
               New arrivals
             </h2>
           </div>
-          <Link
-            href="/search"
-            className="text-sm tracking-wide underline underline-offset-4"
-          >
+          <Link href="/search" className="text-sm tracking-wide underline underline-offset-4">
             Shop all
           </Link>
         </div>
-        <ProductGrid products={ARRIVALS} />
+        <ProductGrid products={arrivals} />
       </div>
     </section>
   );

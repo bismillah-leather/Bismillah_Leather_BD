@@ -6,20 +6,28 @@ export function SettingsForm({
   initial,
 }: {
   initial: {
+    name: string;
     supportPhone: string;
     supportWhatsapp: string;
+    email: string;
+    facebookUrl: string;
     codNote: string;
     announcement: string;
     shippingNote: string;
     address: string;
+    addressShort: string;
   };
 }) {
+  const [name, setName] = useState(initial.name);
   const [supportPhone, setSupportPhone] = useState(initial.supportPhone);
   const [supportWhatsapp, setSupportWhatsapp] = useState(initial.supportWhatsapp);
+  const [email, setEmail] = useState(initial.email);
+  const [facebookUrl, setFacebookUrl] = useState(initial.facebookUrl);
   const [codNote, setCodNote] = useState(initial.codNote);
   const [announcement, setAnnouncement] = useState(initial.announcement);
   const [shippingNote, setShippingNote] = useState(initial.shippingNote);
   const [address, setAddress] = useState(initial.address);
+  const [addressShort, setAddressShort] = useState(initial.addressShort);
   const [pending, setPending] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,13 +50,17 @@ export function SettingsForm({
     setError(null);
     setMsg(null);
     try {
+      await saveOne("store.name", name.trim());
       await saveOne("store.supportPhone", supportPhone.trim());
       await saveOne("store.supportWhatsapp", supportWhatsapp.trim());
+      await saveOne("store.email", email.trim());
+      await saveOne("store.facebookUrl", facebookUrl.trim());
       await saveOne("store.codNote", codNote.trim());
       await saveOne("store.announcement", announcement.trim());
       await saveOne("store.shippingNote", shippingNote.trim());
       await saveOne("store.address", address.trim());
-      setMsg("Settings saved.");
+      await saveOne("store.addressShort", addressShort.trim());
+      setMsg("Settings saved — storefront picks these up on next load.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
     } finally {
@@ -60,13 +72,19 @@ export function SettingsForm({
     <form onSubmit={onSubmit} className="admin-panel mt-6 grid max-w-xl gap-5 p-6">
       <label className="grid gap-2 text-sm">
         <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
-          Support phone
+          Store name
+        </span>
+        <input value={name} onChange={(e) => setName(e.target.value)} className="admin-field" />
+      </label>
+      <label className="grid gap-2 text-sm">
+        <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
+          Support phone (display)
         </span>
         <input
           value={supportPhone}
           onChange={(e) => setSupportPhone(e.target.value)}
           className="admin-field"
-          placeholder="01XXXXXXXXX"
+          placeholder="01957-876157"
         />
       </label>
       <label className="grid gap-2 text-sm">
@@ -77,18 +95,43 @@ export function SettingsForm({
           value={supportWhatsapp}
           onChange={(e) => setSupportWhatsapp(e.target.value)}
           className="admin-field"
-          placeholder="8801XXXXXXXXX"
+          placeholder="8801957876157"
+        />
+      </label>
+      <label className="grid gap-2 text-sm">
+        <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">Email</span>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="admin-field"
         />
       </label>
       <label className="grid gap-2 text-sm">
         <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
-          Shop address
+          Facebook URL
         </span>
         <input
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
+          value={facebookUrl}
+          onChange={(e) => setFacebookUrl(e.target.value)}
           className="admin-field"
-          placeholder="Mirpur-10, Dhaka"
+        />
+      </label>
+      <label className="grid gap-2 text-sm">
+        <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
+          Shop address (full)
+        </span>
+        <input value={address} onChange={(e) => setAddress(e.target.value)} className="admin-field" />
+      </label>
+      <label className="grid gap-2 text-sm">
+        <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
+          Address short
+        </span>
+        <input
+          value={addressShort}
+          onChange={(e) => setAddressShort(e.target.value)}
+          className="admin-field"
+          placeholder="Mirpur-10 · Shah Ali Plaza"
         />
       </label>
       <label className="grid gap-2 text-sm">

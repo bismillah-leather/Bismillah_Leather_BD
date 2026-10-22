@@ -11,6 +11,39 @@ function slugify(input: string) {
     .slice(0, 80);
 }
 
+export async function GET() {
+  const admin = await getActiveAdmin();
+  if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+
+  const prisma = getPrisma();
+  const products = await prisma.product.findMany({
+    where: { deletedAt: null },
+    orderBy: { name: "asc" },
+    take: 200,
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      status: true,
+      variants: {
+        where: { isActive: true },
+        take: 1,
+        select: { sku: true },
+      },
+    },
+  });
+
+  return NextResponse.json({
+    products: products.map((p) => ({
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      status: p.status,
+      sku: p.variants[0]?.sku ?? "",
+    })),
+  });
+}
+
 export async function POST(request: Request) {
   const admin = await getActiveAdmin();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });

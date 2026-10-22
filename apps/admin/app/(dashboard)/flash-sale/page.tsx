@@ -4,6 +4,8 @@ import { SHOWCASE_PRODUCTS, type FlashSaleConfig } from "@bismillah/shared";
 import { useEffect, useMemo, useState } from "react";
 import { AdminPageHeader } from "@/components/admin-page-header";
 
+type ProductOption = { name: string; slug: string; sku: string };
+
 const STORE_API =
   process.env.NEXT_PUBLIC_STORE_URL?.replace(/\/$/, "") || "http://localhost:3000";
 
@@ -43,6 +45,9 @@ function toForm(sale: FlashSaleConfig): FormState {
 
 export default function FlashSaleAdminPage() {
   const [form, setForm] = useState<FormState | null>(null);
+  const [catalog, setCatalog] = useState<ProductOption[]>(() =>
+    SHOWCASE_PRODUCTS.map((p) => ({ name: p.name, slug: p.slug, sku: p.sku })),
+  );
   const [status, setStatus] = useState<"idle" | "loading" | "saving" | "saved" | "error">(
     "loading",
   );
@@ -53,9 +58,16 @@ export default function FlashSaleAdminPage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`${STORE_API}/api/flash-sale`, { cache: "no-store" });
-        if (!res.ok) throw new Error("Failed to load");
-        const sale = (await res.json()) as FlashSaleConfig;
+        const [saleRes, productsRes] = await Promise.all([
+          fetch(`${STORE_API}/api/flash-sale`, { cache: "no-store" }),
+          fetch("/admin/api/products", { cache: "no-store" }),
+        ]);
+        if (!saleRes.ok) throw new Error("Failed to load");
+        const sale = (await saleRes.json()) as FlashSaleConfig;
+        if (productsRes.ok) {
+          const data = (await productsRes.json()) as { products?: ProductOption[] };
+          if (data.products?.length) setCatalog(data.products);
+        }
         if (cancelled) return;
         setForm(toForm(sale));
         setPreviewEndsAt(sale.endsAt);
@@ -267,7 +279,7 @@ export default function FlashSaleAdminPage() {
             Products ({selectedCount})
           </legend>
           <ul className="admin-panel max-h-72 overflow-y-auto">
-            {SHOWCASE_PRODUCTS.map((product) => {
+            {catalog.map((product) => {
               const checked = form.productSlugs.includes(product.slug);
               return (
                 <li key={product.slug} className="border-b border-border last:border-b-0">

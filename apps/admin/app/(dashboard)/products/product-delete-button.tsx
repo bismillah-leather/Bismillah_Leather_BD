@@ -6,9 +6,12 @@ import { useState, useTransition } from "react";
 export function ProductDeleteButton({
   productId,
   productName,
+  redirectTo,
 }: {
   productId: string;
   productName: string;
+  /** After delete, go here (e.g. product detail → list). */
+  redirectTo?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -28,7 +31,10 @@ export function ProductDeleteButton({
         setError(data.error ?? "Delete failed");
         return;
       }
-      startTransition(() => router.refresh());
+      startTransition(() => {
+        if (redirectTo) router.push(redirectTo);
+        else router.refresh();
+      });
     } catch {
       setError("Network error");
     }

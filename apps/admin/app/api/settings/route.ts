@@ -3,12 +3,16 @@ import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
 
 const EDITABLE = new Set([
+  "store.name",
   "store.supportPhone",
   "store.supportWhatsapp",
+  "store.email",
+  "store.facebookUrl",
   "store.codNote",
   "store.announcement",
   "store.shippingNote",
   "store.address",
+  "store.addressShort",
 ]);
 
 export async function PATCH(request: Request) {

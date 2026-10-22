@@ -1,9 +1,10 @@
-import { INITIAL_CATEGORIES, SHOWCASE_PRODUCTS, searchProducts } from "@bismillah/shared";
+import { INITIAL_CATEGORIES } from "@bismillah/shared";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { CategoryPillsBar, categoryPillClass } from "@/components/category-pills";
 import { ProductGrid } from "@/components/product-grid";
+import { listPublishedProducts, searchCatalog } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "Shop all",
@@ -32,8 +33,8 @@ async function SearchResults({
   const query = (Array.isArray(raw) ? raw[0] : raw)?.trim() ?? "";
   const products =
     query.toLowerCase() === "sale"
-      ? SHOWCASE_PRODUCTS.filter((product) => product.salePaisa)
-      : searchProducts(query);
+      ? (await listPublishedProducts()).filter((product) => product.salePaisa)
+      : await searchCatalog(query);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">

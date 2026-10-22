@@ -1,6 +1,11 @@
 import "dotenv/config";
 import { hash } from "@node-rs/argon2";
-import { INITIAL_CATEGORIES, INITIAL_MATERIALS } from "@bismillah/shared";
+import {
+  BRAND,
+  INITIAL_CATEGORIES,
+  INITIAL_MATERIALS,
+  SHOWCASE_PRODUCTS,
+} from "@bismillah/shared";
 import { getPrisma } from "../src/client";
 
 const prisma = getPrisma();
@@ -81,6 +86,22 @@ async function seedSettings() {
     { key: "store", value: { name: "Bismillah Leather", currency: "BDT", timezone: "Asia/Dhaka" } },
     { key: "live_viewers", value: { enabled: true, minToShow: 2 } },
     { key: "payments", value: { cod: true, online: false } },
+    { key: "store.name", value: BRAND.name },
+    { key: "store.supportPhone", value: BRAND.phoneDisplay },
+    { key: "store.supportWhatsapp", value: "8801957876157" },
+    { key: "store.email", value: BRAND.email },
+    { key: "store.facebookUrl", value: BRAND.facebookUrl },
+    { key: "store.address", value: BRAND.addressLine },
+    { key: "store.addressShort", value: BRAND.addressShort },
+    {
+      key: "store.codNote",
+      value: "Cash on delivery available in Dhaka. We call before packing.",
+    },
+    {
+      key: "store.shippingNote",
+      value: "Dhaka delivery 1–2 days. Outside Dhaka 2–4 days after confirmation.",
+    },
+    { key: "store.announcement", value: "" },
   ];
 
   for (const setting of settings) {
@@ -88,6 +109,86 @@ async function seedSettings() {
       where: { key: setting.key },
       create: setting,
       update: {},
+    });
+  }
+}
+
+async function seedProducts() {
+  for (const item of SHOWCASE_PRODUCTS) {
+    const category = await prisma.category.findFirst({
+      where: { slug: item.categorySlug, deletedAt: null },
+      select: { id: true },
+    });
+    if (!category) continue;
+
+    const existing = await prisma.product.findUnique({
+      where: { slug: item.slug },
+      select: { id: true },
+    });
+
+    if (existing) {
+      await prisma.product.update({
+        where: { id: existing.id },
+        data: {
+          name: item.name,
+          description: item.blurb,
+          status: "published",
+          publishedAt: new Date(),
+          deletedAt: null,
+          ogImageKey: item.image,
+          primaryCategoryId: category.id,
+        },
+      });
+      const variant = await prisma.productVariant.findFirst({
+        where: { productId: existing.id },
+        orderBy: { createdAt: "asc" },
+        select: { id: true },
+      });
+      if (variant) {
+        await prisma.productVariant.update({
+          where: { id: variant.id },
+          data: {
+            sku: item.sku,
+            price: item.pricePaisa,
+            salePrice: item.salePaisa,
+            stockOnHand: item.inStock ? 25 : 0,
+            isActive: true,
+          },
+        });
+      }
+      continue;
+    }
+
+    await prisma.product.create({
+      data: {
+        name: item.name,
+        slug: item.slug,
+        description: item.blurb,
+        status: "published",
+        publishedAt: new Date(),
+        primaryCategoryId: category.id,
+        ogImageKey: item.image,
+        isFeatured: Boolean(item.salePaisa),
+        categories: { create: [{ categoryId: category.id }] },
+        variants: {
+          create: {
+            sku: item.sku,
+            price: item.pricePaisa,
+            salePrice: item.salePaisa,
+            stockOnHand: item.inStock ? 25 : 0,
+            isActive: true,
+          },
+        },
+        media: {
+          create: {
+            type: "image",
+            storageKey: item.image,
+            sortOrder: 0,
+            alt: item.name,
+            processingStatus: "ready",
+          },
+        },
+      },
     });
   }
 }
@@ -156,6 +257,7 @@ async function main() {
   await seedMaterials();
   await seedDelivery();
   await seedSettings();
+  await seedProducts();
   await seedTemplates();
   await seedOwner();
 }
