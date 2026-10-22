@@ -23,6 +23,9 @@ importers:
       '@bismillah/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@next/env':
+        specifier: 16.4.0
+        version: 16.4.0
       '@node-rs/argon2':
         specifier: ^2.0.2
         version: 2.2.2
@@ -109,6 +112,9 @@ importers:
       '@bismillah/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@next/env':
+        specifier: 16.4.0
+        version: 16.4.0
       jose:
         specifier: ^6.2.13
         version: 6.2.13

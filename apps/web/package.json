@@ -13,6 +13,7 @@
     "@bismillah/db": "workspace:^",
     "@bismillah/shared": "workspace:*",
     "@bismillah/ui": "workspace:*",
+    "@next/env": "16.4.0",
     "jose": "^6.2.13",
     "lucide-react": "^0.544.0",
     "motion": "^14.4.0",

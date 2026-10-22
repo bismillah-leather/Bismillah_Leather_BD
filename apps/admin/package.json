@@ -13,6 +13,7 @@
     "@bismillah/db": "workspace:^",
     "@bismillah/shared": "workspace:*",
     "@bismillah/ui": "workspace:*",
+    "@next/env": "16.4.0",
     "@node-rs/argon2": "^2.0.2",
     "jose": "^6.2.13",
     "next": "16.4.0",

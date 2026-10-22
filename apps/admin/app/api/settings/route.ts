@@ -1,4 +1,4 @@
-import { getPrisma } from "@bismillah/db";
+import { getPrisma, Prisma } from "@bismillah/db";
 import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
 
@@ -14,6 +14,14 @@ const EDITABLE = new Set([
   "store.address",
   "store.addressShort",
 ]);
+
+function toSettingJson(value: unknown): Prisma.InputJsonValue {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return value;
+  }
+  return String(value);
+}
 
 export async function PATCH(request: Request) {
   const admin = await getActiveAdmin();
@@ -31,13 +39,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "This setting key is not editable here." }, { status: 400 });
   }
 
-  const value =
-    typeof body.value === "string" ||
-    typeof body.value === "number" ||
-    typeof body.value === "boolean" ||
-    body.value === null
-      ? body.value
-      : String(body.value ?? "");
+  const value = toSettingJson(body.value);
 
   const prisma = getPrisma();
   await prisma.setting.upsert({
