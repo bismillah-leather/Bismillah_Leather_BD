@@ -56,7 +56,7 @@ export function cartCount(lines = readRaw()): number {
   return lines.reduce((sum, line) => sum + line.qty, 0);
 }
 
-export function addToCart(slug: string, color: string, qty = 1) {
+export function addToCart(slug: string, color: string, qty = 1, opts?: { openDrawer?: boolean }) {
   const product = productBySlug(slug);
   if (!product || !product.inStock) return false;
   const safeQty = Math.max(1, Math.min(5, Math.floor(qty)));
@@ -69,6 +69,9 @@ export function addToCart(slug: string, color: string, qty = 1) {
     lines.push({ slug, color, qty: safeQty });
   }
   writeRaw(lines);
+  if (opts?.openDrawer !== false && typeof window !== "undefined") {
+    window.dispatchEvent(new Event("bl-cart-open"));
+  }
   return true;
 }
 

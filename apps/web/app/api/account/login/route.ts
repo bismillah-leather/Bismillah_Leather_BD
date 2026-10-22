@@ -1,7 +1,11 @@
 import { getPrisma } from "@bismillah/db";
 import type { Prisma } from "@bismillah/db";
 import { NextResponse } from "next/server";
-import { loginOrRegisterCustomer } from "@/lib/customer-auth";
+import {
+  registerCustomer,
+  signInCustomer,
+  type CustomerAuthMode,
+} from "@/lib/customer-auth";
 import { clientIp, hitRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
@@ -38,19 +42,34 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: { name?: string; phone?: string };
+  let body: Record<string, unknown>;
   try {
-    body = await request.json();
+    body = (await request.json()) as Record<string, unknown>;
   } catch {
     return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
   }
 
-  const result = await loginOrRegisterCustomer(
-    typeof body.name === "string" ? body.name : "",
-    typeof body.phone === "string" ? body.phone : "",
-  );
+  const mode: CustomerAuthMode =
+    body.mode === "signin" || body.mode === "register" ? body.mode : "register";
+  const phone = typeof body.phone === "string" ? body.phone : "";
+  const remember = body.remember === true;
+
+  const result =
+    mode === "signin"
+      ? await signInCustomer(phone, remember)
+      : await registerCustomer({
+          name: typeof body.name === "string" ? body.name : "",
+          phoneRaw: phone,
+          email: typeof body.email === "string" ? body.email : "",
+          district: typeof body.district === "string" ? body.district : "",
+          addressLine: typeof body.addressLine === "string" ? body.addressLine : "",
+          whatsappOk: body.whatsappOk === true,
+          termsAccepted: body.termsAccepted === true,
+          remember,
+        });
+
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: result.status });
   }
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, mode });
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { ShoppingBag } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { addToCart, buyNow } from "@/lib/cart";
 
@@ -20,7 +19,6 @@ export function ProductCardActions({
   tone?: "light" | "dark";
   flush?: boolean;
 }) {
-  const router = useRouter();
   const [added, setAdded] = useState(false);
   const [busy, setBusy] = useState(false);
   const dark = tone === "dark";
@@ -53,7 +51,6 @@ export function ProductCardActions({
         onClick={() => {
           if (!addToCart(slug, color, 1)) return;
           setAdded(true);
-          router.refresh();
           window.setTimeout(() => setAdded(false), 1200);
         }}
         className={`inline-flex shrink-0 items-center justify-center border transition ${

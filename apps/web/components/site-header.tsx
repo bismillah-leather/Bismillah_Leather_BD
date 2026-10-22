@@ -6,20 +6,27 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/hooks/use-cart";
+import { useCartUi } from "./cart-provider";
 
 const categoryLinks = INITIAL_CATEGORIES;
 
 function CartLink({ className }: { className: string }) {
   const { count, hydrated } = useCart();
+  const { openCart } = useCartUi();
   return (
-    <Link href="/cart" className={`relative ${className}`} aria-label="Cart">
+    <button
+      type="button"
+      onClick={openCart}
+      className={`relative ${className}`}
+      aria-label={hydrated ? `Cart, ${count} items` : "Cart"}
+    >
       <ShoppingBag className="size-5" />
       {hydrated && count > 0 ? (
         <span className="absolute top-1 right-1 flex size-4 items-center justify-center rounded-full bg-foreground text-[9px] font-medium text-background">
           {count > 9 ? "9+" : count}
         </span>
       ) : null}
-    </Link>
+    </button>
   );
 }
 

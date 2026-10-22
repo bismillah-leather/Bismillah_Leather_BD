@@ -23,7 +23,7 @@ export function AccountLogoutButton() {
       type="button"
       onClick={logout}
       disabled={pending}
-      className="text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50"
+      className="inline-flex h-11 items-center border border-border px-4 text-sm transition hover:border-foreground disabled:opacity-50"
     >
       {pending ? "Signing out…" : "Sign out"}
     </button>

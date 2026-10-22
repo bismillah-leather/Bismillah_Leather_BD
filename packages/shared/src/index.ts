@@ -44,4 +44,6 @@ export {
 export type { FlashSaleConfig, FlashSaleCountdown } from "./flash-sale";
 export { isSupportedVideoUrl, parseVideoEmbed } from "./video-embed";
 export type { VideoEmbed, VideoProvider } from "./video-embed";
+export { BD_DISTRICTS, divisionForDistrict } from "./bd-geo";
+export type { BdDistrict } from "./bd-geo";
 

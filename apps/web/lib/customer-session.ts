@@ -2,7 +2,8 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
 export const CUSTOMER_SESSION_COOKIE = "bl_customer_session";
-const MAX_AGE_SEC = 60 * 60 * 24 * 30; // 30 days
+const MAX_AGE_DEFAULT = 60 * 60 * 24 * 30; // 30 days
+const MAX_AGE_REMEMBER = 60 * 60 * 24 * 90; // 90 days
 
 export type CustomerSession = {
   sub: string;
@@ -18,12 +19,15 @@ function secretKey() {
   return new TextEncoder().encode(secret);
 }
 
-export async function signCustomerSession(payload: CustomerSession): Promise<string> {
+export async function signCustomerSession(
+  payload: CustomerSession,
+  maxAgeSec = MAX_AGE_DEFAULT,
+): Promise<string> {
   return new SignJWT({ phone: payload.phone, name: payload.name })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.sub)
     .setIssuedAt()
-    .setExpirationTime(`${MAX_AGE_SEC}s`)
+    .setExpirationTime(`${maxAgeSec}s`)
     .sign(secretKey());
 }
 
@@ -48,14 +52,17 @@ export async function getCustomerSession(): Promise<CustomerSession | null> {
   return verifyCustomerToken(token);
 }
 
-export async function setCustomerSessionCookie(token: string) {
+export async function setCustomerSessionCookie(
+  token: string,
+  maxAgeSec = MAX_AGE_DEFAULT,
+) {
   const jar = await cookies();
   jar.set(CUSTOMER_SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: MAX_AGE_SEC,
+    maxAge: maxAgeSec,
   });
 }
 
@@ -69,3 +76,5 @@ export async function clearCustomerSessionCookie() {
     maxAge: 0,
   });
 }
+
+export { MAX_AGE_DEFAULT, MAX_AGE_REMEMBER };
