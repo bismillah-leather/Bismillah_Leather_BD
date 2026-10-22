@@ -8,12 +8,16 @@ const ARRIVALS = SHOWCASE_PRODUCTS.slice(0, 12);
 
 export function NewArrivalsSection() {
   return (
-    <section className="bg-white py-14 sm:py-22">
+    <section className="bg-white py-10 sm:py-14">
       <div className="mx-auto max-w-7xl px-3 sm:px-6">
-        <div className="mb-8 flex flex-col gap-4 sm:mb-12 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs tracking-[0.28em] text-muted-foreground uppercase">Fresh drop</p>
-            <h2 className="font-display mt-2 text-4xl tracking-tight sm:text-6xl">New arrivals</h2>
+            <p className="text-[10px] tracking-[0.28em] text-muted-foreground uppercase sm:text-[11px]">
+              Fresh drop
+            </p>
+            <h2 className="font-display mt-1.5 text-2xl tracking-tight sm:text-3xl md:text-4xl">
+              New arrivals
+            </h2>
           </div>
           <Link
             href="/search"

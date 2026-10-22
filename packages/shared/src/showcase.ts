@@ -1,4 +1,26 @@
-export const SHOWCASE_PRODUCTS = [
+export type LeatherTone = "black" | "brown" | "tan" | "cognac";
+export type ProductKind = "wallet" | "belt";
+
+export type ShowcaseProduct = {
+  slug: string;
+  image: string;
+  name: string;
+  sku: string;
+  categorySlug: string;
+  pricePaisa: bigint;
+  salePaisa: bigint | null;
+  colors: readonly string[];
+  tone: LeatherTone;
+  kind: ProductKind;
+  inStock: boolean;
+  blurb: string;
+  /** Extra bullets under Description (optional). */
+  highlights?: readonly string[];
+  /** YouTube / Facebook watch or live URL (optional). Admin can override via store. */
+  videoUrl?: string | null;
+};
+
+export const SHOWCASE_PRODUCTS: readonly ShowcaseProduct[] = [
   {
     slug: "black-long-wallet",
     image: "/catalog/wallet-black-long.jpg",
@@ -12,6 +34,11 @@ export const SHOWCASE_PRODUCTS = [
     kind: "wallet",
     inStock: true,
     blurb: "Full-length bills, eight card slots, and a zip coin pocket.",
+    highlights: [
+      "8 card slots · zip coin pocket · full-length cash chamber",
+      "Full-grain leather feel, cut for daily carry",
+      "Packed after a confirmation call · Mirpur-10 showroom",
+    ],
   },
   {
     slug: "brown-long-wallet",
@@ -26,6 +53,11 @@ export const SHOWCASE_PRODUCTS = [
     kind: "wallet",
     inStock: true,
     blurb: "A warmer hide with the same full-length layout.",
+    highlights: [
+      "Same long layout in a warmer hide",
+      "Full-grain leather feel, cut for daily carry",
+      "Cash on delivery across Bangladesh",
+    ],
   },
   {
     slug: "black-short-wallet",
@@ -40,6 +72,11 @@ export const SHOWCASE_PRODUCTS = [
     kind: "wallet",
     inStock: true,
     blurb: "Bifold for cards and folded notes.",
+    highlights: [
+      "Bifold · cards and folded notes",
+      "Full-grain leather feel, cut for daily carry",
+      "Packed after a confirmation call · Mirpur-10 showroom",
+    ],
   },
   {
     slug: "tan-formal-wallet",
@@ -54,6 +91,11 @@ export const SHOWCASE_PRODUCTS = [
     kind: "wallet",
     inStock: true,
     blurb: "Slim profile for a dress pocket.",
+    highlights: [
+      "Slim dress-pocket profile",
+      "Full-grain leather feel, cut for daily carry",
+      "Cash on delivery across Bangladesh",
+    ],
   },
   {
     slug: "mini-magnetic-short-wallet",
@@ -68,6 +110,11 @@ export const SHOWCASE_PRODUCTS = [
     kind: "wallet",
     inStock: true,
     blurb: "জেনুইন লেদার মিনি ওয়ালেট। Compact size with magnetic close. Black & Chocolate.",
+    highlights: [
+      "Compact magnetic close · Black & Chocolate",
+      "Full-grain leather feel, cut for daily carry",
+      "Packed after a confirmation call · Mirpur-10 showroom",
+    ],
   },
   {
     slug: "rfid-trifold-wallet",
@@ -82,6 +129,11 @@ export const SHOWCASE_PRODUCTS = [
     kind: "wallet",
     inStock: true,
     blurb: "Genuine leather trifold with RFID blocking. Cards stay organised; scanning risk goes down.",
+    highlights: [
+      "RFID blocking · organised card slots",
+      "Full-grain leather feel, cut for daily carry",
+      "Cash on delivery across Bangladesh",
+    ],
   },
   {
     slug: "magnetic-double-phone-long-wallet",
@@ -96,6 +148,11 @@ export const SHOWCASE_PRODUCTS = [
     kind: "wallet",
     inStock: true,
     blurb: "জেনুইন লেদার লং ওয়ালেট for two phones, premium magnetic close. Black & Olive.",
+    highlights: [
+      "Fits two phones · premium magnetic close",
+      "Full-grain leather feel, cut for daily carry",
+      "Packed after a confirmation call · Mirpur-10 showroom",
+    ],
   },
   {
     slug: "thara-soft-leather-wallet",
@@ -111,6 +168,11 @@ export const SHOWCASE_PRODUCTS = [
     inStock: true,
     blurb:
       "১০০% জেনুইন সফট লেদার। ৮ card slots, ২ document gaps, YKK zip coin pocket, large cash chamber with inner zip.",
+    highlights: [
+      "৮ card slots · ২ document gaps · YKK zip coin pocket",
+      "Soft full-grain leather for daily carry",
+      "Cash on delivery across Bangladesh",
+    ],
   },
   {
     slug: "mini-full-leather-wallet",
@@ -125,6 +187,12 @@ export const SHOWCASE_PRODUCTS = [
     kind: "wallet",
     inStock: true,
     blurb: "৩″ × ৪″. Magnetic coin slot, ২ card slots, ২ document slots. Full leather, no fabric.",
+    highlights: [
+      "Magnetic coin slot · ২ card slots · ২ document slots",
+      "Full leather, no fabric lining",
+      "Packed after a confirmation call · Mirpur-10 showroom",
+      "Cash on delivery across Bangladesh",
+    ],
   },
   {
     slug: "three-quarter-multifunction-wallet",
@@ -139,6 +207,11 @@ export const SHOWCASE_PRODUCTS = [
     kind: "wallet",
     inStock: true,
     blurb: "থ্রি কোয়ার্টার মাল্টি-ফাংশনাল ওয়ালেট। Genuine leather. Black & Chocolate.",
+    highlights: [
+      "Three-quarter multifunction layout",
+      "Full-grain leather feel, cut for daily carry",
+      "Cash on delivery across Bangladesh",
+    ],
   },
   {
     slug: "buffalo-wallet",
@@ -153,6 +226,11 @@ export const SHOWCASE_PRODUCTS = [
     kind: "wallet",
     inStock: true,
     blurb: "Heavier buffalo hide with a firm edge.",
+    highlights: [
+      "Buffalo hide · firm edge",
+      "Built for heavy daily carry",
+      "Packed after a confirmation call · Mirpur-10 showroom",
+    ],
   },
   {
     slug: "lv-line-wallet",
@@ -167,6 +245,11 @@ export const SHOWCASE_PRODUCTS = [
     kind: "wallet",
     inStock: true,
     blurb: "Patterned LV line, long layout.",
+    highlights: [
+      "Patterned LV line · long layout",
+      "Full-grain leather feel, cut for daily carry",
+      "Cash on delivery across Bangladesh",
+    ],
   },
   {
     slug: "black-formal-belt",
@@ -181,6 +264,11 @@ export const SHOWCASE_PRODUCTS = [
     kind: "belt",
     inStock: true,
     blurb: "Automatic buckle, dress width.",
+    highlights: [
+      "Automatic buckle · dress width",
+      "Packed after a confirmation call · Mirpur-10 showroom",
+      "Cash on delivery across Bangladesh",
+    ],
   },
   {
     slug: "brown-formal-belt",
@@ -195,6 +283,11 @@ export const SHOWCASE_PRODUCTS = [
     kind: "belt",
     inStock: true,
     blurb: "Smooth strap for formal trousers.",
+    highlights: [
+      "Smooth formal strap",
+      "Packed after a confirmation call · Mirpur-10 showroom",
+      "Cash on delivery across Bangladesh",
+    ],
   },
   {
     slug: "black-jeans-belt",
@@ -209,6 +302,11 @@ export const SHOWCASE_PRODUCTS = [
     kind: "belt",
     inStock: true,
     blurb: "Everyday width cut for denim.",
+    highlights: [
+      "Everyday denim width",
+      "Packed after a confirmation call · Mirpur-10 showroom",
+      "Cash on delivery across Bangladesh",
+    ],
   },
   {
     slug: "tan-jeans-belt",
@@ -223,12 +321,13 @@ export const SHOWCASE_PRODUCTS = [
     kind: "belt",
     inStock: true,
     blurb: "Lighter strap for casual wear.",
+    highlights: [
+      "Lighter casual strap",
+      "Packed after a confirmation call · Mirpur-10 showroom",
+      "Cash on delivery across Bangladesh",
+    ],
   },
-] as const;
-
-export type ShowcaseProduct = (typeof SHOWCASE_PRODUCTS)[number];
-export type LeatherTone = ShowcaseProduct["tone"];
-export type ProductKind = ShowcaseProduct["kind"];
+];
 
 export function productBySlug(slug: string): ShowcaseProduct | undefined {
   return SHOWCASE_PRODUCTS.find((product) => product.slug === slug);
@@ -244,6 +343,7 @@ export type ProductView = {
   sku: string;
   categorySlug: string;
   blurb: string;
+  highlights: readonly string[];
   colors: readonly string[];
   tone: LeatherTone;
   kind: ProductKind;
@@ -251,7 +351,14 @@ export type ProductView = {
   image: string;
   pricePaisa: string;
   comparePaisa: string | null;
+  videoUrl: string | null;
 };
+
+const DEFAULT_HIGHLIGHTS = [
+  "Full-grain leather feel, cut for daily carry",
+  "Packed after a confirmation call · Mirpur-10 showroom",
+  "Cash on delivery across Bangladesh",
+] as const;
 
 export function galleryFor(product: ShowcaseProduct): string[] {
   const related = SHOWCASE_PRODUCTS.filter(
@@ -262,13 +369,22 @@ export function galleryFor(product: ShowcaseProduct): string[] {
   return [product.image, ...related];
 }
 
-export function toProductView(product: ShowcaseProduct): ProductView {
+export function toProductView(
+  product: ShowcaseProduct,
+  overrides?: { videoUrl?: string | null },
+): ProductView {
+  const videoUrl =
+    overrides && "videoUrl" in overrides
+      ? (overrides.videoUrl ?? null)
+      : (product.videoUrl ?? null);
+
   return {
     slug: product.slug,
     name: product.name,
     sku: product.sku,
     categorySlug: product.categorySlug,
     blurb: product.blurb,
+    highlights: product.highlights?.length ? product.highlights : DEFAULT_HIGHLIGHTS,
     colors: product.colors,
     tone: product.tone,
     kind: product.kind,
@@ -276,6 +392,7 @@ export function toProductView(product: ShowcaseProduct): ProductView {
     image: product.image,
     pricePaisa: (product.salePaisa ?? product.pricePaisa).toString(),
     comparePaisa: product.salePaisa ? product.pricePaisa.toString() : null,
+    videoUrl,
   };
 }
 
@@ -283,7 +400,9 @@ export function searchProducts(query: string): ShowcaseProduct[] {
   const needle = query.trim().toLowerCase();
   if (!needle) return [...SHOWCASE_PRODUCTS];
   return SHOWCASE_PRODUCTS.filter((product) => {
-    const haystack = `${product.name} ${product.sku} ${product.blurb}`.toLowerCase();
+    if (product.categorySlug === needle || product.kind === needle) return true;
+    const haystack =
+      `${product.name} ${product.sku} ${product.blurb} ${product.categorySlug} ${product.kind}`.toLowerCase();
     return haystack.includes(needle);
   });
 }

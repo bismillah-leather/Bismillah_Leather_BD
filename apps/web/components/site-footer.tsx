@@ -6,7 +6,7 @@ export function SiteFooter() {
     <footer className="mt-8 border-t border-border bg-white">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-4">
         <div>
-          <p className="font-display text-2xl">{BRAND.name}</p>
+          <p className="font-display text-lg sm:text-xl">{BRAND.name}</p>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">{BRAND.tagline}</p>
           <p className="mt-4 text-sm text-muted-foreground">{BRAND.addressLine}</p>
           <p className="mt-2 text-sm">

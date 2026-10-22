@@ -1,7 +1,13 @@
+import { loadEnvConfig } from "@next/env";
 import type { NextConfig } from "next";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const rootDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "../..");
+loadEnvConfig(rootDir);
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@bismillah/ui", "@bismillah/shared"],
+  transpilePackages: ["@bismillah/ui", "@bismillah/shared", "@bismillah/db"],
   experimental: {
     agentFeedback: true,
   },

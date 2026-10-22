@@ -48,29 +48,31 @@ export function BestSellersSection() {
   }, [faces.length, featured.slug, paused]);
 
   return (
-    <section className="bg-black py-16 text-white sm:py-24">
+    <section className="bg-black py-10 text-white sm:py-14">
       <div className="mx-auto max-w-7xl px-3 sm:px-6">
-        <div className="mb-10 flex flex-col gap-4 sm:mb-12 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs tracking-[0.28em] text-white/50 uppercase">Most loved</p>
-            <h2 className="font-display mt-2 text-4xl tracking-tight sm:text-6xl md:text-7xl">
+            <p className="text-[10px] tracking-[0.28em] text-white/50 uppercase sm:text-[11px]">
+              Most loved
+            </p>
+            <h2 className="font-display mt-1.5 text-2xl tracking-tight sm:text-3xl md:text-4xl">
               Best sellers
             </h2>
           </div>
           <Link
             href="/search?q=sale"
-            className="inline-flex h-11 items-center border border-white/40 px-4 text-sm transition hover:bg-white hover:text-black"
+            className="inline-flex h-9 items-center border border-white/40 px-3.5 text-xs transition hover:bg-white hover:text-black sm:text-sm"
           >
             View sale
           </Link>
         </div>
 
         <div
-          className="grid gap-5 lg:grid-cols-[1.3fr_0.9fr] lg:gap-6"
+          className="grid gap-4 lg:grid-cols-[1.3fr_0.9fr] lg:gap-5"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >
-          <div className="relative min-h-[26rem] overflow-hidden bg-neutral-900 sm:min-h-[32rem]">
+          <div className="relative min-h-[18rem] overflow-hidden bg-neutral-900 sm:min-h-[22rem] md:min-h-[26rem]">
             {faces.map((src, faceIndex) => (
               <Image
                 key={`${featured.slug}-${src}-${faceIndex}`}
@@ -117,7 +119,7 @@ export function BestSellersSection() {
                 {featured.colors.join(" · ")}
               </p>
               <Link href={`/product/${featured.slug}`}>
-                <h3 className="font-display mt-2 text-3xl sm:text-4xl">{featured.name}</h3>
+                <h3 className="font-display mt-1.5 text-xl tracking-tight sm:text-2xl">{featured.name}</h3>
               </Link>
               <p className="mt-3 line-clamp-2 max-w-md text-sm text-white/70">{featured.blurb}</p>
               <p className="mt-3 text-lg">

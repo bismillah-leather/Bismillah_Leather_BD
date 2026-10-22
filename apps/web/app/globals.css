@@ -54,8 +54,12 @@ html.storefront video {
 
 .marquee-track {
   width: max-content;
-  animation: catalog-marquee 26s linear infinite;
+  animation: catalog-marquee 38s linear infinite;
   will-change: transform;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {

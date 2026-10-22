@@ -53,7 +53,7 @@ function CountdownDigit({ value, label }: { value: string; label: string }) {
       <div className="relative overflow-hidden border border-white/20 bg-white/95 text-black backdrop-blur">
         <span
           key={value}
-          className="font-display block min-w-[2.4rem] px-2 py-1.5 text-center text-xl leading-none tracking-tight tabular-nums sm:min-w-[2.85rem] sm:px-2.5 sm:py-2 sm:text-2xl animate-[flash-tick_0.35s_ease-out]"
+          className="font-display block min-w-[2rem] px-1.5 py-1 text-center text-base leading-none tracking-tight tabular-nums sm:min-w-[2.4rem] sm:px-2 sm:py-1.5 sm:text-xl animate-[flash-tick_0.35s_ease-out]"
         >
           {value}
         </span>
@@ -284,20 +284,20 @@ export function FlashSaleSection({ sale: initialSale }: { sale: FlashSaleConfig 
         className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black via-black/40 to-transparent"
       />
 
-      <div className="relative mx-auto max-w-7xl px-3 pt-12 sm:px-6 sm:pt-16 lg:pt-20">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-          <div className="max-w-xl">
-            <p className="inline-flex items-center gap-2 text-[11px] tracking-[0.28em] text-white/50 uppercase">
-              <span className="relative flex size-2">
+      <div className="relative mx-auto max-w-7xl px-3 pt-8 sm:px-6 sm:pt-10 lg:pt-12">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-lg">
+            <p className="inline-flex items-center gap-2 text-[10px] tracking-[0.28em] text-white/50 uppercase sm:text-[11px]">
+              <span className="relative flex size-1.5">
                 <span className="absolute inline-flex size-full animate-ping rounded-full bg-white opacity-35" />
-                <span className="relative inline-flex size-2 rounded-full bg-white" />
+                <span className="relative inline-flex size-1.5 rounded-full bg-white" />
               </span>
               Live drop
             </p>
-            <h2 className="font-display mt-3 text-5xl tracking-tight sm:text-6xl md:text-7xl lg:text-8xl">
+            <h2 className="font-display mt-2 text-2xl tracking-tight sm:text-3xl md:text-4xl lg:text-5xl">
               {sale.title}
             </h2>
-            <p className="mt-3 max-w-md text-sm leading-6 text-white/60 sm:text-[15px]">
+            <p className="mt-2 max-w-md text-xs leading-5 text-white/60 sm:text-sm sm:leading-6">
               {sale.subtitle}
             </p>
             <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -443,7 +443,7 @@ export function FlashSaleSection({ sale: initialSale }: { sale: FlashSaleConfig 
                             if (suppressClickRef.current) event.preventDefault();
                           }}
                         >
-                          <h3 className="font-display mt-2 text-2xl leading-tight tracking-tight sm:text-3xl lg:text-4xl">
+                          <h3 className="font-display mt-1.5 text-lg leading-tight tracking-tight sm:text-xl lg:text-2xl">
                             {product.name}
                           </h3>
                         </Link>

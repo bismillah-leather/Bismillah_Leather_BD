@@ -10,12 +10,18 @@ export function SectionHeading({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex items-end justify-between gap-3 sm:mb-8 sm:gap-4">
+    <div className="mb-5 flex items-end justify-between gap-3 sm:mb-6 sm:gap-4">
       <div className="min-w-0">
         {eyebrow ? (
-          <p className="text-xs tracking-[0.28em] text-muted-foreground uppercase">{eyebrow}</p>
+          <p className="text-[10px] tracking-[0.28em] text-muted-foreground uppercase sm:text-[11px]">
+            {eyebrow}
+          </p>
         ) : null}
-        <h2 className={`font-display ${eyebrow ? "mt-2" : ""} text-2xl sm:text-5xl`}>{title}</h2>
+        <h2
+          className={`font-display ${eyebrow ? "mt-1.5" : ""} text-xl tracking-tight sm:text-2xl md:text-3xl`}
+        >
+          {title}
+        </h2>
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
     </div>
@@ -30,13 +36,13 @@ export function CenteredRuleHeading({
   size?: "sm" | "lg";
 }) {
   return (
-    <div className="flex items-center gap-4 sm:gap-6">
+    <div className="flex items-center gap-3 sm:gap-4">
       <span className="h-px flex-1 bg-border" />
       <h2
         className={
           size === "lg"
-            ? "font-display text-center text-2xl tracking-[0.12em] text-foreground uppercase sm:text-4xl md:text-5xl"
-            : "text-center text-xs tracking-[0.28em] text-muted-foreground uppercase"
+            ? "font-display text-center text-sm tracking-[0.18em] text-foreground uppercase sm:text-base md:text-lg"
+            : "text-center text-[10px] tracking-[0.28em] text-muted-foreground uppercase sm:text-[11px]"
         }
       >
         {children}

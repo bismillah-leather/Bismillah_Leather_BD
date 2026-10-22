@@ -1,7 +1,8 @@
-import { SHOWCASE_PRODUCTS, searchProducts } from "@bismillah/shared";
+import { INITIAL_CATEGORIES, SHOWCASE_PRODUCTS, searchProducts } from "@bismillah/shared";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { CategoryPillsBar, categoryPillClass } from "@/components/category-pills";
 import { ProductGrid } from "@/components/product-grid";
 
 export const metadata: Metadata = {
@@ -36,13 +37,13 @@ async function SearchResults({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <h1 className="font-display text-4xl sm:text-5xl">
+      <h1 className="font-display text-2xl tracking-tight sm:text-3xl">
         {query ? `Results for “${query}”` : "Shop all"}
       </h1>
-      <p className="mt-2 text-sm text-muted-foreground">
+      <p className="mt-1.5 text-xs text-muted-foreground sm:text-sm">
         {products.length} {products.length === 1 ? "product" : "products"}
       </p>
-      <form action="/search" className="mt-5 max-w-xl">
+      <form action="/search" className="mt-4 max-w-xl">
         <label className="sr-only" htmlFor="search-q">
           Search products
         </label>
@@ -51,26 +52,25 @@ async function SearchResults({
           name="q"
           defaultValue={query === "sale" ? "" : query}
           placeholder="Name or SKU"
-          className="h-12 w-full rounded-full border border-input bg-white px-4 text-base outline-none focus-visible:border-foreground"
+          className="h-10 w-full rounded-full border border-input bg-white px-4 text-sm outline-none focus-visible:border-foreground"
         />
       </form>
-      <div className="sticky top-[var(--site-header-offset,7rem)] z-40 -mx-4 mt-5 border-b border-border bg-white/95 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6">
-        <div className="flex gap-2 overflow-x-auto pb-0.5">
+      <div className="-mx-4 mt-4 sm:-mx-6">
+        <CategoryPillsBar>
           {[
-            { href: "/search", label: "All" },
-            { href: "/search?q=wallet", label: "Wallets" },
-            { href: "/search?q=belt", label: "Belts" },
-            { href: "/search?q=sale", label: "Sale" },
+            { href: "/search", label: "All", active: !query },
+            ...INITIAL_CATEGORIES.map((category) => ({
+              href: `/search?q=${category.slug}`,
+              label: category.name,
+              active: query === category.slug,
+            })),
+            { href: "/search?q=sale", label: "Sale", active: query.toLowerCase() === "sale" },
           ].map((chip) => (
-            <Link
-              key={chip.href}
-              href={chip.href}
-              className="inline-flex h-10 shrink-0 items-center border border-input bg-white px-4 text-sm"
-            >
+            <Link key={chip.href} href={chip.href} className={categoryPillClass(chip.active)}>
               {chip.label}
             </Link>
           ))}
-        </div>
+        </CategoryPillsBar>
       </div>
       <div className="mt-8">
         <ProductGrid products={products} />

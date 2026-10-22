@@ -6,7 +6,9 @@ import { Suspense } from "react";
 import { ProductBuy } from "@/components/product-buy";
 import { ProductGallery } from "@/components/product-gallery";
 import { ProductGrid } from "@/components/product-grid";
+import { ProductInfoSection } from "@/components/product-info-section";
 import { TrustStrip } from "@/components/trust-strip";
+import { videoUrlForSlug } from "@/lib/product-videos-store";
 
 export function generateStaticParams() {
   return SHOWCASE_PRODUCTS.map((product) => ({ slug: product.slug }));
@@ -38,6 +40,9 @@ async function ProductContent({ params }: { params: Promise<{ slug: string }> })
   const { slug } = await params;
   const product = productBySlug(slug);
   if (!product) notFound();
+
+  const videoUrl = await videoUrlForSlug(slug, product.videoUrl);
+  const view = toProductView(product, { videoUrl });
 
   const related = SHOWCASE_PRODUCTS.filter((item) => item.slug !== product.slug).slice(0, 4);
   const recentlyViewed = SHOWCASE_PRODUCTS.filter(
@@ -80,9 +85,14 @@ async function ProductContent({ params }: { params: Promise<{ slug: string }> })
             </ol>
           </nav>
 
-          <div className="mt-6 grid items-start gap-8 lg:mt-10 lg:grid-cols-[1.08fr_0.92fr] lg:gap-14 xl:gap-16">
+          <div className="mt-6 grid items-start gap-8 lg:mt-10 lg:grid-cols-[1.12fr_0.88fr] lg:gap-12 xl:gap-16">
             <ProductGallery images={galleryFor(product)} alt={product.name} />
-            <ProductBuy product={toProductView(product)} />
+            <ProductBuy product={view} />
+          </div>
+
+          {/* Full-width: Details | Description; video only if admin linked this product */}
+          <div className="mt-12 border-t border-border pt-10 lg:mt-16 lg:pt-14">
+            <ProductInfoSection product={view} />
           </div>
         </div>
       </section>

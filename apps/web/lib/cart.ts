@@ -58,7 +58,7 @@ export function cartCount(lines = readRaw()): number {
 
 export function addToCart(slug: string, color: string, qty = 1) {
   const product = productBySlug(slug);
-  if (!product || !product.inStock) return;
+  if (!product || !product.inStock) return false;
   const safeQty = Math.max(1, Math.min(5, Math.floor(qty)));
   const lines = [...readRaw()];
   const index = lines.findIndex((line) => line.slug === slug && line.color === color);
@@ -69,6 +69,15 @@ export function addToCart(slug: string, color: string, qty = 1) {
     lines.push({ slug, color, qty: safeQty });
   }
   writeRaw(lines);
+  return true;
+}
+
+/** Add item then go to checkout (Buy now). */
+export function buyNow(slug: string, color: string, qty = 1) {
+  const ok = addToCart(slug, color, qty);
+  if (!ok || typeof window === "undefined") return false;
+  window.location.assign("/checkout");
+  return true;
 }
 
 export function setCartQty(slug: string, color: string, qty: number) {

@@ -83,14 +83,16 @@ export function ProductCard({ product }: { product: ShowcaseProduct }) {
         ) : null}
       </Link>
 
-      <div className="mt-3 flex flex-1 flex-col">
+      <div className="mt-2.5 flex flex-1 flex-col">
         <Link href={`/product/${product.slug}`}>
-          <h3 className="text-sm leading-snug text-foreground sm:text-[15px]">{product.name}</h3>
+          <h3 className="text-[13px] leading-snug text-foreground transition group-hover:underline sm:text-sm">
+            {product.name}
+          </h3>
         </Link>
-        <p className="mt-1 text-[11px] tracking-[0.1em] text-muted-foreground uppercase">
+        <p className="mt-1 text-[10px] tracking-[0.1em] text-muted-foreground uppercase">
           {product.colors.join(" · ")}
         </p>
-        <p className="mt-1.5 text-sm">
+        <p className="mt-1.5 text-[13px] sm:text-sm">
           <span className="font-medium">{formatPaisa(price)}</span>
           {product.salePaisa ? (
             <span className="ml-2 text-muted-foreground line-through">
@@ -98,7 +100,7 @@ export function ProductCard({ product }: { product: ShowcaseProduct }) {
             </span>
           ) : null}
         </p>
-        <div className="mt-auto pt-3">
+        <div className="mt-auto pt-2.5">
           <ProductCardActions slug={product.slug} color={color} inStock={product.inStock} compact />
         </div>
       </div>

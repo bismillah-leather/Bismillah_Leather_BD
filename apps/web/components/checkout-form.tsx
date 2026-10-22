@@ -17,7 +17,7 @@ const SHIPPING = {
 
 export function CheckoutForm() {
   const { hydrated, items, count, setQty, remove } = useCart();
-  const [querySeeded, setQuerySeeded] = useState(false);
+  const [bootstrapped, setBootstrapped] = useState(false);
   const [shipping, setShipping] = useState<ShippingZone>("inside");
   const [payment, setPayment] = useState<"cod" | "ssl">("cod");
   const [error, setError] = useState("");
@@ -27,17 +27,19 @@ export function CheckoutForm() {
   const [doneShipping, setDoneShipping] = useState<ShippingZone>("inside");
   const [donePayment, setDonePayment] = useState<"cod" | "ssl">("cod");
 
+  // Seed cart from ?product=… before we decide empty vs ready (Buy now race fix).
   useEffect(() => {
-    if (!hydrated || querySeeded) return;
+    if (!hydrated || bootstrapped) return;
     const params = new URLSearchParams(window.location.search);
     const slug = params.get("product");
     if (slug) {
       const color = params.get("color") ?? "Black";
       const qty = Math.max(1, Math.min(5, Number(params.get("qty") ?? "1") || 1));
       addToCart(slug, color, qty);
+      window.history.replaceState({}, "", "/checkout");
     }
-    setQuerySeeded(true);
-  }, [hydrated, querySeeded]);
+    setBootstrapped(true);
+  }, [hydrated, bootstrapped]);
 
   const lines = items;
   const subtotal = useMemo(
@@ -75,7 +77,7 @@ export function CheckoutForm() {
     );
   }
 
-  if (!hydrated) {
+  if (!hydrated || !bootstrapped) {
     return <p className="text-sm text-muted-foreground">Loading checkout…</p>;
   }
 
@@ -291,30 +293,13 @@ export function CheckoutForm() {
                   className="sr-only"
                 />
               </label>
-              <label
-                className={`flex cursor-pointer items-center gap-3 border-t border-input px-4 py-3.5 ${
-                  payment === "ssl" ? "bg-secondary/50" : "bg-white"
-                }`}
-              >
-                <span
-                  className={`flex size-4 items-center justify-center rounded-full border ${
-                    payment === "ssl" ? "border-foreground" : "border-input"
-                  }`}
-                >
-                  {payment === "ssl" ? <span className="size-2 rounded-full bg-foreground" /> : null}
-                </span>
+              <label className="flex cursor-not-allowed items-center gap-3 border-t border-input px-4 py-3.5 opacity-55">
+                <span className="flex size-4 items-center justify-center rounded-full border border-input" />
                 <span className="text-sm">
                   <span className="font-medium">Online pay</span>
                   <span className="ml-2 text-xs text-muted-foreground">bKash / card · soon</span>
                 </span>
-                <input
-                  type="radio"
-                  name="payment"
-                  value="ssl"
-                  checked={payment === "ssl"}
-                  onChange={() => setPayment("ssl")}
-                  className="sr-only"
-                />
+                <input type="radio" name="payment" value="ssl" disabled className="sr-only" />
               </label>
             </div>
           </section>

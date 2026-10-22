@@ -1,22 +1,19 @@
 "use client";
 
 import { BRAND, formatPaisa, type ProductView } from "@bismillah/shared";
-import { ChevronDown, Heart, Phone, ShoppingBag, Zap } from "lucide-react";
-import Link from "next/link";
+import { Heart, Phone, ShoppingBag, Zap } from "lucide-react";
 import { useState } from "react";
-import { addToCart } from "@/lib/cart";
+import { addToCart, buyNow } from "@/lib/cart";
 import { PaymentStrip } from "./payment-strip";
 
 export function ProductBuy({ product }: { product: ProductView }) {
   const [color, setColor] = useState(product.colors[0] ?? "Black");
   const [qty, setQty] = useState(1);
-  const [openDesc, setOpenDesc] = useState(true);
   const [saved, setSaved] = useState(false);
   const [added, setAdded] = useState(false);
+  const [busy, setBusy] = useState(false);
   const price = BigInt(product.pricePaisa);
   const compare = product.comparePaisa ? BigInt(product.comparePaisa) : null;
-  const query = `product=${product.slug}&color=${encodeURIComponent(color)}&qty=${qty}`;
-  const checkoutHref = product.inStock ? `/checkout?${query}` : "#";
   const whatsappHref = `${BRAND.whatsappUrl}?text=${encodeURIComponent(
     `আসসালামু আলাইকুম, ${product.name} (${product.sku}) · ${color} × ${qty} নিতে চাই।`,
   )}`;
@@ -25,6 +22,20 @@ export function ProductBuy({ product }: { product: ProductView }) {
     product.categorySlug.replaceAll("-", " "),
     ...product.colors.slice(0, 2),
   ];
+
+  const handleBuyNow = () => {
+    if (!product.inStock || busy) return;
+    setBusy(true);
+    const ok = buyNow(product.slug, color, qty);
+    if (!ok) setBusy(false);
+  };
+
+  const handleAdd = () => {
+    if (!product.inStock) return;
+    if (!addToCart(product.slug, color, qty)) return;
+    setAdded(true);
+    window.setTimeout(() => setAdded(false), 1400);
+  };
 
   return (
     <div className="lg:sticky lg:top-[calc(var(--site-header-offset,7rem)+0.75rem)]">
@@ -115,26 +126,23 @@ export function ProductBuy({ product }: { product: ProductView }) {
       </div>
 
       <div className="mt-5 hidden gap-3 sm:grid sm:grid-cols-2">
-        <Link
-          href={checkoutHref}
-          aria-disabled={!product.inStock}
+        <button
+          type="button"
+          disabled={!product.inStock || busy}
+          onClick={handleBuyNow}
           className={`inline-flex h-12 items-center justify-center gap-2 text-sm font-medium tracking-wide uppercase transition ${
             product.inStock
-              ? "bg-foreground text-background hover:opacity-90"
+              ? "bg-foreground text-background hover:opacity-90 disabled:opacity-60"
               : "pointer-events-none bg-secondary text-muted-foreground"
           }`}
         >
           <Zap className="size-4" strokeWidth={1.75} />
           Buy now
-        </Link>
+        </button>
         <button
           type="button"
           disabled={!product.inStock}
-          onClick={() => {
-            addToCart(product.slug, color, qty);
-            setAdded(true);
-            window.setTimeout(() => setAdded(false), 1400);
-          }}
+          onClick={handleAdd}
           className={`inline-flex h-12 items-center justify-center gap-2 border text-sm font-medium tracking-wide uppercase transition ${
             product.inStock
               ? added
@@ -181,49 +189,11 @@ export function ProductBuy({ product }: { product: ProductView }) {
         <PaymentStrip />
       </div>
 
-      <div className="mt-6 border-t border-border">
-        <button
-          type="button"
-          className="flex w-full items-center justify-between py-4 text-left text-sm font-medium"
-          onClick={() => setOpenDesc((value) => !value)}
-          aria-expanded={openDesc}
-        >
-          Description
-          <ChevronDown className={`size-4 transition ${openDesc ? "rotate-180" : ""}`} />
-        </button>
-        {openDesc ? (
-          <div className="pb-5 text-sm leading-7 text-muted-foreground">
-            <p>{product.blurb}</p>
-            <ul className="mt-3 grid gap-1.5">
-              <li>Full-grain leather feel, cut for daily carry</li>
-              <li>Packed after a confirmation call · Mirpur-10 showroom</li>
-              <li>Cash on delivery across Bangladesh</li>
-            </ul>
-          </div>
-        ) : null}
-      </div>
-
-      <div className="border-t border-border">
-        <details className="group py-4">
-          <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium">
-            Shipping
-            <ChevronDown className="size-4 transition group-open:rotate-180" />
-          </summary>
-          <p className="mt-3 text-sm leading-7 text-muted-foreground">
-            Inside Dhaka ৳80. Outside Dhaka ৳130. We call before Pathao / Steadfast / RedX booking.
-          </p>
-        </details>
-      </div>
-
       <div className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 gap-2 border-t border-border bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] backdrop-blur-md sm:hidden">
         <button
           type="button"
           disabled={!product.inStock}
-          onClick={() => {
-            addToCart(product.slug, color, qty);
-            setAdded(true);
-            window.setTimeout(() => setAdded(false), 1400);
-          }}
+          onClick={handleAdd}
           className={`inline-flex h-12 items-center justify-center border text-sm font-medium ${
             product.inStock
               ? "border-foreground"
@@ -232,16 +202,18 @@ export function ProductBuy({ product }: { product: ProductView }) {
         >
           {added ? "Added" : "Add to cart"}
         </button>
-        <Link
-          href={checkoutHref}
+        <button
+          type="button"
+          disabled={!product.inStock || busy}
+          onClick={handleBuyNow}
           className={`inline-flex h-12 items-center justify-center text-sm font-medium ${
             product.inStock
-              ? "bg-foreground text-background"
+              ? "bg-foreground text-background disabled:opacity-60"
               : "pointer-events-none bg-secondary text-muted-foreground"
           }`}
         >
           Buy now
-        </Link>
+        </button>
       </div>
     </div>
   );

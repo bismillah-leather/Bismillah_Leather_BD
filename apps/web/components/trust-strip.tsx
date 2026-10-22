@@ -11,17 +11,17 @@ const items = [
 
 export function TrustStrip() {
   return (
-    <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
+    <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
       {items.map(({ icon: Icon, title, text }) => (
         <li
           key={title}
-          className="border border-border bg-white px-5 py-6 transition duration-300 hover:-translate-y-1 hover:border-foreground sm:px-6 sm:py-8"
+          className="border border-border bg-white px-4 py-4 transition duration-300 hover:-translate-y-0.5 hover:border-foreground sm:px-5 sm:py-5"
         >
-          <div className="flex size-12 items-center justify-center border border-border bg-secondary sm:size-14">
-            <Icon className="size-5 sm:size-6" strokeWidth={1.6} aria-hidden="true" />
+          <div className="flex size-9 items-center justify-center border border-border bg-secondary sm:size-10">
+            <Icon className="size-4 sm:size-[18px]" strokeWidth={1.6} aria-hidden="true" />
           </div>
-          <p className="font-display mt-5 text-xl tracking-tight sm:text-2xl">{title}</p>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">{text}</p>
+          <p className="font-display mt-3 text-base tracking-tight sm:text-lg">{title}</p>
+          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground sm:text-sm">{text}</p>
         </li>
       ))}
     </ul>

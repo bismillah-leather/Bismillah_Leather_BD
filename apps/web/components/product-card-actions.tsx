@@ -1,9 +1,9 @@
 "use client";
 
 import { ShoppingBag } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { addToCart } from "@/lib/cart";
+import { addToCart, buyNow } from "@/lib/cart";
 
 export function ProductCardActions({
   slug,
@@ -20,8 +20,9 @@ export function ProductCardActions({
   tone?: "light" | "dark";
   flush?: boolean;
 }) {
+  const router = useRouter();
   const [added, setAdded] = useState(false);
-  const checkoutHref = `/checkout?product=${encodeURIComponent(slug)}&color=${encodeURIComponent(color)}`;
+  const [busy, setBusy] = useState(false);
   const dark = tone === "dark";
 
   if (!inStock) {
@@ -32,20 +33,27 @@ export function ProductCardActions({
 
   return (
     <div className={`${flush ? "" : "mt-3"} flex items-stretch gap-2`}>
-      <Link
-        href={checkoutHref}
-        className={`inline-flex flex-1 items-center justify-center font-medium transition hover:opacity-90 ${
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => {
+          setBusy(true);
+          const ok = buyNow(slug, color, 1);
+          if (!ok) setBusy(false);
+        }}
+        className={`inline-flex flex-1 items-center justify-center font-medium transition hover:opacity-90 disabled:opacity-60 ${
           compact ? "h-9 text-xs sm:h-10" : "h-10 text-sm sm:h-11"
         } ${dark ? "bg-white text-black" : "bg-foreground text-background"}`}
       >
         Buy now
-      </Link>
+      </button>
       <button
         type="button"
         aria-label="Add to cart"
         onClick={() => {
-          addToCart(slug, color, 1);
+          if (!addToCart(slug, color, 1)) return;
           setAdded(true);
+          router.refresh();
           window.setTimeout(() => setAdded(false), 1200);
         }}
         className={`inline-flex shrink-0 items-center justify-center border transition ${

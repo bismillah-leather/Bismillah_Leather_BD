@@ -42,3 +42,6 @@ export {
   serializeFlashSale,
 } from "./flash-sale";
 export type { FlashSaleConfig, FlashSaleCountdown } from "./flash-sale";
+export { isSupportedVideoUrl, parseVideoEmbed } from "./video-embed";
+export type { VideoEmbed, VideoProvider } from "./video-embed";
+

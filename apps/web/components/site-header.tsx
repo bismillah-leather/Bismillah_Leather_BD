@@ -1,7 +1,7 @@
 "use client";
 
 import { BRAND, INITIAL_CATEGORIES } from "@bismillah/shared";
-import { Menu, Search, ShoppingBag, X } from "lucide-react";
+import { Menu, Search, ShoppingBag, User, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -128,7 +128,7 @@ export function SiteHeader() {
             <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-3 py-3 sm:gap-4 sm:px-6 sm:py-4">
               <Link
                 href="/"
-                className="font-display shrink-0 text-lg tracking-tight text-white sm:text-xl md:text-2xl"
+                className="font-display shrink-0 text-base tracking-tight text-white sm:text-lg md:text-xl"
               >
                 {BRAND.name}
               </Link>
@@ -191,7 +191,7 @@ export function SiteHeader() {
 
               <Link
                 href="/"
-                className="font-display max-w-[11rem] truncate text-center text-lg tracking-tight sm:max-w-none sm:text-xl md:text-2xl"
+                className="font-display max-w-[11rem] truncate text-center text-base tracking-tight sm:max-w-none sm:text-lg md:text-xl"
               >
                 {BRAND.name}
               </Link>
@@ -204,32 +204,17 @@ export function SiteHeader() {
                 >
                   <Search className="size-5" />
                 </Link>
+                <Link
+                  href="/account"
+                  className="inline-flex size-10 items-center justify-center rounded-full hover:bg-secondary"
+                  aria-label="Account"
+                >
+                  <User className="size-5" />
+                </Link>
                 <CartLink className="inline-flex size-10 items-center justify-center rounded-full hover:bg-secondary" />
               </div>
             </div>
 
-            {/* Category strip — only after leaving the hero (or on non-home pages). */}
-            <nav
-              aria-label="Categories"
-              className={`hidden overflow-hidden border-t border-border transition-[max-height,opacity] duration-300 ease-out lg:block ${
-                isHome && !pastHero
-                  ? "max-h-0 border-transparent opacity-0"
-                  : "max-h-14 opacity-100"
-              }`}
-            >
-              <ul className="mx-auto flex max-w-7xl items-center justify-center gap-1 overflow-x-auto px-4 py-2.5 text-sm sm:px-6">
-                {categoryLinks.map((category) => (
-                  <li key={category.slug}>
-                    <Link
-                      href={`/category/${category.slug}`}
-                      className="inline-flex h-9 items-center whitespace-nowrap px-3 text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      {category.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
           </>
         )}
 
@@ -267,6 +252,11 @@ export function SiteHeader() {
               ))}
             </ul>
             <ul className="mt-4 grid gap-1 border-t border-border pt-3 text-sm">
+              <li>
+                <Link href="/account" className="flex h-11 items-center" onClick={() => setOpen(false)}>
+                  My account
+                </Link>
+              </li>
               <li>
                 <Link href="/search" className="flex h-11 items-center" onClick={() => setOpen(false)}>
                   New arrivals
