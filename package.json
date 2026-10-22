@@ -23,7 +23,6 @@
     "db:studio": "pnpm --filter @bismillah/db studio"
   },
   "devDependencies": {
-    "prisma": "^8.0.0-rc.25",
     "turbo": "^2.5.8"
   }
 }
