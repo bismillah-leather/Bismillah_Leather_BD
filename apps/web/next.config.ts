@@ -13,8 +13,10 @@ const nextConfig: NextConfig = {
   experimental: {
     agentFeedback: true,
   },
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Keep off on Hobby: Cache Components + root layout DB reads fail Vercel prerender
+  // (/_not-found, /) even when local builds pass. Re-enable after Suspense/"use cache"
+  // coverage is complete for catalog + account routes.
+  cacheComponents: false,
   // Vercel multi-service currently 404s /_next/image; serve public/catalog directly.
   images: {
     unoptimized: true,
