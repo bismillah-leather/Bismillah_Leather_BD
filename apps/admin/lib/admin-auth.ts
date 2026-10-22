@@ -16,6 +16,17 @@ const LOCK_MS = 15 * 60 * 1000;
 
 const ARGON = { memoryCost: 19456, timeCost: 2, parallelism: 1 } as const;
 
+export async function hashAdminPassword(password: string): Promise<string> {
+  return hash(password, ARGON);
+}
+
+export async function verifyAdminPassword(
+  passwordHash: string,
+  password: string,
+): Promise<boolean> {
+  return verify(passwordHash, password);
+}
+
 export type AdminRoleName = "owner" | "manager" | "staff" | "support";
 
 const REGISTERABLE_ROLES = new Set<AdminRoleName>(["manager", "staff", "support"]);
@@ -49,6 +60,24 @@ export async function requireAdmin(): Promise<AdminSession> {
     select: { id: true, isActive: true, email: true, name: true, role: true },
   });
   if (!user?.isActive) redirect("/");
+  return {
+    sub: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+  };
+}
+
+/** For route handlers — returns null instead of redirecting. */
+export async function getActiveAdmin(): Promise<AdminSession | null> {
+  const session = await getAdminSession();
+  if (!session) return null;
+  const prisma = getPrisma();
+  const user = await prisma.adminUser.findUnique({
+    where: { id: session.sub },
+    select: { id: true, isActive: true, email: true, name: true, role: true },
+  });
+  if (!user?.isActive) return null;
   return {
     sub: user.id,
     email: user.email,

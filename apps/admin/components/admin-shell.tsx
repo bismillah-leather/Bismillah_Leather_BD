@@ -5,22 +5,40 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { LogoutButton } from "./logout-button";
 
-const LIVE_NAV = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Flash Sale", href: "/flash-sale" },
-  { label: "Product videos", href: "/product-videos" },
-  { label: "Team", href: "/team" },
-  { label: "Security", href: "/security" },
-] as const;
-
-const SOON_NAV = [
-  "Products",
-  "Orders",
-  "Inventory",
-  "Customers",
-  "Coupons",
-  "Content",
-  "Settings",
+const NAV_GROUPS = [
+  {
+    label: "Overview",
+    items: [
+      { label: "Dashboard", href: "/dashboard" },
+      { label: "Security", href: "/security" },
+    ],
+  },
+  {
+    label: "Commerce",
+    items: [
+      { label: "Orders", href: "/orders" },
+      { label: "Customers", href: "/customers" },
+      { label: "Coupons", href: "/coupons" },
+      { label: "Flash Sale", href: "/flash-sale" },
+    ],
+  },
+  {
+    label: "Catalog",
+    items: [
+      { label: "Products", href: "/products" },
+      { label: "Inventory", href: "/inventory" },
+      { label: "Product videos", href: "/product-videos" },
+    ],
+  },
+  {
+    label: "Store",
+    items: [
+      { label: "Content", href: "/content" },
+      { label: "Team", href: "/team" },
+      { label: "Settings", href: "/settings" },
+      { label: "Account", href: "/account" },
+    ],
+  },
 ] as const;
 
 function navActive(pathname: string, href: string) {
@@ -48,52 +66,38 @@ export function AdminShell({
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 py-4">
-          <p className="px-2.5 text-[10px] tracking-[0.18em] text-muted-foreground/70 uppercase">
-            Live
-          </p>
-          <ul className="mt-2 grid gap-0.5">
-            {LIVE_NAV.map((item) => {
-              const active = navActive(pathname, item.href);
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={`flex h-10 items-center rounded-md px-2.5 text-sm transition ${
-                      active
-                        ? "bg-primary/15 text-primary"
-                        : "text-foreground/80 hover:bg-secondary hover:text-foreground"
-                    }`}
-                  >
-                    <span
-                      className={`mr-2.5 h-1 w-1 rounded-full ${
-                        active ? "bg-primary" : "bg-transparent"
-                      }`}
-                      aria-hidden
-                    />
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-
-          <details className="mt-7 group">
-            <summary className="cursor-pointer list-none px-2.5 text-[10px] tracking-[0.18em] text-muted-foreground/50 uppercase marker:content-none [&::-webkit-details-marker]:hidden">
-              Coming soon
-              <span className="ml-2 text-muted-foreground/35 group-open:hidden">+</span>
-              <span className="ml-2 hidden text-muted-foreground/35 group-open:inline">−</span>
-            </summary>
-            <ul className="mt-2 grid gap-0.5">
-              {SOON_NAV.map((label) => (
-                <li key={label}>
-                  <span className="flex h-9 items-center justify-between rounded-md px-2.5 text-sm text-muted-foreground/35">
-                    {label}
-                    <span className="text-[9px] tracking-[0.14em] uppercase">Soon</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </details>
+          {NAV_GROUPS.map((group) => (
+            <div key={group.label} className="mb-6">
+              <p className="px-2.5 text-[10px] tracking-[0.18em] text-muted-foreground/70 uppercase">
+                {group.label}
+              </p>
+              <ul className="mt-2 grid gap-0.5">
+                {group.items.map((item) => {
+                  const active = navActive(pathname, item.href);
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className={`flex h-10 items-center rounded-md px-2.5 text-sm transition ${
+                          active
+                            ? "bg-primary/15 text-primary"
+                            : "text-foreground/80 hover:bg-secondary hover:text-foreground"
+                        }`}
+                      >
+                        <span
+                          className={`mr-2.5 h-1 w-1 rounded-full ${
+                            active ? "bg-primary" : "bg-transparent"
+                          }`}
+                          aria-hidden
+                        />
+                        {item.label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
         </nav>
 
         <div className="mt-auto border-t border-border px-5 py-4">

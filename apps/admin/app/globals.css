@@ -149,14 +149,15 @@
 .admin-bar {
   display: flex;
   align-items: flex-end;
-  gap: 0.35rem;
-  height: 7.5rem;
+  gap: 0.45rem;
+  height: 8.5rem;
 }
 
-.admin-bar span {
-  flex: 1;
-  min-width: 0;
-  border-radius: 2px 2px 0 0;
-  background: linear-gradient(to top, rgba(198, 161, 91, 0.25), var(--primary));
-  transition: height 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+.admin-bar-fill {
+  display: block;
+  width: 72%;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(to top, rgba(198, 161, 91, 0.2), #c6a15b);
+  box-shadow: 0 0 12px rgba(198, 161, 91, 0.18);
+  transition: height 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }

@@ -159,8 +159,8 @@ export default async function AdminHomePage() {
   ];
 
   const catalog = [
-    { label: "Active products", value: productsActive },
-    { label: "Active variants", value: variantsActive },
+    { label: "Published products", value: productsActive },
+    { label: "Live variants", value: variantsActive },
     { label: "Low stock", value: lowStock },
     { label: "Out of stock", value: outOfStock },
     { label: "Staff online", value: staffActive },
@@ -168,10 +168,14 @@ export default async function AdminHomePage() {
   ];
 
   const shortcuts = [
-    { href: "/flash-sale", title: "Flash sale", body: "Countdown + discount" },
-    { href: "/product-videos", title: "Product films", body: "YouTube / Facebook" },
-    { href: "/team", title: "Team", body: "Invite staff" },
-    { href: "/security", title: "Security", body: "Alerts & lockouts" },
+    { href: "/orders", title: "Orders", body: "Confirm & fulfill" },
+    { href: "/products", title: "Products", body: "Publish catalog" },
+    { href: "/inventory", title: "Inventory", body: "Adjust stock" },
+    { href: "/customers", title: "Customers", body: "Buyers & blocks" },
+    { href: "/coupons", title: "Coupons", body: "Promo codes" },
+    { href: "/content", title: "Content", body: "Pages & home" },
+    { href: "/flash-sale", title: "Flash sale", body: "Countdown deals" },
+    { href: "/settings", title: "Settings", body: "Store contacts" },
   ];
 
   return (
@@ -232,13 +236,20 @@ export default async function AdminHomePage() {
           </div>
           <div className="admin-bar mt-5">
             {dayCounts.map((count, i) => {
-              const h = Math.max(8, Math.round((count / maxDay) * 100));
+              const barPx =
+                count === 0 ? 10 : Math.max(24, Math.round((count / maxDay) * 110));
               return (
-                <span
+                <div
                   key={dayStarts[i]!.toISOString()}
-                  style={{ height: `${h}%` }}
+                  className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1.5"
                   title={`${shortDay(dayStarts[i]!)}: ${count}`}
-                />
+                >
+                  <span className="text-[10px] tabular-nums text-muted-foreground">{count}</span>
+                  <span
+                    className={`admin-bar-fill ${count === 0 ? "opacity-40" : ""}`}
+                    style={{ height: `${barPx}px` }}
+                  />
+                </div>
               );
             })}
           </div>
