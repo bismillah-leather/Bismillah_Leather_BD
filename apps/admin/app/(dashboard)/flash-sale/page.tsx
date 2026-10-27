@@ -1,6 +1,6 @@
 "use client";
 
-import { SHOWCASE_PRODUCTS, type FlashSaleConfig } from "@bismillah/shared";
+import { SHOWCASE_PRODUCTS, type FlashSaleConfig, type FlashSaleItem } from "@bismillah/shared";
 import { useEffect, useMemo, useState } from "react";
 import { AdminPageHeader } from "@/components/admin-page-header";
 
@@ -9,15 +9,27 @@ type ProductOption = { name: string; slug: string; sku: string };
 const STORE_API =
   process.env.NEXT_PUBLIC_STORE_URL?.replace(/\/$/, "") || "http://localhost:3000";
 
+type SelectedProduct = {
+  slug: string;
+  durationHours: string;
+};
+
 type FormState = {
   title: string;
   subtitle: string;
   isActive: boolean;
-  durationHours: string;
   discountKind: "fixed" | "percent";
   discountInput: string;
-  productSlugs: string[];
+  products: SelectedProduct[];
 };
+
+function hoursFromItem(item: FlashSaleItem): string {
+  const end = Date.parse(item.endsAt);
+  const hoursLeft = Number.isFinite(end)
+    ? Math.max(1, Math.round((end - Date.now()) / (60 * 60 * 1000)))
+    : 8;
+  return String(Math.min(720, Math.max(1, hoursLeft)));
+}
 
 function toForm(sale: FlashSaleConfig): FormState {
   const discountInput =
@@ -25,21 +37,24 @@ function toForm(sale: FlashSaleConfig): FormState {
       ? String(Number(sale.discountValue) / 100)
       : String(Number(sale.discountValue) / 100);
 
-  const end = Date.parse(sale.endsAt);
-  const start = Date.parse(sale.startsAt);
-  const hoursLeft =
-    Number.isFinite(end) && Number.isFinite(start)
-      ? Math.max(1, Math.round((end - Date.now()) / (60 * 60 * 1000)))
-      : 8;
+  const items = sale.items?.length
+    ? sale.items
+    : sale.productSlugs.map((slug) => ({
+        slug,
+        startsAt: sale.startsAt,
+        endsAt: sale.endsAt,
+      }));
 
   return {
     title: sale.title,
     subtitle: sale.subtitle,
     isActive: sale.isActive,
-    durationHours: String(Math.min(720, Math.max(1, hoursLeft))),
     discountKind: sale.discountKind,
     discountInput,
-    productSlugs: [...sale.productSlugs],
+    products: items.map((item) => ({
+      slug: item.slug,
+      durationHours: hoursFromItem(item),
+    })),
   };
 }
 
@@ -52,7 +67,6 @@ export default function FlashSaleAdminPage() {
     "loading",
   );
   const [message, setMessage] = useState("");
-  const [previewEndsAt, setPreviewEndsAt] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -70,7 +84,6 @@ export default function FlashSaleAdminPage() {
         }
         if (cancelled) return;
         setForm(toForm(sale));
-        setPreviewEndsAt(sale.endsAt);
         setStatus("idle");
       } catch {
         if (cancelled) return;
@@ -85,7 +98,7 @@ export default function FlashSaleAdminPage() {
     };
   }, []);
 
-  const selectedCount = form?.productSlugs.length ?? 0;
+  const selectedCount = form?.products.length ?? 0;
 
   const discountHint = useMemo(() => {
     if (!form) return "";
@@ -98,12 +111,27 @@ export default function FlashSaleAdminPage() {
   function toggleSlug(slug: string) {
     setForm((prev) => {
       if (!prev) return prev;
-      const has = prev.productSlugs.includes(slug);
+      const existing = prev.products.find((p) => p.slug === slug);
+      if (existing) {
+        return {
+          ...prev,
+          products: prev.products.filter((p) => p.slug !== slug),
+        };
+      }
+      const nextIndex = prev.products.length;
       return {
         ...prev,
-        productSlugs: has
-          ? prev.productSlugs.filter((s) => s !== slug)
-          : [...prev.productSlugs, slug],
+        products: [...prev.products, { slug, durationHours: String(8 + nextIndex * 2) }],
+      };
+    });
+  }
+
+  function setProductHours(slug: string, durationHours: string) {
+    setForm((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        products: prev.products.map((p) => (p.slug === slug ? { ...p, durationHours } : p)),
       };
     });
   }
@@ -114,28 +142,28 @@ export default function FlashSaleAdminPage() {
     setStatus("saving");
     setMessage("");
 
-    const hours = Number(form.durationHours);
     const amount = Number(form.discountInput);
-    if (!Number.isFinite(hours) || hours <= 0) {
-      setStatus("error");
-      setMessage("Duration must be a positive number of hours.");
-      return;
-    }
     if (!Number.isFinite(amount) || amount <= 0) {
       setStatus("error");
       setMessage("Discount must be a positive number.");
       return;
     }
-    if (form.productSlugs.length === 0) {
+    if (form.products.length === 0) {
       setStatus("error");
       setMessage("Select at least one product.");
       return;
     }
 
-    const discountValue =
-      form.discountKind === "percent"
-        ? String(Math.round(amount * 100))
-        : String(Math.round(amount * 100));
+    for (const product of form.products) {
+      const hours = Number(product.durationHours);
+      if (!Number.isFinite(hours) || hours <= 0) {
+        setStatus("error");
+        setMessage("Set a valid duration (hours) for each selected product.");
+        return;
+      }
+    }
+
+    const discountValue = String(Math.round(amount * 100));
 
     try {
       const res = await fetch(`${STORE_API}/api/flash-sale`, {
@@ -145,18 +173,19 @@ export default function FlashSaleAdminPage() {
           title: form.title,
           subtitle: form.subtitle,
           isActive: form.isActive,
-          durationHours: hours,
           discountKind: form.discountKind,
           discountValue,
-          productSlugs: form.productSlugs,
+          items: form.products.map((product) => ({
+            slug: product.slug,
+            durationHours: Number(product.durationHours),
+          })),
         }),
       });
       const data = (await res.json()) as FlashSaleConfig & { error?: string };
       if (!res.ok) throw new Error(data.error || "Save failed");
       setForm(toForm(data));
-      setPreviewEndsAt(data.endsAt);
       setStatus("saved");
-      setMessage("Flash sale saved. Storefront countdown updated.");
+      setMessage("Flash sale saved. Each product has its own countdown.");
     } catch (err) {
       setStatus("error");
       setMessage(err instanceof Error ? err.message : "Save failed");
@@ -179,7 +208,7 @@ export default function FlashSaleAdminPage() {
       <AdminPageHeader
         eyebrow="Merchandising"
         title="Flash Sale"
-        description="Set duration and discount. Storefront shows a live countdown with sale prices."
+        description="Pick products and set a separate countdown for each. Flash Sale stays its own section."
       />
 
       <form onSubmit={onSave} className="mt-8 grid max-w-2xl gap-6">
@@ -214,25 +243,6 @@ export default function FlashSaleAdminPage() {
             className="size-4 accent-primary"
           />
           <span>Active on storefront</span>
-        </label>
-
-        <label className="grid gap-2 text-sm">
-          <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
-            Duration (hours from now)
-          </span>
-          <input
-            type="number"
-            min={0.25}
-            step={0.25}
-            value={form.durationHours}
-            onChange={(e) => setForm({ ...form, durationHours: e.target.value })}
-            className="admin-field"
-            required
-          />
-          <span className="text-xs text-muted-foreground">
-            Saving restarts the countdown from now.
-            {previewEndsAt ? ` Current end: ${new Date(previewEndsAt).toLocaleString()}` : null}
-          </span>
         </label>
 
         <fieldset className="grid gap-3">
@@ -276,27 +286,46 @@ export default function FlashSaleAdminPage() {
 
         <fieldset className="grid gap-3">
           <legend className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
-            Products ({selectedCount})
+            Products · separate timers ({selectedCount})
           </legend>
-          <ul className="admin-panel max-h-72 overflow-y-auto">
+          <ul className="admin-panel max-h-[28rem] overflow-y-auto">
             {catalog.map((product) => {
-              const checked = form.productSlugs.includes(product.slug);
+              const selected = form.products.find((p) => p.slug === product.slug);
               return (
                 <li key={product.slug} className="border-b border-border last:border-b-0">
-                  <label className="flex cursor-pointer items-center gap-3 px-3.5 py-3 text-sm transition hover:bg-secondary/60">
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => toggleSlug(product.slug)}
-                      className="size-4 accent-primary"
-                    />
-                    <span className="flex-1">{product.name}</span>
-                    <span className="text-xs text-muted-foreground">{product.sku}</span>
-                  </label>
+                  <div className="flex flex-wrap items-center gap-3 px-3.5 py-3 text-sm transition hover:bg-secondary/60">
+                    <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(selected)}
+                        onChange={() => toggleSlug(product.slug)}
+                        className="size-4 accent-primary"
+                      />
+                      <span className="min-w-0 flex-1 truncate">{product.name}</span>
+                      <span className="text-xs text-muted-foreground">{product.sku}</span>
+                    </label>
+                    {selected ? (
+                      <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="tracking-wide uppercase">Hours</span>
+                        <input
+                          type="number"
+                          min={0.25}
+                          step={0.25}
+                          value={selected.durationHours}
+                          onChange={(e) => setProductHours(product.slug, e.target.value)}
+                          className="admin-field h-9 w-20 px-2"
+                          required
+                        />
+                      </label>
+                    ) : null}
+                  </div>
                 </li>
               );
             })}
           </ul>
+          <p className="text-xs text-muted-foreground">
+            Saving restarts each product countdown from now for its own hours.
+          </p>
         </fieldset>
 
         <div className="flex flex-wrap items-center gap-3 pt-1">

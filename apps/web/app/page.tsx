@@ -55,11 +55,12 @@ export default async function HomePage() {
 
         <AllProductsSection products={products} />
 
-        <NewArrivalsSection products={products} />
-
         <HomeFlashSale />
 
+        <NewArrivalsSection products={products} />
+
         <BestSellersSection products={products} />
+
 
         <section className="border-y border-border bg-white py-8 sm:py-12">
           <div className="mx-auto max-w-7xl px-3 sm:px-6">

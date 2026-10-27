@@ -2,6 +2,7 @@
 
 import {
   flashSaleCountdown,
+  flashSaleItemForSlug,
   flashSalePricePaisa,
   flashSaleProducts,
   formatPaisa,
@@ -111,7 +112,8 @@ function stageSpacing() {
 
 export function FlashSaleSection({ sale: initialSale }: { sale: FlashSaleConfig }) {
   const [sale, setSale] = useState(initialSale);
-  const products = useMemo(() => flashSaleProducts(sale), [sale]);
+  const [now, setNow] = useState(() => Date.now());
+  const products = useMemo(() => flashSaleProducts(sale, new Date(now)), [sale, now]);
 
   const trackRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -135,6 +137,11 @@ export function FlashSaleSection({ sale: initialSale }: { sale: FlashSaleConfig 
   }, [initialSale]);
 
   useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
@@ -153,7 +160,12 @@ export function FlashSaleSection({ sale: initialSale }: { sale: FlashSaleConfig 
 
   useEffect(() => {
     setActive(0);
-  }, [sale.id, sale.endsAt, products.length]);
+  }, [sale.id, sale.endsAt, sale.items, products.length]);
+
+  useEffect(() => {
+    if (products.length === 0) return;
+    setActive((value) => Math.min(value, products.length - 1));
+  }, [products.length]);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -255,12 +267,14 @@ export function FlashSaleSection({ sale: initialSale }: { sale: FlashSaleConfig 
     setDragOffset(0);
   };
 
-  const live = isFlashSaleLive(sale);
+  const live = isFlashSaleLive(sale, new Date(now));
   if (!sale.isActive || !live || products.length === 0) {
     return null;
   }
 
   const featured = products[active] ?? products[0]!;
+  const featuredItem = flashSaleItemForSlug(sale, featured.slug);
+  const featuredEndsAt = featuredItem?.endsAt ?? sale.endsAt;
   const visualActive = active - dragOffset / spacing;
   const offLabel = discountLabel(sale);
 
@@ -312,9 +326,9 @@ export function FlashSaleSection({ sale: initialSale }: { sale: FlashSaleConfig 
 
           <div className="lg:pt-2">
             <p className="mb-2 text-[10px] tracking-[0.22em] text-white/40 uppercase">
-              Time remaining
+              {featured.name} · ends in
             </p>
-            <FlashCountdown endsAt={sale.endsAt} />
+            <FlashCountdown endsAt={featuredEndsAt} />
           </div>
         </div>
       </div>
@@ -453,6 +467,13 @@ export function FlashSaleSection({ sale: initialSale }: { sale: FlashSaleConfig 
                             {formatPaisa(product.pricePaisa)}
                           </span>
                         </p>
+                        <div className="pointer-events-none mt-3 scale-90 origin-left sm:scale-100">
+                          <FlashCountdown
+                            endsAt={
+                              flashSaleItemForSlug(sale, product.slug)?.endsAt ?? sale.endsAt
+                            }
+                          />
+                        </div>
                         <div className="relative z-20 mt-4 max-w-sm">
                           <ProductCardActions
                             slug={product.slug}

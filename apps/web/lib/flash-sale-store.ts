@@ -1,5 +1,6 @@
 import {
   defaultFlashSale,
+  isFlashSaleLive,
   serializeFlashSale,
   type FlashSaleConfig,
 } from "@bismillah/shared";
@@ -18,13 +19,8 @@ export async function readFlashSale(): Promise<FlashSaleConfig> {
   try {
     const raw = await fs.readFile(DATA_PATH, "utf8");
     const parsed = serializeFlashSale(JSON.parse(raw) as FlashSaleConfig);
-    if (parsed.isActive && Date.parse(parsed.endsAt) <= Date.now()) {
-      const fresh = defaultFlashSale();
-      return {
-        ...parsed,
-        startsAt: fresh.startsAt,
-        endsAt: fresh.endsAt,
-      };
+    if (parsed.isActive && !isFlashSaleLive(parsed)) {
+      return defaultFlashSale();
     }
     return parsed;
   } catch {

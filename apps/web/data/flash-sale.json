@@ -4,9 +4,41 @@
   "subtitle": "Limited time · Mirpur leather picks",
   "isActive": true,
   "startsAt": "2026-10-19T00:00:00.000Z",
-  "endsAt": "2026-10-26T18:00:00.000Z",
+  "endsAt": "2026-11-10T18:00:00.000Z",
   "discountKind": "fixed",
   "discountValue": "20000",
+  "items": [
+    {
+      "slug": "black-long-wallet",
+      "startsAt": "2026-10-19T00:00:00.000Z",
+      "endsAt": "2026-10-28T18:00:00.000Z"
+    },
+    {
+      "slug": "black-short-wallet",
+      "startsAt": "2026-10-19T00:00:00.000Z",
+      "endsAt": "2026-10-30T12:00:00.000Z"
+    },
+    {
+      "slug": "buffalo-wallet",
+      "startsAt": "2026-10-19T00:00:00.000Z",
+      "endsAt": "2026-11-01T20:00:00.000Z"
+    },
+    {
+      "slug": "black-formal-belt",
+      "startsAt": "2026-10-19T00:00:00.000Z",
+      "endsAt": "2026-11-03T16:00:00.000Z"
+    },
+    {
+      "slug": "tan-jeans-belt",
+      "startsAt": "2026-10-19T00:00:00.000Z",
+      "endsAt": "2026-11-06T10:00:00.000Z"
+    },
+    {
+      "slug": "rfid-trifold-wallet",
+      "startsAt": "2026-10-19T00:00:00.000Z",
+      "endsAt": "2026-11-10T18:00:00.000Z"
+    }
+  ],
   "productSlugs": [
     "black-long-wallet",
     "black-short-wallet",

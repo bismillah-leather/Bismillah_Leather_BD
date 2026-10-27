@@ -29,7 +29,7 @@ export function HeroSlider() {
     <section
       id="site-hero"
       aria-label="Bismillah Leather"
-      className="relative h-[min(34svh,14rem)] overflow-hidden bg-black text-white sm:h-[min(40svh,18rem)] md:h-[min(44svh,22rem)]"
+      className="relative h-[min(48svh,22rem)] overflow-hidden bg-black text-white sm:h-[min(52svh,26rem)] md:h-[min(56svh,30rem)]"
     >
       {slides.map((item, slideIndex) => {
         const active = slideIndex === index;
@@ -60,15 +60,15 @@ export function HeroSlider() {
         className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/70"
       />
 
-      <div className="relative z-10 flex h-full flex-col items-center justify-end px-4 pb-4 text-center sm:pb-5 md:pb-6">
-        <h1 className="font-display max-w-2xl text-[1.2rem] leading-[0.95] tracking-tight drop-shadow-[0_2px_18px_rgba(0,0,0,0.45)] sm:text-xl md:text-2xl">
+      <div className="relative z-10 flex h-full flex-col items-center justify-end px-4 pb-5 text-center sm:pb-6 md:pb-7">
+        <h1 className="font-display max-w-3xl text-2xl leading-[0.95] tracking-tight drop-shadow-[0_2px_18px_rgba(0,0,0,0.45)] sm:text-3xl md:text-4xl lg:text-5xl">
           {brand.name}
         </h1>
-        <p className="mt-1 max-w-sm text-[9px] leading-snug tracking-wide text-white/75 uppercase sm:text-[10px]">
+        <p className="mt-2 max-w-md text-[10px] leading-snug tracking-wide text-white/75 uppercase sm:text-xs">
           {brand.tagline}
         </p>
 
-        <div className="mt-2.5 flex items-center gap-1.5" role="tablist" aria-label="Hero slides">
+        <div className="mt-3 flex items-center gap-1.5" role="tablist" aria-label="Hero slides">
           {slides.map((item, slideIndex) => (
             <button
               key={item.src}

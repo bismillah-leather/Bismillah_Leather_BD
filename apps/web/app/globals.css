@@ -53,8 +53,12 @@ html.storefront video {
 }
 
 .marquee-track {
-  width: max-content;
-  animation: catalog-marquee 38s linear infinite;
+  display: flex !important;
+  width: max-content !important;
+  max-width: none !important;
+  flex-wrap: nowrap !important;
+  white-space: nowrap !important;
+  animation: catalog-marquee 38s linear infinite !important;
   will-change: transform;
 }
 
@@ -62,13 +66,13 @@ html.storefront video {
   animation-play-state: paused;
 }
 
+/* Keep a single scrolling row even when OS asks to reduce motion. */
 @media (prefers-reduced-motion: reduce) {
   .marquee-track {
-    animation: none;
-    flex-wrap: wrap;
-    width: auto;
-    max-width: 100%;
-    padding-inline: 1rem;
+    flex-wrap: nowrap !important;
+    width: max-content !important;
+    max-width: none !important;
+    animation: catalog-marquee 90s linear infinite !important;
   }
 }
 

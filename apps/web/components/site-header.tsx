@@ -42,7 +42,7 @@ export function SiteHeader({ brand: brandProp }: { brand?: StoreBrand }) {
   const [pastHero, setPastHero] = useState(() => pathname !== "/");
   const [offset, setOffset] = useState(112);
 
-  /** Transparent brand + search over the hero — no category strip. */
+  /** Transparent full-width search over the hero — no category strip. */
   const overHero = isHome && !pastHero && !open;
   /** Solid bar + category nav after the hero (or on every other page). */
   const solidNav = !overHero;
@@ -134,27 +134,29 @@ export function SiteHeader({ brand: brandProp }: { brand?: StoreBrand }) {
         }`}
       >
         {overHero ? (
-          <div className="pt-[max(10px,env(safe-area-inset-top,0px))]">
-            <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-3 py-3 sm:gap-4 sm:px-6 sm:py-4">
-              <Link
-                href="/"
-                className="font-display shrink-0 text-base tracking-tight text-white sm:text-lg md:text-xl"
-              >
-                {brand.name}
-              </Link>
-
-              <form action="/search" className="w-[min(100%,16rem)] sm:w-[min(100%,20rem)] md:w-[22rem]">
+          <div className="pt-[max(12px,env(safe-area-inset-top,0px))]">
+            <div className="mx-auto w-full max-w-[90rem] px-3 py-3 sm:px-6 sm:py-4 lg:px-10">
+              <form action="/search" className="w-full">
                 <label className="sr-only" htmlFor="hero-search">
                   Search products
                 </label>
-                <div className="relative">
-                  <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-white/70" />
+                <div className="group relative flex items-center overflow-hidden rounded-full border border-white/25 bg-white/[0.12] shadow-[0_12px_48px_rgba(0,0,0,0.28)] ring-1 ring-inset ring-white/10 backdrop-blur-2xl transition duration-300 focus-within:border-white/50 focus-within:bg-white/[0.18]">
+                  <Search
+                    className="pointer-events-none ml-5 size-5 shrink-0 text-white/70 transition group-focus-within:text-white sm:ml-6"
+                    strokeWidth={1.75}
+                  />
                   <input
                     id="hero-search"
                     name="q"
                     placeholder='Search "long wallet"'
-                    className="h-11 w-full rounded-full border border-white/35 bg-white/10 pr-4 pl-11 text-sm text-white outline-none backdrop-blur-md placeholder:text-white/55 transition focus-visible:border-white focus-visible:bg-white/15"
+                    className="h-12 min-w-0 flex-1 bg-transparent px-3.5 text-[15px] tracking-wide text-white outline-none placeholder:text-white/45 sm:h-14 sm:px-5 sm:text-base"
                   />
+                  <button
+                    type="submit"
+                    className="mr-2 inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-white px-4 text-sm font-medium tracking-wide text-black transition hover:bg-white/90 active:scale-[0.98] sm:mr-2.5 sm:h-11 sm:px-6"
+                  >
+                    Search
+                  </button>
                 </div>
               </form>
             </div>
