@@ -8,6 +8,18 @@ loadEnvConfig(rootDir);
 
 const adminDevOrigin = process.env.ADMIN_DEV_ORIGIN ?? "http://127.0.0.1:3001";
 
+function r2ImagePattern() {
+  const raw = process.env.R2_PUBLIC_URL?.trim();
+  if (!raw) return [];
+  try {
+    const url = new URL(raw);
+    const protocol = url.protocol === "http:" ? "http" : "https";
+    return [{ protocol, hostname: url.hostname, pathname: "/**" }] as const;
+  } catch {
+    return [];
+  }
+}
+
 const nextConfig: NextConfig = {
   transpilePackages: ["@bismillah/ui", "@bismillah/shared", "@bismillah/db"],
   experimental: {
@@ -20,7 +32,12 @@ const nextConfig: NextConfig = {
   // Vercel multi-service currently 404s /_next/image; serve public/catalog directly.
   images: {
     unoptimized: true,
-    localPatterns: [{ pathname: "/catalog/**" }],
+    localPatterns: [{ pathname: "/catalog/**" }, { pathname: "/support-avatar.jpg" }],
+    remotePatterns: [
+      { protocol: "https", hostname: "**.r2.dev", pathname: "/**" },
+      { protocol: "https", hostname: "**.r2.cloudflarestorage.com", pathname: "/**" },
+      ...r2ImagePattern(),
+    ],
   },
   // Local: storefront :3000 proxies /admin → admin app :3001 (prod uses vercel.json services).
   async rewrites() {

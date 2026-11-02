@@ -45,3 +45,28 @@ export async function PATCH(
 
   return NextResponse.json({ ok: true, page });
 }
+
+export async function DELETE(
+  _request: Request,
+  ctx: { params: Promise<{ id: string }> },
+) {
+  const admin = await getActiveAdmin();
+  if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+
+  const { id } = await ctx.params;
+  const prisma = getPrisma();
+  const page = await prisma.page.delete({
+    where: { id },
+    select: { id: true, slug: true, title: true },
+  });
+  await prisma.auditLog.create({
+    data: {
+      actorId: admin.sub,
+      action: "page.delete",
+      entityType: "Page",
+      entityId: id,
+      before: page,
+    },
+  });
+  return NextResponse.json({ ok: true });
+}

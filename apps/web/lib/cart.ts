@@ -16,11 +16,12 @@ export type CartItemView = CartLine & {
 };
 
 const STORAGE_KEY = "bl-cart-v1";
-let cached: CartLine[] = [];
+const EMPTY_LINES: CartLine[] = [];
+let cached: CartLine[] = EMPTY_LINES;
 let cacheReady = false;
 
 function readRaw(): CartLine[] {
-  if (typeof window === "undefined") return [];
+  if (typeof window === "undefined") return EMPTY_LINES;
   if (cacheReady) return cached;
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]") as CartLine[];

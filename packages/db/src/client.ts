@@ -1,6 +1,7 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "./generated/prisma/client";
 import { Pool } from "pg";
+import { loadRootEnv } from "./load-root-env";
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient; pool?: Pool };
 
@@ -23,6 +24,8 @@ export function createPrismaClient(connectionString: string): PrismaClient {
 
 export function getPrisma(): PrismaClient {
   if (globalForPrisma.prisma) return globalForPrisma.prisma;
+
+  loadRootEnv();
 
   // Prefer pooled URL at runtime (Prisma Postgres / PgBouncer). Fall back to DATABASE_URL.
   const connectionString = process.env.DATABASE_POOL_URL ?? process.env.DATABASE_URL;

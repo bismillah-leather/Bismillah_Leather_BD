@@ -102,7 +102,7 @@ export function FeaturedCategoryRail({ items }: Props) {
   const visualActive = active - dragOffset / spacing;
 
   return (
-    <div className="featured-rail-scope relative">
+    <div className="featured-rail-scope relative isolate">
       <div
         ref={trackRef}
         className="relative mx-auto h-[17rem] touch-pan-y select-none overflow-hidden sm:h-[20rem] lg:h-[22rem]"
@@ -170,15 +170,24 @@ export function FeaturedCategoryRail({ items }: Props) {
                     }
                   }}
                 >
-                  <Image
-                    src={item.image}
-                    alt={item.name}
-                    fill
-                    sizes="(min-width: 1024px) 240px, 180px"
-                    className="object-cover transition duration-700 ease-out group-hover:scale-[1.03]"
-                    draggable={false}
-                    priority={abs < 1.5}
-                  />
+                  {item.image.startsWith("/") || /\.r2\.dev|r2\.cloudflarestorage\.com/i.test(item.image) ? (
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      fill
+                      sizes="(min-width: 1024px) 240px, 180px"
+                      className="object-cover transition duration-700 ease-out group-hover:scale-[1.03]"
+                      draggable={false}
+                      priority={abs < 1.5}
+                    />
+                  ) : (
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="absolute inset-0 size-full object-cover transition duration-700 ease-out group-hover:scale-[1.03]"
+                      draggable={false}
+                    />
+                  )}
                   <span className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
                   {isCenter ? (
                     <span className="absolute inset-x-0 bottom-0 flex justify-center p-2.5 sm:p-3">

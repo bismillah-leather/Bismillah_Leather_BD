@@ -1,7 +1,6 @@
 import { getPrisma } from "@bismillah/db";
 import { formatPaisa } from "@bismillah/shared";
 import Link from "next/link";
-import { AdminPageHeader } from "@/components/admin-page-header";
 import { requireAdmin } from "@/lib/admin-auth";
 import { listSecurityAlerts } from "@/lib/security-alerts";
 
@@ -27,44 +26,51 @@ function shortDay(d: Date) {
   return d.toLocaleDateString(undefined, { weekday: "short" });
 }
 
+function taka(paisa: bigint) {
+  return Number(paisa) / 100;
+}
+
+const SHORTCUTS = [
+  { href: "/orders", label: "Orders" },
+  { href: "/statements", label: "Statements" },
+  { href: "/products", label: "Products" },
+  { href: "/inventory", label: "Inventory" },
+  { href: "/customers", label: "Customers" },
+  { href: "/flash-sale", label: "Flash sale" },
+  { href: "/coupons", label: "Coupons" },
+  { href: "/content", label: "Content" },
+  { href: "/security", label: "Security" },
+] as const;
+
 export default async function AdminHomePage() {
   const session = await requireAdmin();
   const prisma = getPrisma();
   const now = new Date();
   const today = startOfLocalDay(now);
   const weekAgo = daysAgo(6);
-  const monthAgo = daysAgo(29);
-
   const dayStarts = Array.from({ length: 7 }, (_, i) => daysAgo(6 - i));
 
   const [
     todayAgg,
     weekAgg,
-    monthAgg,
     ordersToday,
     ordersWeek,
-    ordersMonth,
     pending,
-    confirmed,
-    completed,
-    cancelled,
     unpaid,
-    paid,
     unfulfilled,
-    shipped,
-    delivered,
     customersTotal,
     customersNewWeek,
-    customersBlocked,
-    productsActive,
-    variantsActive,
     lowStock,
     outOfStock,
-    staffActive,
     lockedAdmins,
+    activeCoupons,
     recentOrders,
     alerts,
-    dayCounts,
+    statusGroups,
+    paymentGroups,
+    productGroups,
+    topProducts,
+    days,
   ] = await Promise.all([
     prisma.order.aggregate({
       where: { placedAt: { gte: today } },
@@ -75,38 +81,24 @@ export default async function AdminHomePage() {
       where: { placedAt: { gte: weekAgo } },
       _sum: { total: true },
     }),
-    prisma.order.aggregate({
-      where: { placedAt: { gte: monthAgo } },
-      _sum: { total: true },
-    }),
     prisma.order.count({ where: { placedAt: { gte: today } } }),
     prisma.order.count({ where: { placedAt: { gte: weekAgo } } }),
-    prisma.order.count({ where: { placedAt: { gte: monthAgo } } }),
     prisma.order.count({ where: { status: "pending" } }),
-    prisma.order.count({ where: { status: "confirmed" } }),
-    prisma.order.count({ where: { status: "completed" } }),
-    prisma.order.count({ where: { status: "cancelled" } }),
     prisma.order.count({ where: { paymentStatus: "unpaid" } }),
-    prisma.order.count({ where: { paymentStatus: "paid" } }),
     prisma.order.count({ where: { fulfillmentStatus: "unfulfilled" } }),
-    prisma.order.count({ where: { fulfillmentStatus: "shipped" } }),
-    prisma.order.count({ where: { fulfillmentStatus: "delivered" } }),
     prisma.customer.count(),
     prisma.customer.count({ where: { createdAt: { gte: weekAgo } } }),
-    prisma.customer.count({ where: { isBlocked: true } }),
-    prisma.product.count({ where: { status: "published", deletedAt: null } }),
-    prisma.productVariant.count({ where: { isActive: true } }),
     prisma.productVariant.count({
       where: { isActive: true, stockOnHand: { gt: 0, lte: 3 } },
     }),
     prisma.productVariant.count({
       where: { isActive: true, stockOnHand: { lte: 0 } },
     }),
-    prisma.adminUser.count({ where: { isActive: true } }),
     prisma.adminUser.count({ where: { lockedUntil: { gt: now } } }),
+    prisma.coupon.count({ where: { isActive: true } }),
     prisma.order.findMany({
       orderBy: { placedAt: "desc" },
-      take: 6,
+      take: 7,
       select: {
         id: true,
         number: true,
@@ -119,11 +111,32 @@ export default async function AdminHomePage() {
       },
     }),
     listSecurityAlerts(4),
+    prisma.order.groupBy({
+      by: ["status"],
+      _count: { _all: true },
+    }),
+    prisma.order.groupBy({
+      by: ["paymentStatus"],
+      _count: { _all: true },
+    }),
+    prisma.product.groupBy({
+      by: ["status"],
+      where: { deletedAt: null },
+      _count: { _all: true },
+    }),
+    prisma.product.findMany({
+      where: { deletedAt: null, status: "published" },
+      orderBy: [{ soldCount: "desc" }, { updatedAt: "desc" }],
+      take: 5,
+      select: { id: true, name: true, soldCount: true },
+    }),
     Promise.all(
       dayStarts.map((start, i) => {
         const end = i === 6 ? new Date(now.getTime() + 1) : dayStarts[i + 1]!;
-        return prisma.order.count({
+        return prisma.order.aggregate({
           where: { placedAt: { gte: start, lt: end } },
+          _count: { _all: true },
+          _sum: { total: true },
         });
       }),
     ),
@@ -131,314 +144,381 @@ export default async function AdminHomePage() {
 
   const revenueToday = todayAgg._sum.total ?? 0n;
   const revenueWeek = weekAgg._sum.total ?? 0n;
-  const revenueMonth = monthAgg._sum.total ?? 0n;
-  const aovToday = todayAgg._avg.total != null ? BigInt(Math.round(Number(todayAgg._avg.total))) : 0n;
-  const maxDay = Math.max(1, ...dayCounts);
+  const aovToday =
+    todayAgg._avg.total != null ? BigInt(Math.round(Number(todayAgg._avg.total))) : 0n;
+  const aovWeek = ordersWeek > 0 ? revenueWeek / BigInt(ordersWeek) : 0n;
+  const showTodayAov = ordersToday > 0;
 
-  const heroKpis = [
-    { label: "Revenue today", value: formatPaisa(revenueToday), hint: "Gross order total" },
-    { label: "Orders today", value: String(ordersToday), hint: "Since midnight" },
-    { label: "Avg order", value: formatPaisa(aovToday), hint: "Today’s AOV" },
-    { label: "Customers", value: String(customersTotal), hint: `+${customersNewWeek} this week` },
-  ];
+  const series = days.map((day, i) => ({
+    label: shortDay(dayStarts[i]!),
+    count: day._count._all,
+    total: day._sum.total ?? 0n,
+  }));
+  const published = productGroups.find((row) => row.status === "published")?._count._all ?? 0;
+  const drafts = productGroups.find((row) => row.status === "draft")?._count._all ?? 0;
+  const catalogTotal = productGroups.reduce((sum, row) => sum + row._count._all, 0);
+  const paid = paymentGroups.find((row) => row.paymentStatus === "paid")?._count._all ?? 0;
+  const orderTotal = statusGroups.reduce((sum, row) => sum + row._count._all, 0);
+  const firstName = session.name.split(" ")[0] || session.name;
+  const dateLabel = now.toLocaleDateString(undefined, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
 
-  const orderPipeline = [
-    { label: "Pending", value: pending, tone: "warn" as const },
-    { label: "Confirmed", value: confirmed, tone: "ok" as const },
-    { label: "Completed", value: completed, tone: "ok" as const },
-    { label: "Cancelled", value: cancelled, tone: "bad" as const },
-  ];
-
-  const moneyOps = [
-    { label: "Unpaid", value: unpaid },
-    { label: "Paid", value: paid },
-    { label: "Unfulfilled", value: unfulfilled },
-    { label: "Shipped", value: shipped },
-    { label: "Delivered", value: delivered },
-    { label: "Week orders", value: ordersWeek },
-  ];
-
-  const catalog = [
-    { label: "Published products", value: productsActive },
-    { label: "Live variants", value: variantsActive },
-    { label: "Low stock", value: lowStock },
-    { label: "Out of stock", value: outOfStock },
-    { label: "Staff online", value: staffActive },
-    { label: "Locked admins", value: lockedAdmins },
-  ];
-
-  const shortcuts = [
-    { href: "/orders", title: "Orders", body: "Confirm & fulfill" },
-    { href: "/products", title: "Products", body: "Publish catalog" },
-    { href: "/inventory", title: "Inventory", body: "Adjust stock" },
-    { href: "/customers", title: "Customers", body: "Buyers & blocks" },
-    { href: "/coupons", title: "Coupons", body: "Promo codes" },
-    { href: "/content", title: "Content", body: "Pages & home" },
-    { href: "/flash-sale", title: "Flash sale", body: "Countdown deals" },
-    { href: "/settings", title: "Settings", body: "Store contacts" },
+  const pulse = [
+    { href: "/orders", label: "Pending", value: String(pending), hot: pending > 0 },
+    { href: "/orders", label: "Unpaid", value: String(unpaid), hot: unpaid > 0 },
+    { href: "/orders", label: "To pack", value: String(unfulfilled), hot: unfulfilled > 0 },
+    { href: "/inventory", label: "Low stock", value: String(lowStock), hot: lowStock > 0 },
+    { href: "/inventory", label: "Out of stock", value: String(outOfStock), hot: outOfStock > 0 },
+    { href: "/security", label: "Locked staff", value: String(lockedAdmins), hot: lockedAdmins > 0 },
   ];
 
   return (
-    <div>
-      <AdminPageHeader
-        eyebrow="Overview"
-        title="Dashboard"
-        description={`${greeting(now.getHours())}, ${session.name}. Live pulse from Mirpur-10.`}
-      />
-
-      <section className="admin-hero mt-8">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-[11px] tracking-[0.22em] text-primary uppercase">Today</p>
-            <p className="font-display mt-1 text-2xl tracking-tight sm:text-3xl">
-              {now.toLocaleDateString(undefined, {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-              })}
+    <div className="grid gap-5">
+      <section className="admin-hero">
+        <div className="flex flex-wrap items-start justify-between gap-6">
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium tracking-[0.22em] text-primary uppercase">
+              Atelier overview
             </p>
-            <p className="mt-2 max-w-md text-sm text-muted-foreground">
-              Week revenue {formatPaisa(revenueWeek)} · 30-day {formatPaisa(revenueMonth)} ·{" "}
-              {ordersMonth} orders this month
-            </p>
+            <h1 className="font-display mt-3 text-3xl tracking-tight text-[#f6efe4] sm:text-4xl">
+              {greeting(now.getHours())}, {firstName}
+            </h1>
+            <p className="mt-2 text-sm text-[#cbbfae]">{dateLabel}</p>
           </div>
-          <div className="rounded-md border border-primary/25 bg-primary/10 px-3.5 py-2 text-right">
-            <p className="text-[10px] tracking-[0.16em] text-primary uppercase">Role</p>
-            <p className="mt-0.5 text-sm font-medium capitalize">{session.role}</p>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/products" className="admin-btn-ghost h-10 px-4 text-[11px]">
+              Add product
+            </Link>
+            <Link href="/orders" className="admin-btn-primary h-10 px-4 text-[11px]">
+              Orders
+            </Link>
           </div>
         </div>
 
-        <ul className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {heroKpis.map((kpi) => (
-            <li
-              key={kpi.label}
-              className="border border-white/8 bg-black/25 px-4 py-3.5 backdrop-blur-[1px]"
+        <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(18rem,0.95fr)] lg:items-end">
+          <div>
+            <p className="text-[11px] tracking-[0.18em] text-[#e4c98a]/80 uppercase">
+              Revenue today
+            </p>
+            <p className="admin-figure mt-3 text-5xl text-[#f4e2bc] sm:text-6xl">
+              {formatPaisa(revenueToday)}
+            </p>
+            <p className="mt-3 text-sm text-[#cbbfae]">
+              {formatPaisa(revenueWeek)} across the last 7 days
+              {ordersWeek > 0 ? ` · ${ordersWeek} orders` : ""}
+            </p>
+            <dl className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-4">
+              <Stat label="Orders today" value={String(ordersToday)} hint={`${ordersWeek} this week`} />
+              <Stat
+                label="Average order"
+                value={formatPaisa(showTodayAov ? aovToday : aovWeek)}
+                hint={showTodayAov ? "Today" : "7-day average"}
+              />
+              <Stat
+                label="Customers"
+                value={String(customersTotal)}
+                hint={`+${customersNewWeek} this week`}
+              />
+              <Stat label="Live products" value={String(published)} hint={`${drafts} drafts`} />
+            </dl>
+          </div>
+          <RevenueChart series={series} weekTotal={revenueWeek} />
+        </div>
+      </section>
+
+      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+        {pulse.map((item) => (
+          <li key={item.label}>
+            <Link
+              href={item.href}
+              className={`admin-panel flex h-full flex-col justify-between px-3.5 py-3 transition hover:border-[#c6a15b]/45 ${
+                item.hot ? "border-[#c6a15b]/40" : ""
+              }`}
             >
-              <p className="text-[10px] tracking-[0.16em] text-muted-foreground uppercase">
-                {kpi.label}
-              </p>
-              <p className="font-display mt-1.5 text-2xl tracking-tight text-primary sm:text-[1.65rem]">
-                {kpi.value}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">{kpi.hint}</p>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1.35fr_1fr]">
-        <section className="admin-panel p-5 sm:p-6">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 className="text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
-              Orders · last 7 days
-            </h2>
-            <p className="text-xs text-muted-foreground">{ordersWeek} total</p>
-          </div>
-          <div className="admin-bar mt-5">
-            {dayCounts.map((count, i) => {
-              const barPx =
-                count === 0 ? 10 : Math.max(24, Math.round((count / maxDay) * 110));
-              return (
-                <div
-                  key={dayStarts[i]!.toISOString()}
-                  className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1.5"
-                  title={`${shortDay(dayStarts[i]!)}: ${count}`}
-                >
-                  <span className="text-[10px] tabular-nums text-muted-foreground">{count}</span>
-                  <span
-                    className={`admin-bar-fill ${count === 0 ? "opacity-40" : ""}`}
-                    style={{ height: `${barPx}px` }}
-                  />
-                </div>
-              );
-            })}
-          </div>
-          <ul className="mt-3 grid grid-cols-7 gap-1">
-            {dayStarts.map((d) => (
-              <li
-                key={d.toISOString()}
-                className="text-center text-[10px] tracking-wide text-muted-foreground uppercase"
-              >
-                {shortDay(d)}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="admin-panel p-5 sm:p-6">
-          <h2 className="text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
-            Order pipeline
-          </h2>
-          <ul className="mt-4 grid gap-2.5">
-            {orderPipeline.map((row) => (
-              <li
-                key={row.label}
-                className="flex items-center justify-between border border-border/80 bg-background/40 px-3.5 py-2.5"
-              >
-                <span className="text-sm text-foreground/90">{row.label}</span>
-                <span
-                  className={`font-display text-xl tracking-tight ${
-                    row.tone === "warn"
-                      ? "text-amber-400"
-                      : row.tone === "bad"
-                        ? "text-destructive"
-                        : "text-primary"
-                  }`}
-                >
-                  {row.value}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
-
-      <section className="mt-8">
-        <h2 className="text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
-          Fulfillment & payments
-        </h2>
-        <ul className="mt-3 grid gap-3 sm:grid-cols-3 xl:grid-cols-6">
-          {moneyOps.map((item) => (
-            <li key={item.label} className="admin-metric">
-              <p className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
+              <span className="text-[11px] tracking-wide text-muted-foreground uppercase">
                 {item.label}
-              </p>
-              <p className="font-display mt-2 text-2xl tracking-tight">{item.value}</p>
-            </li>
-          ))}
-        </ul>
-      </section>
+              </span>
+              <span className="admin-figure mt-3 text-2xl text-[#f6efe4]">{item.value}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
 
-      <section className="mt-8">
-        <h2 className="text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
-          Catalog & team
-        </h2>
-        <ul className="mt-3 grid gap-3 sm:grid-cols-3 xl:grid-cols-6">
-          {catalog.map((item) => (
-            <li key={item.label} className="admin-metric">
-              <p className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
-                {item.label}
-              </p>
-              <p
-                className={`font-display mt-2 text-2xl tracking-tight ${
-                  item.label.includes("stock") && item.value > 0
-                    ? "text-amber-400"
-                    : item.label.includes("Locked") && item.value > 0
-                      ? "text-destructive"
-                      : "text-primary"
-                }`}
-              >
-                {item.value}
-              </p>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.75fr)]">
         <section className="admin-panel overflow-hidden">
-          <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <h2 className="text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
-              Recent orders
-            </h2>
-            <span className="text-xs text-muted-foreground">Latest 6</span>
-          </div>
-          {recentOrders.length === 0 ? (
-            <p className="px-5 py-8 text-sm text-muted-foreground">No orders yet.</p>
-          ) : (
-            <ul className="divide-y divide-border">
-              {recentOrders.map((o) => (
-                <li
-                  key={o.id}
-                  className="flex flex-wrap items-baseline justify-between gap-2 px-5 py-3.5"
-                >
-                  <div>
-                    <p className="text-sm font-medium">{o.number}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {o.customerPhone} · {o.status} · {o.paymentStatus} · {o.fulfillmentStatus}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-primary">{formatPaisa(o.total)}</p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">
-                      {o.placedAt.toLocaleString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <section className="admin-panel overflow-hidden">
-          <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <h2 className="text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
-              Security pulse
-            </h2>
-            <Link href="/security" className="text-xs text-primary underline-offset-2 hover:underline">
-              Open →
+          <div className="flex items-center justify-between border-b border-white/8 px-5 py-4">
+            <div>
+              <h2 className="font-display text-xl tracking-tight">Recent orders</h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">{orderTotal} on the books</p>
+            </div>
+            <Link href="/orders" className="text-xs font-medium text-primary hover:underline">
+              View all
             </Link>
           </div>
-          <div className="grid grid-cols-2 gap-px border-b border-border bg-border">
-            <div className="bg-card px-5 py-4">
-              <p className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
-                Locked
-              </p>
-              <p
-                className={`font-display mt-1 text-2xl ${
-                  lockedAdmins > 0 ? "text-destructive" : "text-primary"
-                }`}
-              >
-                {lockedAdmins}
-              </p>
-            </div>
-            <div className="bg-card px-5 py-4">
-              <p className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
-                Blocked buyers
-              </p>
-              <p className="font-display mt-1 text-2xl text-primary">{customersBlocked}</p>
-            </div>
-          </div>
-          {alerts.length === 0 ? (
-            <p className="px-5 py-8 text-sm text-muted-foreground">No recent alerts.</p>
+          {recentOrders.length === 0 ? (
+            <p className="px-5 py-12 text-sm text-muted-foreground">
+              No orders yet. The ledger fills in as soon as the first COD comes through.
+            </p>
           ) : (
-            <ul className="divide-y divide-border">
-              {alerts.map((a) => (
-                <li key={a.id} className="px-5 py-3.5">
-                  <p className="line-clamp-2 text-sm">{a.detail}</p>
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    {a.kind} · {new Date(a.at).toLocaleString()}
-                  </p>
-                </li>
-              ))}
-            </ul>
+            <div className="overflow-x-auto">
+              <table className="admin-ledger w-full min-w-[40rem] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-white/8">
+                    <th className="px-5 py-3 font-medium">Order</th>
+                    <th className="px-3 py-3 font-medium">Status</th>
+                    <th className="px-3 py-3 font-medium">Payment</th>
+                    <th className="px-3 py-3 font-medium">Fulfillment</th>
+                    <th className="px-5 py-3 text-right font-medium">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentOrders.map((order) => (
+                    <tr key={order.id} className="border-b border-white/6 last:border-0">
+                      <td className="px-5 py-3.5">
+                        <p className="font-medium text-[#f6efe4]">{order.number}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {order.customerPhone} ·{" "}
+                          {order.placedAt.toLocaleString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </td>
+                      <td className="px-3 py-3.5">
+                        <Pill>{order.status}</Pill>
+                      </td>
+                      <td className="px-3 py-3.5">
+                        <Pill tone={order.paymentStatus === "paid" ? "gold" : "quiet"}>
+                          {order.paymentStatus.replaceAll("_", " ")}
+                        </Pill>
+                      </td>
+                      <td className="px-3 py-3.5 capitalize text-muted-foreground">
+                        {order.fulfillmentStatus.replaceAll("_", " ")}
+                      </td>
+                      <td className="px-5 py-3.5 text-right tabular-nums text-[#f4e2bc]">
+                        {formatPaisa(order.total)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </section>
+
+        <div className="grid gap-5">
+          <section className="admin-panel p-5">
+            <h2 className="font-display text-xl tracking-tight">Catalog</h2>
+            <dl className="mt-4 grid grid-cols-3 gap-3">
+              <Mini label="Live" value={String(published)} />
+              <Mini label="Drafts" value={String(drafts)} />
+              <Mini label="All" value={String(catalogTotal)} />
+            </dl>
+            <div className="mt-5 grid gap-3">
+              <Meter
+                label="Paid orders"
+                value={paid}
+                total={Math.max(orderTotal, 1)}
+                hint={orderTotal === 0 ? "No orders yet" : `${paid} of ${orderTotal}`}
+              />
+              <Meter
+                label="Stock at risk"
+                value={lowStock + outOfStock}
+                total={Math.max(lowStock + outOfStock + published, 1)}
+                hint={`${lowStock} low · ${outOfStock} out`}
+              />
+            </div>
+            <p className="mt-4 text-xs text-muted-foreground">
+              {activeCoupons} active coupon{activeCoupons === 1 ? "" : "s"}
+            </p>
+          </section>
+
+          <section className="admin-panel p-5">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-xl tracking-tight">Best sellers</h2>
+              <Link href="/products" className="text-xs font-medium text-primary hover:underline">
+                Catalog
+              </Link>
+            </div>
+            {topProducts.length === 0 ? (
+              <p className="mt-4 text-sm text-muted-foreground">No published products yet.</p>
+            ) : (
+              <ol className="mt-4 grid gap-3">
+                {topProducts.map((product, index) => (
+                  <li key={product.id} className="flex items-baseline justify-between gap-3">
+                    <p className="min-w-0 truncate text-sm">
+                      <span className="mr-2 text-xs text-[#e4c98a]">{index + 1}</span>
+                      {product.name}
+                    </p>
+                    <p className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                      {product.soldCount} sold
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+
+          <section className="admin-panel p-5">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-xl tracking-tight">Security</h2>
+              <Link href="/security" className="text-xs font-medium text-primary hover:underline">
+                Open
+              </Link>
+            </div>
+            {alerts.length === 0 ? (
+              <p className="mt-4 text-sm text-muted-foreground">No recent alerts. The floor is quiet.</p>
+            ) : (
+              <ul className="mt-4 grid gap-3">
+                {alerts.slice(0, 3).map((alert) => (
+                  <li key={alert.id}>
+                    <p className="line-clamp-2 text-sm leading-5">{alert.detail}</p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      {new Date(alert.at).toLocaleString()}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
       </div>
 
-      <section className="mt-8">
-        <h2 className="text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
-          Jump in
-        </h2>
-        <ul className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          {shortcuts.map((item) => (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                className="admin-panel block px-4 py-4 transition hover:border-primary/40"
-              >
-                <p className="text-sm font-medium">{item.title}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{item.body}</p>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <nav className="flex flex-wrap gap-2" aria-label="Dashboard shortcuts">
+        {SHORTCUTS.map((item) => (
+          <Link key={item.href} href={item.href} className="admin-btn-ghost h-9 px-3 text-[11px]">
+            {item.label}
+          </Link>
+        ))}
+      </nav>
+    </div>
+  );
+}
+
+function Stat({ label, value, hint }: { label: string; value: string; hint: string }) {
+  return (
+    <div className="bg-[#120f0c] px-3 py-3">
+      <dt className="text-[10px] tracking-[0.14em] text-[#cbbfae] uppercase">{label}</dt>
+      <dd className="admin-figure mt-2 text-lg text-[#f6efe4]">{value}</dd>
+      <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>
+    </div>
+  );
+}
+
+function Mini({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">{label}</dt>
+      <dd className="admin-figure mt-1.5 text-2xl">{value}</dd>
+    </div>
+  );
+}
+
+function Pill({ children, tone = "quiet" }: { children: string; tone?: "gold" | "quiet" }) {
+  return (
+    <span
+      className={`inline-flex rounded-full px-2 py-0.5 text-[11px] capitalize ${
+        tone === "gold" ? "bg-[#c6a15b]/18 text-[#f4e2bc]" : "bg-white/6 text-[#d9d0c4]"
+      }`}
+    >
+      {children}
+    </span>
+  );
+}
+
+function Meter({
+  label,
+  value,
+  total,
+  hint,
+}: {
+  label: string;
+  value: number;
+  total: number;
+  hint: string;
+}) {
+  const width = Math.max(0, Math.min(100, Math.round((value / total) * 100)));
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-3 text-xs">
+        <span>{label}</span>
+        <span className="text-muted-foreground">{hint}</span>
+      </div>
+      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/8">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-[#8a6a2e] to-[#e4c98a]"
+          style={{ width: `${width}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function RevenueChart({
+  series,
+  weekTotal,
+}: {
+  series: Array<{ label: string; count: number; total: bigint }>;
+  weekTotal: bigint;
+}) {
+  const values = series.map((point) => taka(point.total));
+  const max = Math.max(1, ...values);
+  const width = 640;
+  const height = 168;
+  const points = values.map((value, index) => {
+    const x = series.length === 1 ? width / 2 : (index / (series.length - 1)) * width;
+    const y = height - 18 - (value / max) * (height - 36);
+    return { x, y };
+  });
+  const line = points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x},${point.y}`).join(" ");
+  const area = `${line} L${width},${height} L0,${height} Z`;
+  const quiet = values.every((value) => value === 0);
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="text-sm font-medium text-[#f6efe4]">7-day revenue</h2>
+        <p className="text-xs text-[#cbbfae]">{formatPaisa(weekTotal)}</p>
+      </div>
+      <svg viewBox={`0 0 ${width} ${height}`} className="mt-3 h-40 w-full" role="img" aria-label="Revenue for the last seven days">
+        <defs>
+          <linearGradient id="admin-gold-area" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#e4c98a" stopOpacity="0.42" />
+            <stop offset="100%" stopColor="#e4c98a" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {[0.25, 0.5, 0.75].map((step) => (
+          <line
+            key={step}
+            x1="0"
+            x2={width}
+            y1={height * step}
+            y2={height * step}
+            stroke="rgba(243,238,230,0.08)"
+          />
+        ))}
+        <path d={area} fill="url(#admin-gold-area)" />
+        <path d={line} fill="none" stroke="#e4c98a" strokeWidth="2.5" strokeLinejoin="round" />
+        {points.map((point) => (
+          <circle key={point.x} cx={point.x} cy={point.y} r="3.5" fill="#f6efe4" />
+        ))}
+      </svg>
+      <ul className="mt-1 grid grid-cols-7 gap-1">
+        {series.map((point) => (
+          <li key={point.label} className="text-center">
+            <p className="text-[10px] text-muted-foreground">{point.label}</p>
+            <p className="text-[10px] tabular-nums text-[#cbbfae]">{point.count}</p>
+          </li>
+        ))}
+      </ul>
+      {quiet ? (
+        <p className="mt-2 text-[11px] text-muted-foreground">No sales recorded in this window.</p>
+      ) : null}
     </div>
   );
 }

@@ -26,8 +26,10 @@ function getSnapshot(): CartLine[] {
   return getCartLines();
 }
 
+const SERVER_LINES: CartLine[] = [];
+
 function getServerSnapshot(): CartLine[] {
-  return [];
+  return SERVER_LINES;
 }
 
 export function useCart() {

@@ -54,6 +54,11 @@ export function SiteFooter({ brand }: { brand: StoreBrand }) {
           <p className="text-xs tracking-[0.16em] uppercase">Information</p>
           <ul className="mt-3 grid gap-2 text-sm text-muted-foreground">
             <li>
+              <Link className="hover:text-foreground" href="/about">
+                About
+              </Link>
+            </li>
+            <li>
               <Link className="hover:text-foreground" href="/policies/shipping">
                 Shipping policy
               </Link>

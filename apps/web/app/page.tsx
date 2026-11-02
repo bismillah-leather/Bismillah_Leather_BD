@@ -12,20 +12,7 @@ import { CenteredRuleHeading } from "@/components/section-heading";
 import { TrustStrip } from "@/components/trust-strip";
 import { listPublishedProducts } from "@/lib/catalog";
 import { getStoreBrand } from "@/lib/store-brand";
-
-const featuredCategories = [
-  { slug: "long-wallet", name: "Long Wallet", image: "/catalog/wallet-black-long.jpg" },
-  { slug: "short-wallet", name: "Short Wallet", image: "/catalog/wallet-black-short.jpg" },
-  { slug: "formal-wallet", name: "Formal Wallet", image: "/catalog/wallet-tan-formal.jpg" },
-  { slug: "mini-wallet", name: "Mini Wallet", image: "/catalog/wallet-cognac-mini.jpg" },
-  { slug: "trifold-wallet", name: "Trifold", image: "/catalog/wallet-black-short.jpg" },
-  { slug: "semi-long-wallet", name: "Three Quarter", image: "/catalog/wallet-espresso.jpg" },
-  { slug: "buffalo-wallet", name: "Buffalo", image: "/catalog/wallet-buffalo.jpg" },
-  { slug: "thara-wallet", name: "Thara", image: "/catalog/wallet-brown-long.jpg" },
-  { slug: "formal-belt", name: "Formal Belt", image: "/catalog/belt-black-formal.jpg" },
-  { slug: "jeans-belt", name: "Jeans Belt", image: "/catalog/belt-tan-jeans.jpg" },
-  { slug: "lv-wallet", name: "LV Wallet", image: "/catalog/wallet-espresso.jpg" },
-] as const;
+import { getStorefrontContent } from "@/lib/storefront-content";
 
 const moreCategories = [
   { slug: "thara-wallet", name: "Thara Wallet", image: "/catalog/wallet-brown-long.jpg" },
@@ -35,11 +22,15 @@ const moreCategories = [
 ] as const;
 
 export default async function HomePage() {
-  const [brand, products] = await Promise.all([getStoreBrand(), listPublishedProducts()]);
+  const [brand, products, content] = await Promise.all([
+    getStoreBrand(),
+    listPublishedProducts(),
+    getStorefrontContent(),
+  ]);
 
   return (
     <div>
-      <HeroSlider />
+      <HeroSlider slides={content.hero} />
 
       <BrandMarquee />
 
@@ -48,7 +39,7 @@ export default async function HomePage() {
           <div className="mx-auto max-w-7xl px-3 sm:px-6">
             <CenteredRuleHeading size="lg">Featured categories</CenteredRuleHeading>
             <div className="mt-4 sm:mt-5">
-              <FeaturedCategoryRail items={featuredCategories} />
+              <FeaturedCategoryRail items={content.featured} />
             </div>
           </div>
         </section>
@@ -66,7 +57,7 @@ export default async function HomePage() {
           <div className="mx-auto max-w-7xl px-3 sm:px-6">
             <CenteredRuleHeading size="lg">Why shop with us</CenteredRuleHeading>
             <div className="mt-6 sm:mt-8">
-              <TrustStrip />
+              <TrustStrip items={content.trust} />
             </div>
           </div>
         </section>

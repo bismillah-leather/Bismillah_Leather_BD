@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { getStorefrontContent } from "@/lib/storefront-content";
 
 const POLICIES = {
   shipping: {
@@ -50,14 +51,20 @@ export default function PolicyPage({ params }: { params: Promise<{ slug: string 
 
 async function PolicyContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const policy = POLICIES[slug as keyof typeof POLICIES];
-  if (!policy) notFound();
+  const fallback = POLICIES[slug as keyof typeof POLICIES];
+  if (!fallback) notFound();
+  const content = await getStorefrontContent();
+  const policy = content.policies[slug as keyof typeof content.policies] ?? {
+    title: fallback.title,
+    body: fallback.body.join("\n\n"),
+  };
+  const paragraphs = policy.body.split(/\n{2,}|\n/).map((line) => line.trim()).filter(Boolean);
 
   return (
     <article className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
       <h1 className="font-display text-4xl">{policy.title}</h1>
       <div className="mt-6 grid gap-4 text-base leading-7 text-muted-foreground">
-        {policy.body.map((paragraph) => (
+        {paragraphs.map((paragraph) => (
           <p key={paragraph}>{paragraph}</p>
         ))}
       </div>

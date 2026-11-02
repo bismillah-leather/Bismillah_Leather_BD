@@ -7,12 +7,12 @@ export const categoryPillClass = (active: boolean) =>
   `inline-flex h-7 shrink-0 items-center rounded-full px-3 text-[10px] font-medium tracking-[0.08em] uppercase transition duration-200 sm:h-8 sm:px-3.5 sm:text-[11px] ${
     active
       ? "border border-black bg-black text-white"
-      : "border border-neutral-300 bg-white text-neutral-600 hover:border-black hover:bg-black hover:text-white"
+      : "border border-neutral-400 bg-white text-neutral-900 shadow-sm hover:border-black hover:bg-black hover:text-white"
   }`;
 
 export function CategoryPillsBar({ children }: { children: ReactNode }) {
   return (
-    <div className="sticky top-[var(--site-header-offset,7rem)] z-40 border-b border-border bg-white/95 shadow-[0_4px_16px_rgba(0,0,0,0.04)] backdrop-blur-md">
+    <div className="sticky top-[var(--site-header-offset,7rem)] z-[190] border-b border-neutral-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
       <div className="relative mx-auto max-w-7xl">
         <div
           className="pointer-events-none absolute inset-y-0 left-0 z-10 w-5 bg-gradient-to-r from-white to-transparent sm:w-8"

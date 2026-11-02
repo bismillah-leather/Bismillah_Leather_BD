@@ -1,4 +1,5 @@
 import { getPrisma } from "@bismillah/db";
+import { parseTakaToPaisa } from "@bismillah/shared";
 import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
 
@@ -91,16 +92,90 @@ export async function PATCH(
     data.primaryCategoryId = body.categoryId;
   }
 
-  if (Object.keys(data).length === 0) {
+  const priceTaka =
+    typeof body.priceTaka === "number"
+      ? body.priceTaka
+      : typeof body.priceTaka === "string"
+        ? Number(body.priceTaka)
+        : null;
+  const stock =
+    typeof body.stock === "number"
+      ? body.stock
+      : typeof body.stock === "string"
+        ? Number(body.stock)
+        : null;
+
+  const hasPrice = priceTaka != null && Number.isFinite(priceTaka) && priceTaka > 0;
+  const hasStock = stock != null && Number.isFinite(stock) && stock >= 0 && Number.isInteger(stock);
+  const clearSale = body.salePriceTaka === null || body.salePriceTaka === "";
+  const salePriceTaka =
+    typeof body.salePriceTaka === "number"
+      ? body.salePriceTaka
+      : typeof body.salePriceTaka === "string" && body.salePriceTaka.trim() !== ""
+        ? Number(body.salePriceTaka)
+        : null;
+  const hasSale =
+    !clearSale && salePriceTaka != null && Number.isFinite(salePriceTaka) && salePriceTaka > 0;
+
+  if (Object.keys(data).length === 0 && !hasPrice && !hasStock && !hasSale && !clearSale) {
     return NextResponse.json({ error: "Nothing to update." }, { status: 400 });
   }
 
   const prisma = getPrisma();
-  const product = await prisma.product.update({
-    where: { id },
-    data,
-    select: { id: true, name: true, isFeatured: true },
-  });
+  const product =
+    Object.keys(data).length > 0
+      ? await prisma.product.update({
+          where: { id },
+          data,
+          select: { id: true, name: true, isFeatured: true },
+        })
+      : await prisma.product.findUniqueOrThrow({
+          where: { id },
+          select: { id: true, name: true, isFeatured: true },
+        });
+
+  if (hasPrice || hasStock || hasSale || clearSale) {
+    const variant = await prisma.productVariant.findFirst({
+      where: { productId: id, isActive: true },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, price: true },
+    });
+    if (variant) {
+      let price: bigint | undefined;
+      let salePrice: bigint | null | undefined;
+      if (hasPrice) {
+        try {
+          price = parseTakaToPaisa(String(priceTaka));
+        } catch {
+          return NextResponse.json({ error: "Invalid price." }, { status: 400 });
+        }
+      }
+      if (hasSale) {
+        try {
+          salePrice = parseTakaToPaisa(String(salePriceTaka));
+        } catch {
+          return NextResponse.json({ error: "Invalid sale price." }, { status: 400 });
+        }
+        const regular = price ?? variant.price;
+        if (salePrice >= regular) {
+          return NextResponse.json(
+            { error: "Sale price must be lower than the regular price." },
+            { status: 400 },
+          );
+        }
+      } else if (clearSale) {
+        salePrice = null;
+      }
+      await prisma.productVariant.update({
+        where: { id: variant.id },
+        data: {
+          ...(price != null ? { price } : {}),
+          ...(salePrice !== undefined ? { salePrice } : {}),
+          ...(hasStock ? { stockOnHand: Math.trunc(stock) } : {}),
+        },
+      });
+    }
+  }
 
   await prisma.auditLog.create({
     data: {

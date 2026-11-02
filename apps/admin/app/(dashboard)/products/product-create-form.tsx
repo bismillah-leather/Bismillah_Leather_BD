@@ -28,6 +28,7 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
   const [stock, setStock] = useState("10");
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [isFeatured, setIsFeatured] = useState(false);
+  const [photo, setPhoto] = useState<File | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
@@ -75,6 +76,23 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
         setError(data.error ?? "Could not create product.");
         return;
       }
+      const createdId = (data as { product?: { id?: string; name?: string } }).product?.id;
+      if (photo && createdId) {
+        const body = new FormData();
+        body.set("file", photo);
+        const imageRes = await fetch(`/admin/api/products/${createdId}/image`, {
+          method: "POST",
+          body,
+        });
+        if (!imageRes.ok) {
+          const imageData = (await imageRes.json().catch(() => ({}))) as { error?: string };
+          setOk(`Added “${data.product?.name ?? name}”, but the photo was not stored.`);
+          setError(imageData.error ?? "Photo upload failed.");
+          setPhoto(null);
+          router.refresh();
+          return;
+        }
+      }
       setOk(`Added “${data.product?.name ?? name}”.`);
       setName("");
       setSlug("");
@@ -86,6 +104,7 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
       setStock("10");
       setStatus("draft");
       setIsFeatured(false);
+      setPhoto(null);
       router.refresh();
     } catch {
       setError("Network error.");
@@ -109,7 +128,7 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
         onClick={() => setOpen((v) => !v)}
         className="admin-btn-primary"
       >
-        {open ? "Close form" : "Add product"}
+        {open ? "Close" : "Add"}
       </button>
 
       {open ? (
@@ -237,6 +256,21 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
               Featured on storefront
             </label>
           </div>
+
+          <label className="grid gap-2 text-sm">
+            <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
+              Photo
+            </span>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+              onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
+              className="admin-field h-auto py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:text-primary-foreground"
+            />
+            <span className="text-xs text-muted-foreground">
+              {photo ? photo.name : "Stored on R2 and shown on the storefront."}
+            </span>
+          </label>
 
           <label className="grid gap-2 text-sm">
             <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">

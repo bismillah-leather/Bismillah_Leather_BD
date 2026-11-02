@@ -2,10 +2,16 @@ import { getPrisma } from "@bismillah/db";
 import { formatPaisa } from "@bismillah/shared";
 import Link from "next/link";
 import { Suspense } from "react";
-import { AdminPageHeader } from "@/components/admin-page-header";
 import { AdminSearch } from "@/components/admin-search";
 import { StockEditor } from "@/components/stock-editor";
 import { requireAdmin } from "@/lib/admin-auth";
+import { adminMediaSrc } from "@/lib/media-url";
+
+function stockState(onHand: number) {
+  if (onHand <= 0) return "out" as const;
+  if (onHand <= 3) return "low" as const;
+  return "healthy" as const;
+}
 
 export default async function InventoryPage({
   searchParams,
@@ -18,92 +24,250 @@ export default async function InventoryPage({
   const filter = sp.filter === "low" || sp.filter === "out" ? sp.filter : "all";
 
   const prisma = getPrisma();
-  const variants = await prisma.productVariant.findMany({
-    where: {
-      isActive: true,
-      ...(filter === "low" ? { stockOnHand: { gt: 0, lte: 3 } } : {}),
-      ...(filter === "out" ? { stockOnHand: { lte: 0 } } : {}),
-      ...(q
-        ? {
-            OR: [
-              { sku: { contains: q, mode: "insensitive" } },
-              { product: { name: { contains: q, mode: "insensitive" } } },
-            ],
-          }
-        : {}),
-    },
-    orderBy: [{ stockOnHand: "asc" }, { sku: "asc" }],
-    take: 100,
-    select: {
-      id: true,
-      sku: true,
-      price: true,
-      stockOnHand: true,
-      stockReserved: true,
-      product: { select: { name: true, slug: true } },
-    },
-  });
+  const [variants, levels, movements] = await Promise.all([
+    prisma.productVariant.findMany({
+      where: {
+        isActive: true,
+        ...(filter === "low" ? { stockOnHand: { gt: 0, lte: 3 } } : {}),
+        ...(filter === "out" ? { stockOnHand: { lte: 0 } } : {}),
+        ...(q
+          ? {
+              OR: [
+                { sku: { contains: q, mode: "insensitive" } },
+                { product: { name: { contains: q, mode: "insensitive" } } },
+              ],
+            }
+          : {}),
+      },
+      orderBy: [{ stockOnHand: "asc" }, { sku: "asc" }],
+      take: 100,
+      select: {
+        id: true,
+        sku: true,
+        price: true,
+        stockOnHand: true,
+        stockReserved: true,
+        product: {
+          select: {
+            id: true,
+            name: true,
+            media: {
+              where: { type: "image" as const },
+              orderBy: { sortOrder: "asc" as const },
+              take: 1,
+              select: { storageKey: true },
+            },
+          },
+        },
+      },
+    }),
+    prisma.productVariant.findMany({
+      where: { isActive: true },
+      select: { stockOnHand: true, stockReserved: true, price: true },
+    }),
+    prisma.inventoryMovement.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      select: {
+        id: true,
+        delta: true,
+        reason: true,
+        createdAt: true,
+        variant: { select: { sku: true, product: { select: { name: true } } } },
+      },
+    }),
+  ]);
+
+  const unitsOnHand = levels.reduce((sum, row) => sum + row.stockOnHand, 0);
+  const unitsReserved = levels.reduce((sum, row) => sum + row.stockReserved, 0);
+  const unitsFree = levels.reduce(
+    (sum, row) => sum + Math.max(0, row.stockOnHand - row.stockReserved),
+    0,
+  );
+  const stockValue = levels.reduce(
+    (sum, row) => sum + row.price * BigInt(Math.max(0, row.stockOnHand)),
+    0n,
+  );
+  const lowCount = levels.filter((row) => row.stockOnHand > 0 && row.stockOnHand <= 3).length;
+  const outCount = levels.filter((row) => row.stockOnHand <= 0).length;
+  const healthyCount = levels.length - lowCount - outCount;
+
+  const filters = [
+    ["all", "All", levels.length],
+    ["low", "Low", lowCount],
+    ["out", "Out", outCount],
+  ] as const;
 
   return (
-    <div>
-      <AdminPageHeader
-        eyebrow="Warehouse"
-        title="Inventory"
-        description="Adjust on-hand stock. Reserved units stay locked for open carts/orders."
-      />
+    <div className="grid gap-5">
+      <section className="admin-hero">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-medium tracking-[0.22em] text-primary uppercase">
+              Warehouse
+            </p>
+            <h1 className="font-display mt-2 text-3xl tracking-tight text-[#f6efe4] sm:text-4xl">
+              Inventory
+            </h1>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-[#cbbfae]">
+              On-hand units, what is already reserved, and what is still free to sell.
+            </p>
+          </div>
+          <Link href="/products" className="admin-btn-ghost h-10 px-4 text-[11px]">
+            Products
+          </Link>
+        </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <dl className="mt-7 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-4">
+          <Figure label="SKUs" value={String(levels.length)} hint={`${healthyCount} healthy`} />
+          <Figure label="On hand" value={String(unitsOnHand)} hint={`${unitsReserved} reserved`} />
+          <Figure label="Free to sell" value={String(unitsFree)} hint={`${outCount} out · ${lowCount} low`} />
+          <Figure label="Stock value" value={formatPaisa(stockValue)} hint="At selling price" />
+        </dl>
+      </section>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <Suspense fallback={null}>
-          <AdminSearch placeholder="Search SKU or product…" />
+          <AdminSearch placeholder="Search name or SKU…" />
         </Suspense>
-        <div className="flex gap-1.5">
-          {(
-            [
-              ["all", "All"],
-              ["low", "Low"],
-              ["out", "Out"],
-            ] as const
-          ).map(([key, label]) => (
-            <Link
-              key={key}
-              href={key === "all" ? "/inventory" : `/inventory?filter=${key}`}
-              className={`inline-flex h-9 items-center rounded-md px-3 text-xs tracking-wide uppercase ${
-                filter === key
-                  ? "bg-primary/15 text-primary"
-                  : "border border-border text-muted-foreground"
-              }`}
-            >
-              {label}
-            </Link>
-          ))}
+        <div className="flex flex-wrap gap-1.5">
+          {filters.map(([key, label, count]) => {
+            const params = new URLSearchParams();
+            if (q) params.set("q", q);
+            if (key !== "all") params.set("filter", key);
+            const href = params.size ? `/inventory?${params.toString()}` : "/inventory";
+            const active = filter === key;
+            return (
+              <Link
+                key={key}
+                href={href}
+                className={`inline-flex h-9 items-center gap-2 rounded-full px-3 text-[11px] tracking-wide uppercase ${
+                  active
+                    ? "bg-primary text-primary-foreground"
+                    : "border border-white/12 text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {label}
+                <span className={active ? "text-primary-foreground/80" : "text-[#e4c98a]"}>{count}</span>
+              </Link>
+            );
+          })}
         </div>
       </div>
 
-      <ul className="admin-panel mt-8 divide-y divide-border">
-        {variants.length === 0 ? (
-          <li className="px-4 py-10 text-sm text-muted-foreground">No variants found.</li>
-        ) : (
-          variants.map((v) => (
-            <li
-              key={v.id}
-              className="grid gap-3 px-4 py-4 sm:grid-cols-[1fr_auto] sm:items-center"
-            >
-              <div>
-                <p className="text-sm font-medium">{v.product.name}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {v.sku} · {formatPaisa(v.price)} · reserved {v.stockReserved}
-                  {v.stockOnHand <= 0
-                    ? " · out"
-                    : v.stockOnHand <= 3
-                      ? " · low"
-                      : ""}
-                </p>
-              </div>
-              <StockEditor variantId={v.id} stockOnHand={v.stockOnHand} />
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_18rem]">
+        <ul className="grid gap-2">
+          {variants.length === 0 ? (
+            <li className="admin-panel px-5 py-14 text-sm text-muted-foreground">
+              Nothing in this view. Clear the search or switch the filter.
             </li>
-          ))
-        )}
-      </ul>
+          ) : (
+            variants.map((variant) => {
+              const state = stockState(variant.stockOnHand);
+              const free = Math.max(0, variant.stockOnHand - variant.stockReserved);
+              const image = adminMediaSrc(variant.product.media[0]?.storageKey);
+              return (
+                <li key={variant.id} className="admin-panel px-3 py-3 sm:px-4">
+                  <div className="grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">
+                    <div className="size-16 overflow-hidden rounded-xl bg-[#1c1814] sm:size-[4.5rem]">
+                      {image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={image} alt="" className="size-full object-cover" />
+                      ) : (
+                        <div className="grid size-full place-items-center text-[10px] text-muted-foreground">
+                          No photo
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Link
+                          href={`/products/${variant.product.id}`}
+                          className="truncate text-sm font-medium text-[#f6efe4] hover:text-primary"
+                        >
+                          {variant.product.name}
+                        </Link>
+                        <StatePill state={state} />
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {variant.sku} · {formatPaisa(variant.price)}
+                      </p>
+                      <p className="mt-2 text-xs tabular-nums text-[#cbbfae]">
+                        <span className="text-[#f6efe4]">{variant.stockOnHand}</span> on hand
+                        <span className="mx-1.5 text-white/20">/</span>
+                        {variant.stockReserved} reserved
+                        <span className="mx-1.5 text-white/20">/</span>
+                        {free} free
+                      </p>
+                    </div>
+                    <StockEditor
+                      variantId={variant.id}
+                      stockOnHand={variant.stockOnHand}
+                      stockReserved={variant.stockReserved}
+                    />
+                  </div>
+                </li>
+              );
+            })
+          )}
+        </ul>
+
+        <aside className="admin-panel h-fit p-5">
+          <h2 className="font-display text-xl tracking-tight">Latest moves</h2>
+          {movements.length === 0 ? (
+            <p className="mt-4 text-sm text-muted-foreground">
+              Adjustments show up here after the first stock save.
+            </p>
+          ) : (
+            <ul className="mt-4 grid gap-3">
+              {movements.map((move) => (
+                <li key={move.id} className="border-b border-white/8 pb-3 last:border-0 last:pb-0">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <p className="min-w-0 truncate text-sm">{move.variant.product.name}</p>
+                    <p
+                      className={`shrink-0 text-sm tabular-nums ${
+                        move.delta >= 0 ? "text-[#e4c98a]" : "text-[#f0b2a6]"
+                      }`}
+                    >
+                      {move.delta > 0 ? `+${move.delta}` : move.delta}
+                    </p>
+                  </div>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    {move.variant.sku} · {move.reason} ·{" "}
+                    {move.createdAt.toLocaleString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </aside>
+      </div>
     </div>
   );
+}
+
+function Figure({ label, value, hint }: { label: string; value: string; hint: string }) {
+  return (
+    <div className="bg-[#120f0c] px-3.5 py-3.5">
+      <dt className="text-[10px] tracking-[0.14em] text-[#cbbfae] uppercase">{label}</dt>
+      <dd className="admin-figure mt-2 text-2xl text-[#f6efe4]">{value}</dd>
+      <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>
+    </div>
+  );
+}
+
+function StatePill({ state }: { state: "healthy" | "low" | "out" }) {
+  const label = state === "out" ? "Out" : state === "low" ? "Low" : "In stock";
+  const tone =
+    state === "out"
+      ? "bg-[#dc5a46]/15 text-[#f0b2a6]"
+      : state === "low"
+        ? "bg-[#c6a15b]/18 text-[#f4e2bc]"
+        : "bg-white/6 text-[#d9d0c4]";
+  return <span className={`rounded-full px-2 py-0.5 text-[10px] tracking-wide uppercase ${tone}`}>{label}</span>;
 }

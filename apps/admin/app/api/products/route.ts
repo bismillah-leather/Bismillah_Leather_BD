@@ -28,7 +28,7 @@ export async function GET() {
       variants: {
         where: { isActive: true },
         take: 1,
-        select: { sku: true },
+        select: { sku: true, price: true },
       },
     },
   });
@@ -40,6 +40,7 @@ export async function GET() {
       slug: p.slug,
       status: p.status,
       sku: p.variants[0]?.sku ?? "",
+      pricePaisa: (p.variants[0]?.price ?? 0n).toString(),
     })),
   });
 }

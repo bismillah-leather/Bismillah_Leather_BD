@@ -1,29 +1,29 @@
 "use client";
 
+import { DEFAULT_HERO_SLIDES, type HeroSlide } from "@bismillah/shared";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useStoreBrand } from "./brand-provider";
 
-const slides = [
-  { src: "/catalog/hero-leather.jpg", focus: "object-[center_38%]" },
-  { src: "/catalog/wallet-black-long.jpg", focus: "object-center" },
-  { src: "/catalog/wallet-buffalo.jpg", focus: "object-[center_35%]" },
-  { src: "/catalog/belt-black-formal.jpg", focus: "object-center" },
-] as const;
-
 const INTERVAL_MS = 6000;
 
+function knownImage(src: string) {
+  return src.startsWith("/") || /\.r2\.dev|r2\.cloudflarestorage\.com/i.test(src);
+}
+
 /** Balanced banner height; brand copy stays compact. */
-export function HeroSlider() {
+export function HeroSlider({ slides }: { slides?: HeroSlide[] }) {
   const brand = useStoreBrand();
+  const frames = slides && slides.length > 0 ? slides : DEFAULT_HERO_SLIDES;
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
+    if (frames.length < 2) return;
     const timer = window.setInterval(() => {
-      setIndex((value) => (value + 1) % slides.length);
+      setIndex((value) => (value + 1) % frames.length);
     }, INTERVAL_MS);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [frames.length]);
 
   return (
     <section
@@ -31,26 +31,35 @@ export function HeroSlider() {
       aria-label="Bismillah Leather"
       className="relative h-[min(48svh,22rem)] overflow-hidden bg-black text-white sm:h-[min(52svh,26rem)] md:h-[min(56svh,30rem)]"
     >
-      {slides.map((item, slideIndex) => {
+      {frames.map((item, slideIndex) => {
         const active = slideIndex === index;
+        const focus = item.focus || "object-center";
         return (
           <div
-            key={item.src}
+            key={`${item.src}-${slideIndex}`}
             className={`absolute inset-0 transition-opacity duration-[1600ms] ease-out ${
               active ? "opacity-100" : "opacity-0"
             }`}
             aria-hidden={!active}
           >
-            <Image
-              src={item.src}
-              alt=""
-              fill
-              priority={slideIndex === 0}
-              sizes="100vw"
-              className={`object-cover ${item.focus} ${
-                active ? "hero-kenburns" : "scale-[1.02]"
-              }`}
-            />
+            {knownImage(item.src) ? (
+              <Image
+                src={item.src}
+                alt={item.alt}
+                fill
+                priority={slideIndex === 0}
+                sizes="100vw"
+                className={`object-cover ${focus} ${active ? "hero-kenburns" : "scale-[1.02]"}`}
+              />
+            ) : (
+              <img
+                src={item.src}
+                alt={item.alt}
+                className={`absolute inset-0 size-full object-cover ${focus} ${
+                  active ? "hero-kenburns" : "scale-[1.02]"
+                }`}
+              />
+            )}
           </div>
         );
       })}
@@ -69,9 +78,9 @@ export function HeroSlider() {
         </p>
 
         <div className="mt-3 flex items-center gap-1.5" role="tablist" aria-label="Hero slides">
-          {slides.map((item, slideIndex) => (
+          {frames.map((item, slideIndex) => (
             <button
-              key={item.src}
+              key={`${item.src}-${slideIndex}`}
               type="button"
               role="tab"
               aria-selected={slideIndex === index}

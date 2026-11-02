@@ -46,9 +46,9 @@ export function ProductDeleteButton({
         type="button"
         disabled={pending}
         onClick={() => void onDelete()}
-        className="h-9 border border-destructive/35 px-3 text-xs tracking-wide text-destructive uppercase transition hover:bg-destructive/10 disabled:opacity-50"
+        className="admin-btn-danger h-9 px-3 text-[11px]"
       >
-        {pending ? "…" : "Delete"}
+        {pending ? "Deleting…" : "Delete"}
       </button>
       {error ? <p className="text-[11px] text-destructive">{error}</p> : null}
     </div>

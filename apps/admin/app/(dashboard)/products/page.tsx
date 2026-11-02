@@ -1,13 +1,12 @@
 import { getPrisma } from "@bismillah/db";
-import { formatPaisa } from "@bismillah/shared";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AdminPageHeader } from "@/components/admin-page-header";
 import { AdminSearch } from "@/components/admin-search";
-import { StatusSelect } from "@/components/status-select";
 import { requireAdmin } from "@/lib/admin-auth";
+import { adminMediaSrc, syncCatalogImagesToR2 } from "@/lib/media-url";
 import { ProductCreateForm } from "./product-create-form";
-import { ProductDeleteButton } from "./product-delete-button";
+import { ProductShelfCard, type ShelfProduct } from "./product-shelf";
 
 const STATUSES = ["draft", "scheduled", "published", "archived"] as const;
 
@@ -22,6 +21,12 @@ export default async function ProductsPage({
   const status = STATUSES.includes(sp.status as (typeof STATUSES)[number])
     ? (sp.status as (typeof STATUSES)[number])
     : undefined;
+
+  try {
+    await syncCatalogImagesToR2();
+  } catch (error) {
+    console.error("[admin] image sync skipped:", error);
+  }
 
   const prisma = getPrisma();
   const [products, categories, counts] = await Promise.all([
@@ -48,12 +53,18 @@ export default async function ProductsPage({
         isFeatured: true,
         soldCount: true,
         updatedAt: true,
-        primaryCategory: { select: { name: true } },
+        primaryCategory: { select: { id: true, name: true, sortOrder: true } },
         variants: {
           where: { isActive: true },
           orderBy: { createdAt: "asc" },
           take: 1,
-          select: { sku: true, price: true, stockOnHand: true },
+          select: { sku: true, price: true, salePrice: true, stockOnHand: true },
+        },
+        media: {
+          where: { type: "image" },
+          orderBy: { sortOrder: "asc" },
+          take: 1,
+          select: { storageKey: true },
         },
         _count: { select: { variants: true } },
       },
@@ -78,7 +89,7 @@ export default async function ProductsPage({
       <AdminPageHeader
         eyebrow="Catalog"
         title="Products"
-        description="Add, publish, and remove leather products. Delete soft-archives so order history stays intact."
+        description="Each product has a photo, Save edit, and Delete. New photos are stored on R2. Add a product with the button below."
       />
 
       <ul className="mt-6 grid gap-3 sm:grid-cols-4">
@@ -125,63 +136,67 @@ export default async function ProductsPage({
         </div>
       </div>
 
-      <ul className="admin-panel mt-6 divide-y divide-border">
-        {products.length === 0 ? (
-          <li className="px-4 py-10 text-sm text-muted-foreground">
-            No products yet. Tap <span className="text-foreground">Add product</span> above.
-          </li>
-        ) : (
-          products.map((p) => {
-            const variant = p.variants[0];
-            return (
-              <li
-                key={p.id}
-                className="grid gap-4 px-4 py-4 lg:grid-cols-[1.4fr_9rem_10rem_auto] lg:items-center"
-              >
-                <div>
-                  <p className="text-sm font-medium">
-                    <Link
-                      href={`/products/${p.id}`}
-                      className="transition hover:text-primary"
-                    >
-                      {p.name}
-                    </Link>
-                    {p.isFeatured ? (
-                      <span className="ml-2 text-[10px] tracking-wide text-primary uppercase">
-                        Featured
-                      </span>
-                    ) : null}
-                  </p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    /{p.slug} · {p.primaryCategory.name}
-                    {variant
-                      ? ` · ${variant.sku} · ${formatPaisa(variant.price)} · stock ${variant.stockOnHand}`
-                      : ""}
-                    · {p._count.variants} variant{p._count.variants === 1 ? "" : "s"} · sold{" "}
-                    {p.soldCount}
-                    {" · "}
-                    <Link href={`/products/${p.id}`} className="text-primary hover:underline">
-                      Details / video
-                    </Link>
-                  </p>
-                </div>
-                <StatusSelect
-                  endpoint={`/admin/api/products/${p.id}/status`}
-                  bodyKey="status"
-                  value={p.status}
-                  options={STATUSES}
-                />
-                <p className="text-xs text-muted-foreground lg:text-right">
-                  Updated {p.updatedAt.toLocaleDateString()}
-                </p>
-                <ProductDeleteButton productId={p.id} productName={p.name} />
-              </li>
-            );
-          })
-        )}
-      </ul>
+      {products.length === 0 ? (
+        <p className="admin-panel mt-6 px-4 py-10 text-sm text-muted-foreground">
+          No products yet. Use Add product above.
+        </p>
+      ) : (
+        <div className="mt-8 grid gap-8">
+          {groupByCategory(products).map((group) => (
+            <section key={group.name}>
+              <div className="mb-3 flex items-baseline justify-between gap-3">
+                <h2 className="font-display text-2xl tracking-tight">{group.name}</h2>
+                <p className="text-xs text-muted-foreground">{group.items.length} on the store</p>
+              </div>
+              <ul className="grid gap-3 lg:grid-cols-2">
+                {group.items.map((item) => (
+                  <li key={item.id}>
+                    <ProductShelfCard product={item} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      )}
     </div>
   );
+}
+
+function groupByCategory(
+  products: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    status: string;
+    isFeatured: boolean;
+    primaryCategory: { name: string; sortOrder: number };
+    variants: Array<{ sku: string; price: bigint; salePrice: bigint | null; stockOnHand: number }>;
+    media: Array<{ storageKey: string }>;
+  }>,
+) {
+  const groups = new Map<string, { name: string; sort: number; items: ShelfProduct[] }>();
+  for (const product of products) {
+    const key = product.primaryCategory.name;
+    const variant = product.variants[0];
+    const item: ShelfProduct = {
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      status: product.status,
+      isFeatured: product.isFeatured,
+      categoryName: key,
+      image: adminMediaSrc(product.media[0]?.storageKey),
+      sku: variant?.sku ?? null,
+      priceTaka: variant ? String(Number(variant.price) / 100) : "",
+      salePriceTaka: variant?.salePrice != null ? String(Number(variant.salePrice) / 100) : "",
+      stock: variant?.stockOnHand ?? 0,
+    };
+    const existing = groups.get(key);
+    if (existing) existing.items.push(item);
+    else groups.set(key, { name: key, sort: product.primaryCategory.sortOrder, items: [item] });
+  }
+  return [...groups.values()].sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name));
 }
 
 function FilterChip({

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { AdminPageHeader } from "@/components/admin-page-header";
 import { StatusSelect } from "@/components/status-select";
 import { requireAdmin } from "@/lib/admin-auth";
+import { adminMediaSrc } from "@/lib/media-url";
 import { ProductDeleteButton } from "../product-delete-button";
 import { ProductVideoEditor } from "./product-video-editor";
 
@@ -46,10 +47,8 @@ export default async function ProductDetailPage({
         },
       },
       media: {
-        where: { type: "video" },
         orderBy: { sortOrder: "asc" },
-        take: 1,
-        select: { storageKey: true },
+        select: { type: true, storageKey: true },
       },
       _count: { select: { variants: true, media: true } },
     },
@@ -58,7 +57,10 @@ export default async function ProductDetailPage({
   if (!product) notFound();
 
   const variant = product.variants[0];
-  const videoUrl = product.media[0]?.storageKey ?? null;
+  const videoUrl = product.media.find((item) => item.type === "video")?.storageKey ?? null;
+  const imageUrl = adminMediaSrc(
+    product.media.find((item) => item.type === "image")?.storageKey,
+  );
 
   return (
     <div>
@@ -107,7 +109,18 @@ export default async function ProductDetailPage({
         </li>
       </ul>
 
-      <section className="admin-panel mt-8 grid gap-4 p-5 sm:p-6">
+      <section className="admin-panel mt-8 grid gap-4 p-5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:p-6">
+        <div className="aspect-[4/5] overflow-hidden rounded-lg bg-[#1c1814]">
+          {imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={imageUrl} alt="" className="size-full object-cover" />
+          ) : (
+            <div className="grid size-full place-items-center text-[10px] tracking-wide text-muted-foreground uppercase">
+              No photo
+            </div>
+          )}
+        </div>
+        <div className="grid gap-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-[11px] tracking-[0.2em] text-primary uppercase">Details</p>
@@ -158,6 +171,7 @@ export default async function ProductDetailPage({
             </Link>
           </p>
         ) : null}
+        </div>
       </section>
 
       <ProductVideoEditor

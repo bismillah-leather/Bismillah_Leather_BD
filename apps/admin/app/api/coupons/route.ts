@@ -16,6 +16,9 @@ export async function POST(request: Request) {
   const code = typeof body.code === "string" ? body.code.trim().toUpperCase() : "";
   const type = body.type === "percent" || body.type === "fixed" ? body.type : null;
   const amount = Number(body.amount);
+  const productIds = Array.isArray(body.productIds)
+    ? [...new Set(body.productIds.filter((id): id is string => typeof id === "string" && id.length > 0))]
+    : [];
   if (!code || code.length < 3) {
     return NextResponse.json({ error: "Code must be at least 3 characters." }, { status: 400 });
   }
@@ -23,12 +26,21 @@ export async function POST(request: Request) {
   if (!Number.isFinite(amount) || amount <= 0) {
     return NextResponse.json({ error: "amount must be positive." }, { status: 400 });
   }
+  if (type === "percent" && amount > 100) {
+    return NextResponse.json({ error: "Percent cannot be more than 100." }, { status: 400 });
+  }
 
   // percent: store basis points (15% → 1500). fixed: taka → paisa.
   const value =
     type === "percent" ? BigInt(Math.round(amount * 100)) : BigInt(Math.round(amount * 100));
 
   const prisma = getPrisma();
+  const products = productIds.length
+    ? await prisma.product.findMany({
+        where: { id: { in: productIds }, deletedAt: null },
+        select: { id: true },
+      })
+    : [];
   try {
     const coupon = await prisma.coupon.create({
       data: {
@@ -36,7 +48,10 @@ export async function POST(request: Request) {
         type,
         value,
         isActive: true,
-        scope: "all",
+        scope: products.length ? "product" : "all",
+        ...(products.length
+          ? { products: { create: products.map((product) => ({ productId: product.id })) } }
+          : {}),
       },
       select: { id: true, code: true },
     });

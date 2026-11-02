@@ -146,17 +146,31 @@ export default function ProductVideosPage() {
                   {live ? " · live" : ""}
                 </p>
               </div>
-              <input
-                value={value}
-                onChange={(e) =>
-                  setDraft((prev) => ({
-                    ...prev,
-                    [product.slug]: e.target.value,
-                  }))
-                }
-                placeholder="https://youtube.com/… or facebook.com/…/videos/…"
-                className="admin-field"
-              />
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  value={value}
+                  onChange={(e) =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      [product.slug]: e.target.value,
+                    }))
+                  }
+                  placeholder="https://youtube.com/… or facebook.com/…/videos/…"
+                  className="admin-field min-w-0 flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      [product.slug]: "",
+                    }))
+                  }
+                  className="admin-btn-danger h-9 px-3 text-[11px]"
+                >
+                  Delete
+                </button>
+              </div>
             </li>
           );
         })}

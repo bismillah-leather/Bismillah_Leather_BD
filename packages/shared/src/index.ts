@@ -53,6 +53,25 @@ export {
 export type { FlashSaleConfig, FlashSaleCountdown, FlashSaleItem } from "./flash-sale";
 export { isSupportedVideoUrl, parseVideoEmbed } from "./video-embed";
 export type { VideoEmbed, VideoProvider } from "./video-embed";
+export {
+  DEFAULT_ABOUT,
+  DEFAULT_FEATURED,
+  DEFAULT_HERO_SLIDES,
+  DEFAULT_POLICIES,
+  DEFAULT_TRUST,
+  isStorefrontImageSrc,
+  POLICY_SLUGS,
+  readStorefrontDraft,
+} from "./storefront-content";
+export type {
+  AboutContent,
+  FeaturedCard,
+  HeroSlide,
+  PolicyDraft,
+  PolicySlug,
+  StorefrontDraft,
+  TrustItem,
+} from "./storefront-content";
 export { BD_DISTRICTS, divisionForDistrict } from "./bd-geo";
 export type { BdDistrict } from "./bd-geo";
 

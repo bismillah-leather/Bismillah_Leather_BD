@@ -22,7 +22,16 @@ type ItemInput = {
   durationHours?: number;
   startsAt?: string;
   endsAt?: string;
+  /** Taka taken off this product. */
+  amountOffTaka?: number;
+  /** Admin-set flash price in taka. Wins over amount off. */
+  offerTaka?: number;
 };
+
+function takaToPaisa(value: unknown): string | undefined {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return undefined;
+  return String(Math.round(value * 100));
+}
 
 type PutBody = Omit<Partial<FlashSaleConfig>, "items"> & {
   /** Admin convenience: default hours from now → item endsAt when not set per product */
@@ -61,10 +70,14 @@ export async function PUT(request: Request) {
         const itemEnd =
           item.endsAt ??
           endsAtFromDurationHours(hours, item.startsAt ? new Date(item.startsAt) : now);
+        const offer = takaToPaisa(item.offerTaka);
+        const amountOff = takaToPaisa(item.amountOffTaka);
         return {
           slug: item.slug,
           startsAt: itemStart,
           endsAt: itemEnd,
+          ...(offer ? { offerPaisa: offer } : {}),
+          ...(amountOff ? { amountOffPaisa: amountOff } : {}),
         };
       });
   } else {

@@ -68,12 +68,17 @@ function CountdownDigit({ value, label }: { value: string; label: string }) {
 }
 
 function FlashCountdown({ endsAt }: { endsAt: string }) {
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
+    setNow(Date.now());
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, []);
+
+  if (now == null) {
+    return <div className="h-12 w-44" aria-hidden />;
+  }
 
   const parts = flashSaleCountdown(endsAt, new Date(now));
   if (parts.expired) {
@@ -334,7 +339,7 @@ export function FlashSaleSection({ sale: initialSale }: { sale: FlashSaleConfig 
       </div>
 
       <div
-        className="relative mt-8 sm:mt-10"
+        className="relative isolate mt-8 sm:mt-10"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
@@ -378,7 +383,7 @@ export function FlashSaleSection({ sale: initialSale }: { sale: FlashSaleConfig 
               const opacity = clamp(1.2 - abs * 0.28, 0.2, 1);
               const zIndex = Math.round(160 - abs * 18);
               const isCenter = abs < 0.55;
-              const price = flashSalePricePaisa(product.pricePaisa, sale);
+              const price = flashSalePricePaisa(product.pricePaisa, sale, product.slug);
 
               return (
                 <li
@@ -461,11 +466,15 @@ export function FlashSaleSection({ sale: initialSale }: { sale: FlashSaleConfig 
                             {product.name}
                           </h3>
                         </Link>
-                        <p className="pointer-events-none mt-2 text-base sm:text-lg">
-                          <span className="font-medium">{formatPaisa(price)}</span>
-                          <span className="ml-2 text-sm text-white/40 line-through">
-                            {formatPaisa(product.pricePaisa)}
+                        <p className="pointer-events-none mt-2 flex items-baseline gap-2">
+                          <span className="font-display text-2xl tracking-tight text-white sm:text-3xl">
+                            {formatPaisa(price)}
                           </span>
+                          {price < product.pricePaisa ? (
+                            <span className="text-sm text-white/45 line-through">
+                              {formatPaisa(product.pricePaisa)}
+                            </span>
+                          ) : null}
                         </p>
                         <div className="pointer-events-none mt-3 scale-90 origin-left sm:scale-100">
                           <FlashCountdown
@@ -484,8 +493,16 @@ export function FlashSaleSection({ sale: initialSale }: { sale: FlashSaleConfig 
                         </div>
                       </div>
                     ) : (
-                      <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3 sm:p-4">
-                        <p className="truncate text-xs tracking-wide text-white/70">{product.name}</p>
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 sm:p-4">
+                        <p className="truncate text-xs tracking-wide text-white/80">{product.name}</p>
+                        <p className="mt-1 flex items-baseline gap-1.5 text-[11px]">
+                          <span className="font-medium text-white">{formatPaisa(price)}</span>
+                          {price < product.pricePaisa ? (
+                            <span className="text-white/45 line-through">
+                              {formatPaisa(product.pricePaisa)}
+                            </span>
+                          ) : null}
+                        </p>
                       </div>
                     )}
                   </article>

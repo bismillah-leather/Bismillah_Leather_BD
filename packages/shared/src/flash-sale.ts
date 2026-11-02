@@ -6,6 +6,10 @@ export type FlashSaleItem = {
   slug: string;
   startsAt: string;
   endsAt: string;
+  /** Taka taken off this product, in paisa. Used when no offer price is set. */
+  amountOffPaisa?: string;
+  /** Admin-set flash price in paisa. When lower than the list price, this is what the store shows. */
+  offerPaisa?: string;
 };
 
 /** Admin + storefront flash sale contract. Money is paisa; percent is basis points. */
@@ -43,19 +47,28 @@ type FlashSaleInput = Partial<FlashSaleConfig> & {
   items?: FlashSaleItem[];
 };
 
+function keepPaisa(value: unknown): string | undefined {
+  return typeof value === "string" && /^\d+$/.test(value) && value !== "0" ? value : undefined;
+}
+
 function itemFromSlug(
   slug: string,
   startsAt: string,
   endsAt: string,
   staggerIndex = 0,
+  money?: { offerPaisa?: string; amountOffPaisa?: string },
 ): FlashSaleItem {
+  const prices = {
+    ...(money?.offerPaisa ? { offerPaisa: money.offerPaisa } : {}),
+    ...(money?.amountOffPaisa ? { amountOffPaisa: money.amountOffPaisa } : {}),
+  };
   if (staggerIndex <= 0) {
-    return { slug, startsAt, endsAt };
+    return { slug, startsAt, endsAt, ...prices };
   }
   const startMs = Date.parse(startsAt);
   const endMs = Date.parse(endsAt);
   if (Number.isNaN(startMs) || Number.isNaN(endMs) || endMs <= startMs) {
-    return { slug, startsAt, endsAt };
+    return { slug, startsAt, endsAt, ...prices };
   }
   const span = endMs - startMs;
   const extra = staggerIndex * Math.min(2 * 60 * 60 * 1000, Math.floor(span / 4));
@@ -63,6 +76,7 @@ function itemFromSlug(
     slug,
     startsAt,
     endsAt: new Date(endMs + extra).toISOString(),
+    ...prices,
   };
 }
 
@@ -82,6 +96,10 @@ export function normalizeFlashSale(raw: FlashSaleInput): FlashSaleConfig {
           item.startsAt || startsAt,
           item.endsAt || endsAt,
           item.endsAt ? 0 : index,
+          {
+            offerPaisa: keepPaisa(item.offerPaisa),
+            amountOffPaisa: keepPaisa(item.amountOffPaisa),
+          },
         ),
       );
   } else if (Array.isArray(raw.productSlugs) && raw.productSlugs.length > 0) {
@@ -177,7 +195,24 @@ export function flashDiscountPaisa(listPricePaisa: bigint, sale: FlashSaleConfig
   return clampDiscount(value, listPricePaisa);
 }
 
-export function flashSalePricePaisa(listPricePaisa: bigint, sale: FlashSaleConfig): bigint {
+export function flashSalePricePaisa(
+  listPricePaisa: bigint,
+  sale: FlashSaleConfig,
+  slug?: string,
+): bigint {
+  if (slug) {
+    const item = flashSaleItemForSlug(sale, slug);
+    const offer = item?.offerPaisa;
+    if (offer && /^\d+$/.test(offer)) {
+      const next = BigInt(offer);
+      if (next > 0n && next < listPricePaisa) return next;
+    }
+    const amountOff = item?.amountOffPaisa;
+    if (amountOff && /^\d+$/.test(amountOff)) {
+      const off = BigInt(amountOff);
+      if (off > 0n && off < listPricePaisa) return listPricePaisa - off;
+    }
+  }
   return listPricePaisa - flashDiscountPaisa(listPricePaisa, sale);
 }
 

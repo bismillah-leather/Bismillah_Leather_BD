@@ -1,14 +1,16 @@
 import { getPrisma } from "@bismillah/db";
+import { POLICY_SLUGS, readStorefrontDraft } from "@bismillah/shared";
 import { AdminPageHeader } from "@/components/admin-page-header";
-import { ToggleButton } from "@/components/toggle-button";
 import { requireAdmin } from "@/lib/admin-auth";
+import { PageRow, SectionCreateForm, SectionRow } from "./content-rows";
 import { PageCreateForm } from "./page-create-form";
+import { StorefrontStudio } from "./storefront-studio";
 
 export default async function ContentPage() {
   await requireAdmin();
   const prisma = getPrisma();
 
-  const [pages, sections] = await Promise.all([
+  const [pages, sections, studioSections, policyPages] = await Promise.all([
     prisma.page.findMany({
       orderBy: { updatedAt: "desc" },
       take: 50,
@@ -16,6 +18,7 @@ export default async function ContentPage() {
         id: true,
         slug: true,
         title: true,
+        body: true,
         isPublished: true,
         updatedAt: true,
       },
@@ -31,17 +34,28 @@ export default async function ContentPage() {
         sortOrder: true,
       },
     }),
+    prisma.homeSection.findMany({
+      where: { key: { in: ["hero", "about", "trust", "featured"] } },
+      select: { key: true, payload: true },
+    }),
+    prisma.page.findMany({
+      where: { slug: { in: [...POLICY_SLUGS] } },
+      select: { slug: true, title: true, body: true },
+    }),
   ]);
+  const draft = readStorefrontDraft({ sections: studioSections, pages: policyPages });
 
   return (
     <div>
       <AdminPageHeader
         eyebrow="Storefront"
         title="Content"
-        description="Static pages and home sections that shape the leather storefront story."
+        description="Change the hero, featured photos, about page, and the policy pages the customer sees."
       />
 
-      <section className="mt-8 max-w-2xl">
+      <StorefrontStudio initial={draft} />
+
+      <section className="mt-12 max-w-2xl">
         <h2 className="text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
           New page
         </h2>
@@ -59,24 +73,14 @@ export default async function ContentPage() {
             <li className="px-4 py-8 text-sm text-muted-foreground">No pages yet.</li>
           ) : (
             pages.map((p) => (
-              <li
+              <PageRow
                 key={p.id}
-                className="grid gap-3 px-4 py-4 sm:grid-cols-[1fr_auto] sm:items-center"
-              >
-                <div>
-                  <p className="text-sm font-medium">{p.title}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    /{p.slug} · updated {p.updatedAt.toLocaleDateString()}
-                  </p>
-                </div>
-                <ToggleButton
-                  endpoint={`/admin/api/content/pages/${p.id}`}
-                  flagKey="isPublished"
-                  active={p.isPublished}
-                  activeLabel="Published"
-                  inactiveLabel="Draft"
-                />
-              </li>
+                id={p.id}
+                title={p.title}
+                body={p.body}
+                isPublished={p.isPublished}
+                meta={`/${p.slug} · updated ${p.updatedAt.toLocaleDateString()}`}
+              />
             ))
           )}
         </ul>
@@ -86,6 +90,7 @@ export default async function ContentPage() {
         <h2 className="text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
           Home sections
         </h2>
+        <SectionCreateForm />
         <ul className="admin-panel mt-3 divide-y divide-border">
           {sections.length === 0 ? (
             <li className="px-4 py-8 text-sm text-muted-foreground">
@@ -93,24 +98,13 @@ export default async function ContentPage() {
             </li>
           ) : (
             sections.map((s) => (
-              <li
+              <SectionRow
                 key={s.id}
-                className="grid gap-3 px-4 py-4 sm:grid-cols-[1fr_auto] sm:items-center"
-              >
-                <div>
-                  <p className="text-sm font-medium">{s.title || s.key}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {s.key} · {s.type} · sort {s.sortOrder}
-                  </p>
-                </div>
-                <ToggleButton
-                  endpoint={`/admin/api/content/sections/${s.id}`}
-                  flagKey="isActive"
-                  active={s.isActive}
-                  activeLabel="On"
-                  inactiveLabel="Off"
-                />
-              </li>
+                id={s.id}
+                title={s.title || s.key}
+                isActive={s.isActive}
+                meta={`${s.key} · ${s.type} · sort ${s.sortOrder}`}
+              />
             ))
           )}
         </ul>

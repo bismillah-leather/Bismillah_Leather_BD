@@ -2,12 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ProductPicker, type CouponCatalogItem } from "./coupon-products";
 
-export function CouponCreateForm() {
+export function CouponCreateForm({ catalog }: { catalog: CouponCatalogItem[] }) {
   const router = useRouter();
   const [code, setCode] = useState("");
   const [type, setType] = useState<"percent" | "fixed">("percent");
   const [amount, setAmount] = useState("10");
+  const [productIds, setProductIds] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +23,7 @@ export function CouponCreateForm() {
       const res = await fetch("/admin/api/coupons", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, type, amount: Number(amount) }),
+        body: JSON.stringify({ code, type, amount: Number(amount), productIds }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
       if (!res.ok) {
@@ -30,6 +32,7 @@ export function CouponCreateForm() {
       }
       setMsg(`Created ${data.code}`);
       setCode("");
+      setProductIds([]);
       router.refresh();
     } catch {
       setError("Network error.");
@@ -79,6 +82,15 @@ export function CouponCreateForm() {
           className="admin-field"
         />
       </label>
+      <div className="sm:col-span-2">
+        <ProductPicker
+          catalog={catalog}
+          selected={productIds}
+          type={type}
+          amount={amount}
+          onChange={setProductIds}
+        />
+      </div>
       <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
         <button type="submit" disabled={pending} className="admin-btn-primary">
           {pending ? "Creating…" : "Create coupon"}
