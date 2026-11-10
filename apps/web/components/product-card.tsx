@@ -4,6 +4,7 @@ import { formatPaisa, SHOWCASE_PRODUCTS, type ShowcaseProduct } from "@bismillah
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { LiveViewers } from "./live-viewers";
 import { ProductCardActions } from "./product-card-actions";
 
 function facesFor(product: ShowcaseProduct) {
@@ -30,7 +31,7 @@ export function ProductCard({ product }: { product: ShowcaseProduct }) {
 
   return (
     <article
-      className="group flex h-full flex-col"
+      className="group relative flex h-full flex-col"
       onMouseEnter={() => {
         setHover(true);
         setFace(faces.length > 1 ? 1 : 0);
@@ -64,7 +65,11 @@ export function ProductCard({ product }: { product: ShowcaseProduct }) {
         ) : null}
 
         {!product.inStock ? (
-          <span className="absolute top-2.5 right-2.5 bg-black px-2 py-1 text-[10px] tracking-[0.12em] text-white uppercase">
+          <span
+            className={`absolute left-2.5 bg-black px-2 py-1 text-[10px] tracking-[0.12em] text-white uppercase ${
+              product.salePaisa ? "top-10" : "top-2.5"
+            }`}
+          >
             Sold out
           </span>
         ) : null}
@@ -82,6 +87,7 @@ export function ProductCard({ product }: { product: ShowcaseProduct }) {
           </div>
         ) : null}
       </Link>
+      <LiveViewers slug={product.slug} className="absolute top-2.5 right-2.5 z-10" />
 
       <div className="mt-2.5 flex flex-1 flex-col">
         <Link href={`/product/${product.slug}`}>

@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { AdminPageHeader } from "@/components/admin-page-header";
 import { AdminSearch } from "@/components/admin-search";
 import { requireAdmin } from "@/lib/admin-auth";
-import { adminMediaSrc, syncCatalogImagesToR2 } from "@/lib/media-url";
+import { adminMediaSrc, requestStoreOrigin } from "@/lib/media-url";
 import { ProductCreateForm } from "./product-create-form";
 import { ProductShelfCard, type ShelfProduct } from "./product-shelf";
 
@@ -15,21 +15,16 @@ export default async function ProductsPage({
 }: {
   searchParams: Promise<{ q?: string; status?: string }>;
 }) {
-  await requireAdmin();
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
   const status = STATUSES.includes(sp.status as (typeof STATUSES)[number])
     ? (sp.status as (typeof STATUSES)[number])
     : undefined;
 
-  try {
-    await syncCatalogImagesToR2();
-  } catch (error) {
-    console.error("[admin] image sync skipped:", error);
-  }
-
   const prisma = getPrisma();
-  const [products, categories, counts] = await Promise.all([
+  const [, origin, products, categories, counts] = await Promise.all([
+    requireAdmin(),
+    requestStoreOrigin(),
     prisma.product.findMany({
       where: {
         deletedAt: null,
@@ -142,7 +137,7 @@ export default async function ProductsPage({
         </p>
       ) : (
         <div className="mt-8 grid gap-8">
-          {groupByCategory(products).map((group) => (
+          {groupByCategory(products, origin).map((group) => (
             <section key={group.name}>
               <div className="mb-3 flex items-baseline justify-between gap-3">
                 <h2 className="font-display text-2xl tracking-tight">{group.name}</h2>
@@ -174,6 +169,7 @@ function groupByCategory(
     variants: Array<{ sku: string; price: bigint; salePrice: bigint | null; stockOnHand: number }>;
     media: Array<{ storageKey: string }>;
   }>,
+  origin: string,
 ) {
   const groups = new Map<string, { name: string; sort: number; items: ShelfProduct[] }>();
   for (const product of products) {
@@ -186,7 +182,7 @@ function groupByCategory(
       status: product.status,
       isFeatured: product.isFeatured,
       categoryName: key,
-      image: adminMediaSrc(product.media[0]?.storageKey),
+      image: adminMediaSrc(product.media[0]?.storageKey, origin),
       sku: variant?.sku ?? null,
       priceTaka: variant ? String(Number(variant.price) / 100) : "",
       salePriceTaka: variant?.salePrice != null ? String(Number(variant.salePrice) / 100) : "",

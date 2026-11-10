@@ -1,11 +1,11 @@
-import { getPrisma } from "@bismillah/db";
+import { getPrisma, type Prisma } from "@bismillah/db";
 import { formatPaisa } from "@bismillah/shared";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AdminSearch } from "@/components/admin-search";
 import { StockEditor } from "@/components/stock-editor";
 import { requireAdmin } from "@/lib/admin-auth";
-import { adminMediaSrc } from "@/lib/media-url";
+import { adminMediaSrc, requestStoreOrigin } from "@/lib/media-url";
 
 function stockState(onHand: number) {
   if (onHand <= 0) return "out" as const;
@@ -18,27 +18,28 @@ export default async function InventoryPage({
 }: {
   searchParams: Promise<{ q?: string; filter?: string }>;
 }) {
-  await requireAdmin();
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
   const filter = sp.filter === "low" || sp.filter === "out" ? sp.filter : "all";
-
+  const originPromise = requestStoreOrigin();
   const prisma = getPrisma();
-  const [variants, levels, movements] = await Promise.all([
+  const listWhere: Prisma.ProductVariantWhereInput = {
+    isActive: true,
+    ...(filter === "low" ? { stockOnHand: { gt: 0, lte: 3 } } : {}),
+    ...(filter === "out" ? { stockOnHand: { lte: 0 } } : {}),
+    ...(q
+      ? {
+          OR: [
+            { sku: { contains: q, mode: "insensitive" } },
+            { product: { name: { contains: q, mode: "insensitive" } } },
+          ],
+        }
+      : {}),
+  };
+  const [, variants, levels, movements, origin] = await Promise.all([
+    requireAdmin(),
     prisma.productVariant.findMany({
-      where: {
-        isActive: true,
-        ...(filter === "low" ? { stockOnHand: { gt: 0, lte: 3 } } : {}),
-        ...(filter === "out" ? { stockOnHand: { lte: 0 } } : {}),
-        ...(q
-          ? {
-              OR: [
-                { sku: { contains: q, mode: "insensitive" } },
-                { product: { name: { contains: q, mode: "insensitive" } } },
-              ],
-            }
-          : {}),
-      },
+      where: listWhere,
       orderBy: [{ stockOnHand: "asc" }, { sku: "asc" }],
       take: 100,
       select: {
@@ -61,10 +62,28 @@ export default async function InventoryPage({
         },
       },
     }),
-    prisma.productVariant.findMany({
-      where: { isActive: true },
-      select: { stockOnHand: true, stockReserved: true, price: true },
-    }),
+    prisma.$queryRaw<
+      {
+        sku_count: number;
+        on_hand: number;
+        reserved: number;
+        free_units: number;
+        stock_value: string;
+        low_count: number;
+        out_count: number;
+      }[]
+    >`
+      SELECT
+        count(*)::int AS sku_count,
+        coalesce(sum(stock_on_hand), 0)::int AS on_hand,
+        coalesce(sum(stock_reserved), 0)::int AS reserved,
+        coalesce(sum(GREATEST(stock_on_hand - stock_reserved, 0)), 0)::int AS free_units,
+        coalesce(sum(price * GREATEST(stock_on_hand, 0)), 0)::text AS stock_value,
+        count(*) FILTER (WHERE stock_on_hand > 0 AND stock_on_hand <= 3)::int AS low_count,
+        count(*) FILTER (WHERE stock_on_hand <= 0)::int AS out_count
+      FROM product_variants
+      WHERE is_active
+    `,
     prisma.inventoryMovement.findMany({
       orderBy: { createdAt: "desc" },
       take: 6,
@@ -76,24 +95,28 @@ export default async function InventoryPage({
         variant: { select: { sku: true, product: { select: { name: true } } } },
       },
     }),
+    originPromise,
   ]);
-
-  const unitsOnHand = levels.reduce((sum, row) => sum + row.stockOnHand, 0);
-  const unitsReserved = levels.reduce((sum, row) => sum + row.stockReserved, 0);
-  const unitsFree = levels.reduce(
-    (sum, row) => sum + Math.max(0, row.stockOnHand - row.stockReserved),
-    0,
-  );
-  const stockValue = levels.reduce(
-    (sum, row) => sum + row.price * BigInt(Math.max(0, row.stockOnHand)),
-    0n,
-  );
-  const lowCount = levels.filter((row) => row.stockOnHand > 0 && row.stockOnHand <= 3).length;
-  const outCount = levels.filter((row) => row.stockOnHand <= 0).length;
-  const healthyCount = levels.length - lowCount - outCount;
+  const totals = levels[0] ?? {
+    sku_count: 0,
+    on_hand: 0,
+    reserved: 0,
+    free_units: 0,
+    stock_value: "0",
+    low_count: 0,
+    out_count: 0,
+  };
+  const unitsOnHand = Number(totals.on_hand);
+  const unitsReserved = Number(totals.reserved);
+  const unitsFree = Number(totals.free_units);
+  const stockValue = BigInt(totals.stock_value);
+  const lowCount = Number(totals.low_count);
+  const outCount = Number(totals.out_count);
+  const skuCount = Number(totals.sku_count);
+  const healthyCount = Math.max(0, skuCount - lowCount - outCount);
 
   const filters = [
-    ["all", "All", levels.length],
+    ["all", "All", skuCount],
     ["low", "Low", lowCount],
     ["out", "Out", outCount],
   ] as const;
@@ -119,7 +142,7 @@ export default async function InventoryPage({
         </div>
 
         <dl className="mt-7 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-4">
-          <Figure label="SKUs" value={String(levels.length)} hint={`${healthyCount} healthy`} />
+          <Figure label="SKUs" value={String(skuCount)} hint={`${healthyCount} healthy`} />
           <Figure label="On hand" value={String(unitsOnHand)} hint={`${unitsReserved} reserved`} />
           <Figure label="Free to sell" value={String(unitsFree)} hint={`${outCount} out · ${lowCount} low`} />
           <Figure label="Stock value" value={formatPaisa(stockValue)} hint="At selling price" />
@@ -148,7 +171,7 @@ export default async function InventoryPage({
                 }`}
               >
                 {label}
-                <span className={active ? "text-primary-foreground/80" : "text-[#e4c98a]"}>{count}</span>
+                <span className={active ? "text-white/80" : "text-neutral-500"}>{count}</span>
               </Link>
             );
           })}
@@ -165,7 +188,7 @@ export default async function InventoryPage({
             variants.map((variant) => {
               const state = stockState(variant.stockOnHand);
               const free = Math.max(0, variant.stockOnHand - variant.stockReserved);
-              const image = adminMediaSrc(variant.product.media[0]?.storageKey);
+              const image = adminMediaSrc(variant.product.media[0]?.storageKey, origin);
               return (
                 <li key={variant.id} className="admin-panel px-3 py-3 sm:px-4">
                   <div className="grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">

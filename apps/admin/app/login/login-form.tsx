@@ -48,7 +48,7 @@ export function LoginForm({ defaultEmail = "" }: { defaultEmail?: string }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder={defaultEmail || "staff@bismillah.local"}
-          className="h-12 border-white/18 bg-card/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] focus-visible:border-primary"
+          className="h-12 border border-neutral-300 bg-white text-black shadow-none focus-visible:border-black"
         />
       </label>
       <label className="grid gap-2 text-sm">
@@ -61,7 +61,7 @@ export function LoginForm({ defaultEmail = "" }: { defaultEmail?: string }) {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="h-12 border-white/18 bg-card/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] focus-visible:border-primary"
+          className="h-12 border border-neutral-300 bg-white text-black shadow-none focus-visible:border-black"
         />
       </label>
 

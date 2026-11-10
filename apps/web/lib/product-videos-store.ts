@@ -1,17 +1,12 @@
+import { readStoredProductVideos, writeStoredProductVideos, type ProductVideoMap } from "@bismillah/db";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-/** slug → YouTube / Facebook video URL (empty string clears). */
-export type ProductVideoMap = Record<string, string>;
+export type { ProductVideoMap };
 
 const DATA_PATH = path.join(process.cwd(), "data", "product-videos.json");
 
-export async function writeProductVideos(map: ProductVideoMap): Promise<void> {
-  await fs.mkdir(path.dirname(DATA_PATH), { recursive: true });
-  await fs.writeFile(DATA_PATH, `${JSON.stringify(map, null, 2)}\n`, "utf8");
-}
-
-export async function readProductVideos(): Promise<ProductVideoMap> {
+async function readFileMap(): Promise<ProductVideoMap> {
   try {
     const raw = await fs.readFile(DATA_PATH, "utf8");
     const parsed = JSON.parse(raw) as unknown;
@@ -24,6 +19,26 @@ export async function readProductVideos(): Promise<ProductVideoMap> {
   } catch {
     return {};
   }
+}
+
+export async function writeProductVideos(map: ProductVideoMap): Promise<void> {
+  await writeStoredProductVideos(map);
+  try {
+    await fs.mkdir(path.dirname(DATA_PATH), { recursive: true });
+    await fs.writeFile(DATA_PATH, `${JSON.stringify(map, null, 2)}\n`, "utf8");
+  } catch {
+    // Database copy is the one the storefront reads.
+  }
+}
+
+export async function readProductVideos(): Promise<ProductVideoMap> {
+  try {
+    const stored = await readStoredProductVideos();
+    if (stored) return stored;
+  } catch (error) {
+    console.error("[web] product video database read failed:", error);
+  }
+  return readFileMap();
 }
 
 export async function videoUrlForSlug(slug: string, fallback?: string | null): Promise<string | null> {

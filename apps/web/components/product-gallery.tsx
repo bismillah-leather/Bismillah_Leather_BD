@@ -2,13 +2,16 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { LiveViewers } from "./live-viewers";
 
 export function ProductGallery({
   images,
   alt,
+  slug,
 }: {
   images: readonly string[];
   alt: string;
+  slug?: string;
 }) {
   const shots = images.length > 0 ? images : ["/catalog/wallet-black-long.jpg"];
   const [active, setActive] = useState(0);
@@ -82,6 +85,7 @@ export function ProductGallery({
         <span className="pointer-events-none absolute top-4 left-4 bg-black/80 px-2.5 py-1 text-[10px] tracking-[0.18em] text-white uppercase backdrop-blur-sm">
           Bismillah
         </span>
+        {slug ? <LiveViewers slug={slug} pinned className="absolute top-4 right-4 z-10" /> : null}
 
         <span
           className={`pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/75 px-3 py-1.5 text-[10px] tracking-[0.16em] text-white uppercase backdrop-blur-sm transition ${

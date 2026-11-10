@@ -1,6 +1,8 @@
+import { getPrisma } from "@bismillah/db";
+import { originFromProxyHeaders, storefrontOriginFrom } from "@bismillah/shared";
+import { headers } from "next/headers";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { getPrisma } from "@bismillah/db";
 import { putR2Object, readR2Config } from "./r2";
 
 const MIME: Record<string, string> = {
@@ -12,15 +14,28 @@ const MIME: Record<string, string> = {
   gif: "image/gif",
 };
 
-export function storeOrigin() {
-  return process.env.NEXT_PUBLIC_STORE_URL?.replace(/\/$/, "") || "http://localhost:3000";
+/** Storefront origin for this request. Same public host in production. */
+export async function requestStoreOrigin() {
+  const configured = process.env.NEXT_PUBLIC_STORE_URL?.replace(/\/$/, "");
+  if (configured) return storefrontOriginFrom(configured);
+  try {
+    const h = await headers();
+    const host = h.get("x-forwarded-host") || h.get("host");
+    if (!host) return "";
+    return storefrontOriginFrom(originFromProxyHeaders((name) => h.get(name), `http://${host}`));
+  } catch {
+    return "";
+  }
 }
 
 /** Browser URL for a stored image. Local catalog paths load from the storefront. */
-export function adminMediaSrc(storageKey: string | null | undefined) {
+export function adminMediaSrc(storageKey: string | null | undefined, origin?: string | null) {
   if (!storageKey) return null;
   if (/^https?:\/\//i.test(storageKey)) return storageKey;
-  if (storageKey.startsWith("/")) return `${storeOrigin()}${storageKey}`;
+  if (storageKey.startsWith("/")) {
+    const base = origin?.replace(/\/$/, "");
+    return base ? `${base}${storageKey}` : storageKey;
+  }
   return storageKey;
 }
 

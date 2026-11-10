@@ -3,6 +3,7 @@ import { Fraunces, Outfit } from "next/font/google";
 import { BrandProvider } from "@/components/brand-provider";
 import { CartDrawer } from "@/components/cart-drawer";
 import { CartProvider } from "@/components/cart-provider";
+import { LiveViewersProvider } from "@/components/live-viewers";
 import { FloatingContact } from "@/components/floating-contact";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -50,19 +51,21 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col">
         <BrandProvider brand={brand}>
           <CartProvider>
-            <a
-              href="#main"
-              className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground"
-            >
-              Skip to content
-            </a>
-            <SiteHeader brand={brand} />
-            <main id="main" className="flex-1">
-              {children}
-            </main>
-            <SiteFooter brand={brand} />
-            <CartDrawer />
-            <FloatingContact />
+            <LiveViewersProvider>
+              <a
+                href="#main"
+                className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground"
+              >
+                Skip to content
+              </a>
+              <SiteHeader brand={brand} />
+              <main id="main" className="flex-1">
+                {children}
+              </main>
+              <SiteFooter brand={brand} />
+              <CartDrawer />
+              <FloatingContact />
+            </LiveViewersProvider>
           </CartProvider>
         </BrandProvider>
       </body>

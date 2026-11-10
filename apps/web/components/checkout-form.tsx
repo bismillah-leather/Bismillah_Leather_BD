@@ -4,7 +4,8 @@ import { formatPaisa, normalizeBdPhone } from "@bismillah/shared";
 import { Minus, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { placeOrderAction } from "@/app/checkout/actions";
 import { useCart } from "@/hooks/use-cart";
 import { addToCart, clearCart, type CartItemView } from "@/lib/cart";
 
@@ -21,11 +22,13 @@ export function CheckoutForm() {
   const [shipping, setShipping] = useState<ShippingZone>("inside");
   const [payment, setPayment] = useState<"cod" | "ssl">("cod");
   const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
+  const [orderNumber, setOrderNumber] = useState("");
+  const orderKey = useRef("");
   const [done, setDone] = useState(false);
   const [orderItems, setOrderItems] = useState<CartItemView[]>([]);
   const [doneTotal, setDoneTotal] = useState(0n);
   const [doneShipping, setDoneShipping] = useState<ShippingZone>("inside");
-  const [donePayment, setDonePayment] = useState<"cod" | "ssl">("cod");
 
   // Seed cart from ?product=… before we decide empty vs ready (Buy now race fix).
   useEffect(() => {
@@ -54,23 +57,16 @@ export function CheckoutForm() {
       <div className="mx-auto max-w-xl border border-border bg-white">
         <div className="bg-black px-6 py-10 text-white sm:px-8">
           <p className="text-[11px] tracking-[0.22em] text-white/50 uppercase">Thank you</p>
-          <h2 className="font-display mt-3 text-4xl tracking-tight">We will call to confirm.</h2>
+          <h2 className="font-display mt-3 text-4xl tracking-tight">Order {orderNumber}</h2>
           <p className="mt-4 text-sm leading-6 text-white/65">
-            {orderItems.length} item{orderItems.length === 1 ? "" : "s"} ·{" "}
-            {SHIPPING[doneShipping].label} ·{" "}
-            {donePayment === "cod" ? "Cash on delivery" : "Online pay"} after confirmation.
+            Saved. We will call to confirm {orderItems.length} item
+            {orderItems.length === 1 ? "" : "s"} · {SHIPPING[doneShipping].label} · cash on delivery.
           </p>
           <p className="mt-4 text-lg font-medium tabular-nums">{formatPaisa(doneTotal)}</p>
         </div>
         <div className="flex flex-wrap gap-3 p-6 sm:p-8">
-          <Link
-            href="/"
-            className="inline-flex h-12 items-center bg-foreground px-5 text-sm font-medium text-background"
-          >
+          <Link href="/" className="inline-flex h-12 items-center bg-foreground px-5 text-sm font-medium text-background">
             Back to shop
-          </Link>
-          <Link href="/cart" className="inline-flex h-12 items-center border border-foreground px-5 text-sm">
-            View cart
           </Link>
         </div>
       </div>
@@ -99,8 +95,9 @@ export function CheckoutForm() {
   return (
     <form
       className="mx-auto grid max-w-5xl gap-0 overflow-hidden border border-border bg-white lg:grid-cols-[minmax(0,1fr)_22.5rem]"
-      onSubmit={(event) => {
+      onSubmit={async (event) => {
         event.preventDefault();
+        if (pending) return;
         const data = new FormData(event.currentTarget);
         const contact = String(data.get("contact") ?? "").trim();
         const phoneRaw = String(data.get("phone") ?? "").trim() || contact;
@@ -124,12 +121,36 @@ export function CheckoutForm() {
           return;
         }
         setError("");
-        setOrderItems(lines);
-        setDoneTotal(total);
-        setDoneShipping(shipping);
-        setDonePayment(payment);
-        clearCart();
-        setDone(true);
+        setPending(true);
+        if (!orderKey.current) orderKey.current = crypto.randomUUID();
+        try {
+          const result = await placeOrderAction({
+            idempotencyKey: orderKey.current,
+            contact,
+            firstName: String(data.get("firstName") ?? ""),
+            lastName,
+            phone,
+            address,
+            city,
+            postal: String(data.get("postal") ?? ""),
+            shipping,
+            items: lines.map((item) => ({ slug: item.slug, color: item.color, qty: item.qty })),
+          });
+          if (!result.ok) {
+            setError(result.error);
+            return;
+          }
+          setOrderItems(lines);
+          setDoneTotal(total);
+          setDoneShipping(shipping);
+          setOrderNumber(result.number);
+          clearCart();
+          setDone(true);
+        } catch {
+          setError("Could not place the order. Check your connection and try again.");
+        } finally {
+          setPending(false);
+        }
       }}
     >
       <div className="order-2 border-t border-border lg:order-1 lg:border-t-0 lg:border-r">
@@ -308,9 +329,10 @@ export function CheckoutForm() {
 
           <button
             type="submit"
-            className="inline-flex h-12 w-full items-center justify-center rounded-md bg-foreground text-sm font-medium text-background transition hover:opacity-90 lg:hidden"
+            disabled={pending}
+            className="inline-flex h-12 w-full items-center justify-center rounded-md bg-foreground text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-60 lg:hidden"
           >
-            Place order · {formatPaisa(total)}
+            {pending ? "Placing order…" : `Place order · ${formatPaisa(total)}`}
           </button>
           <div className="flex items-start gap-2 text-xs leading-5 text-muted-foreground lg:hidden">
             <ShieldCheck className="mt-0.5 size-4 shrink-0 text-foreground" strokeWidth={1.5} />
@@ -426,9 +448,10 @@ export function CheckoutForm() {
         <div className="hidden border-t border-border px-6 py-5 lg:block">
           <button
             type="submit"
-            className="inline-flex h-12 w-full items-center justify-center rounded-md bg-foreground text-sm font-medium text-background transition hover:opacity-90"
+            disabled={pending}
+            className="inline-flex h-12 w-full items-center justify-center rounded-md bg-foreground text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-60"
           >
-            Place order · {formatPaisa(total)}
+            {pending ? "Placing order…" : `Place order · ${formatPaisa(total)}`}
           </button>
           <div className="mt-4 flex items-start gap-2 text-xs leading-5 text-muted-foreground">
             <ShieldCheck className="mt-0.5 size-4 shrink-0 text-foreground" strokeWidth={1.5} />

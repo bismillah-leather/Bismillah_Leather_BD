@@ -92,7 +92,7 @@ async function ProductContent({ params }: { params: Promise<{ slug: string }> })
           </nav>
 
           <div className="mt-6 grid gap-8 lg:grid-cols-2 lg:gap-12">
-            <ProductGallery images={galleryFor(product)} alt={product.name} />
+            <ProductGallery images={galleryFor(product)} alt={product.name} slug={product.slug} />
             <div>
               <p className="text-[10px] tracking-[0.28em] text-muted-foreground uppercase">
                 {product.kind} · {categoryLabel}

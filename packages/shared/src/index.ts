@@ -74,4 +74,5 @@ export type {
 } from "./storefront-content";
 export { BD_DISTRICTS, divisionForDistrict } from "./bd-geo";
 export type { BdDistrict } from "./bd-geo";
+export { isLoopbackHost, originFromProxyHeaders, storefrontOriginFrom } from "./public-origin";
 

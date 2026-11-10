@@ -1,6 +1,6 @@
 import { getPrisma } from "@bismillah/db";
 import { NextResponse } from "next/server";
-import { getActiveAdmin } from "@/lib/admin-auth";
+import { forgetAdminCache, getActiveAdmin } from "@/lib/admin-auth";
 import { setAdminSessionCookie, signAdminSession } from "@/lib/session";
 
 export async function PATCH(request: Request) {
@@ -20,6 +20,7 @@ export async function PATCH(request: Request) {
   }
 
   const prisma = getPrisma();
+  forgetAdminCache(admin.sub);
   const user = await prisma.adminUser.update({
     where: { id: admin.sub },
     data: { name },

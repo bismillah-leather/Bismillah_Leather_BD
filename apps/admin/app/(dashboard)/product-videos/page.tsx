@@ -4,9 +4,6 @@ import { SHOWCASE_PRODUCTS, isSupportedVideoUrl } from "@bismillah/shared";
 import { useEffect, useMemo, useState } from "react";
 import { AdminPageHeader } from "@/components/admin-page-header";
 
-const STORE_API =
-  process.env.NEXT_PUBLIC_STORE_URL?.replace(/\/$/, "") || "http://localhost:3000";
-
 type VideoMap = Record<string, string>;
 type ProductOption = { name: string; slug: string; sku: string };
 
@@ -27,10 +24,11 @@ export default function ProductVideosPage() {
     (async () => {
       try {
         const [videosRes, productsRes] = await Promise.all([
-          fetch(`${STORE_API}/api/product-videos`, { cache: "no-store" }),
+          fetch("/admin/api/product-videos", { cache: "no-store" }),
           fetch("/admin/api/products", { cache: "no-store" }),
         ]);
         const data = (await videosRes.json()) as VideoMap;
+        if (!videosRes.ok) throw new Error("videos");
         if (productsRes.ok) {
           const list = (await productsRes.json()) as { products?: ProductOption[] };
           if (list.products?.length) setCatalog(list.products);
@@ -42,7 +40,7 @@ export default function ProductVideosPage() {
       } catch {
         if (!cancelled) {
           setStatus("error");
-          setError("Could not load product videos from the storefront API.");
+          setError("Could not load product videos.");
         }
       }
     })();
@@ -77,7 +75,7 @@ export default function ProductVideosPage() {
       cleaned[slug] = trimmed;
     }
     try {
-      const res = await fetch(`${STORE_API}/api/product-videos`, {
+      const res = await fetch("/admin/api/product-videos", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(cleaned),

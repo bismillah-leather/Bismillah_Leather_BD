@@ -5,19 +5,23 @@ import { loadRootEnv } from "./load-root-env";
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient; pool?: Pool };
 
+function poolMax() {
+  // One warm isolate must not open a fresh pool on every query.
+  if (process.env.VERCEL === "1") return 2;
+  if (process.env.NODE_ENV === "production") return 5;
+  return 10;
+}
+
 export function createPrismaClient(connectionString: string): PrismaClient {
   const pool =
     globalForPrisma.pool ??
     new Pool({
       connectionString,
-      max: 20,
-      connectionTimeoutMillis: 5_000,
-      idleTimeoutMillis: 30_000,
+      max: poolMax(),
+      connectionTimeoutMillis: 8_000,
+      idleTimeoutMillis: 20_000,
     });
-
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.pool = pool;
-  }
+  globalForPrisma.pool = pool;
 
   return new PrismaClient({ adapter: new PrismaPg(pool) });
 }
@@ -34,8 +38,6 @@ export function getPrisma(): PrismaClient {
   }
 
   const client = createPrismaClient(connectionString);
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = client;
-  }
+  globalForPrisma.prisma = client;
   return client;
 }

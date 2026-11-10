@@ -1,7 +1,7 @@
-import { getPrisma } from "@bismillah/db";
 import { formatPaisa } from "@bismillah/shared";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-auth";
+import { loadDashboardStats } from "@/lib/dashboard-stats";
 import { listSecurityAlerts } from "@/lib/security-alerts";
 
 function startOfLocalDay(d = new Date()) {
@@ -43,18 +43,17 @@ const SHORTCUTS = [
 ] as const;
 
 export default async function AdminHomePage() {
-  const session = await requireAdmin();
-  const prisma = getPrisma();
   const now = new Date();
   const today = startOfLocalDay(now);
   const weekAgo = daysAgo(6);
   const dayStarts = Array.from({ length: 7 }, (_, i) => daysAgo(6 - i));
-
-  const [
-    todayAgg,
-    weekAgg,
-    ordersToday,
-    ordersWeek,
+  const [session, stats, alerts] = await Promise.all([
+    requireAdmin(),
+    loadDashboardStats(weekAgo),
+    listSecurityAlerts(4),
+  ]);
+  const {
+    weekOrders,
     pending,
     unpaid,
     unfulfilled,
@@ -64,96 +63,32 @@ export default async function AdminHomePage() {
     outOfStock,
     lockedAdmins,
     activeCoupons,
-    recentOrders,
-    alerts,
     statusGroups,
     paymentGroups,
     productGroups,
     topProducts,
-    days,
-  ] = await Promise.all([
-    prisma.order.aggregate({
-      where: { placedAt: { gte: today } },
-      _sum: { total: true },
-      _avg: { total: true },
-    }),
-    prisma.order.aggregate({
-      where: { placedAt: { gte: weekAgo } },
-      _sum: { total: true },
-    }),
-    prisma.order.count({ where: { placedAt: { gte: today } } }),
-    prisma.order.count({ where: { placedAt: { gte: weekAgo } } }),
-    prisma.order.count({ where: { status: "pending" } }),
-    prisma.order.count({ where: { paymentStatus: "unpaid" } }),
-    prisma.order.count({ where: { fulfillmentStatus: "unfulfilled" } }),
-    prisma.customer.count(),
-    prisma.customer.count({ where: { createdAt: { gte: weekAgo } } }),
-    prisma.productVariant.count({
-      where: { isActive: true, stockOnHand: { gt: 0, lte: 3 } },
-    }),
-    prisma.productVariant.count({
-      where: { isActive: true, stockOnHand: { lte: 0 } },
-    }),
-    prisma.adminUser.count({ where: { lockedUntil: { gt: now } } }),
-    prisma.coupon.count({ where: { isActive: true } }),
-    prisma.order.findMany({
-      orderBy: { placedAt: "desc" },
-      take: 7,
-      select: {
-        id: true,
-        number: true,
-        status: true,
-        paymentStatus: true,
-        fulfillmentStatus: true,
-        total: true,
-        customerPhone: true,
-        placedAt: true,
-      },
-    }),
-    listSecurityAlerts(4),
-    prisma.order.groupBy({
-      by: ["status"],
-      _count: { _all: true },
-    }),
-    prisma.order.groupBy({
-      by: ["paymentStatus"],
-      _count: { _all: true },
-    }),
-    prisma.product.groupBy({
-      by: ["status"],
-      where: { deletedAt: null },
-      _count: { _all: true },
-    }),
-    prisma.product.findMany({
-      where: { deletedAt: null, status: "published" },
-      orderBy: [{ soldCount: "desc" }, { updatedAt: "desc" }],
-      take: 5,
-      select: { id: true, name: true, soldCount: true },
-    }),
-    Promise.all(
-      dayStarts.map((start, i) => {
-        const end = i === 6 ? new Date(now.getTime() + 1) : dayStarts[i + 1]!;
-        return prisma.order.aggregate({
-          where: { placedAt: { gte: start, lt: end } },
-          _count: { _all: true },
-          _sum: { total: true },
-        });
-      }),
-    ),
-  ]);
+  } = stats;
 
-  const revenueToday = todayAgg._sum.total ?? 0n;
-  const revenueWeek = weekAgg._sum.total ?? 0n;
-  const aovToday =
-    todayAgg._avg.total != null ? BigInt(Math.round(Number(todayAgg._avg.total))) : 0n;
+  const todayOrders = weekOrders.filter((order) => order.placedAt >= today);
+  const sumTotal = (rows: typeof weekOrders) => rows.reduce((sum, order) => sum + order.total, 0n);
+  const revenueToday = sumTotal(todayOrders);
+  const revenueWeek = sumTotal(weekOrders);
+  const ordersToday = todayOrders.length;
+  const ordersWeek = weekOrders.length;
+  const aovToday = ordersToday > 0 ? revenueToday / BigInt(ordersToday) : 0n;
   const aovWeek = ordersWeek > 0 ? revenueWeek / BigInt(ordersWeek) : 0n;
   const showTodayAov = ordersToday > 0;
+  const recentOrders = weekOrders.slice(0, 7);
 
-  const series = days.map((day, i) => ({
-    label: shortDay(dayStarts[i]!),
-    count: day._count._all,
-    total: day._sum.total ?? 0n,
-  }));
+  const series = dayStarts.map((start, i) => {
+    const end = i === 6 ? new Date(now.getTime() + 1) : dayStarts[i + 1]!;
+    const bucket = weekOrders.filter((order) => order.placedAt >= start && order.placedAt < end);
+    return {
+      label: shortDay(start),
+      count: bucket.length,
+      total: sumTotal(bucket),
+    };
+  });
   const published = productGroups.find((row) => row.status === "published")?._count._all ?? 0;
   const drafts = productGroups.find((row) => row.status === "draft")?._count._all ?? 0;
   const catalogTotal = productGroups.reduce((sum, row) => sum + row._count._all, 0);
@@ -278,7 +213,7 @@ export default async function AdminHomePage() {
                   {recentOrders.map((order) => (
                     <tr key={order.id} className="border-b border-white/6 last:border-0">
                       <td className="px-5 py-3.5">
-                        <p className="font-medium text-[#f6efe4]">{order.number}</p>
+                        <p className="font-medium text-black">{order.number}</p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
                           {order.customerPhone} ·{" "}
                           {order.placedAt.toLocaleString(undefined, {
@@ -300,7 +235,7 @@ export default async function AdminHomePage() {
                       <td className="px-3 py-3.5 capitalize text-muted-foreground">
                         {order.fulfillmentStatus.replaceAll("_", " ")}
                       </td>
-                      <td className="px-5 py-3.5 text-right tabular-nums text-[#f4e2bc]">
+                      <td className="px-5 py-3.5 text-right tabular-nums text-black">
                         {formatPaisa(order.total)}
                       </td>
                     </tr>
@@ -449,9 +384,9 @@ function Meter({
         <span>{label}</span>
         <span className="text-muted-foreground">{hint}</span>
       </div>
-      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/8">
+      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-neutral-200">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-[#8a6a2e] to-[#e4c98a]"
+          className="h-full rounded-full bg-black"
           style={{ width: `${width}%` }}
         />
       </div>
@@ -499,13 +434,13 @@ function RevenueChart({
             x2={width}
             y1={height * step}
             y2={height * step}
-            stroke="rgba(243,238,230,0.08)"
+            stroke="rgba(255,255,255,0.16)"
           />
         ))}
-        <path d={area} fill="url(#admin-gold-area)" />
-        <path d={line} fill="none" stroke="#e4c98a" strokeWidth="2.5" strokeLinejoin="round" />
+        <path d={area} fill="rgba(255,255,255,0.16)" />
+        <path d={line} fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinejoin="round" />
         {points.map((point) => (
-          <circle key={point.x} cx={point.x} cy={point.y} r="3.5" fill="#f6efe4" />
+          <circle key={point.x} cx={point.x} cy={point.y} r="3.5" fill="#ffffff" />
         ))}
       </svg>
       <ul className="mt-1 grid grid-cols-7 gap-1">

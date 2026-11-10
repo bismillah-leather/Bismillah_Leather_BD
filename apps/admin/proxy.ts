@@ -1,3 +1,4 @@
+import { originFromProxyHeaders } from "@bismillah/shared";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminToken } from "@/lib/session";
@@ -47,6 +48,11 @@ export async function proxy(request: NextRequest) {
 
   if (!session) {
     const home = request.nextUrl.clone();
+    const origin = originFromProxyHeaders((name) => request.headers.get(name), request.nextUrl.origin);
+    const pub = new URL(origin);
+    home.protocol = pub.protocol;
+    home.hostname = pub.hostname;
+    home.port = pub.port;
     home.pathname = "/";
     home.search = "";
     if (pathname !== "/") home.searchParams.set("next", pathname);

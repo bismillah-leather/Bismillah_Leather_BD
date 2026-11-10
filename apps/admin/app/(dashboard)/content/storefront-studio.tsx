@@ -1,9 +1,8 @@
 "use client";
 
 import type { FeaturedCard, HeroSlide, PolicySlug, StorefrontDraft, TrustItem } from "@bismillah/shared";
-import { useState } from "react";
-
-const STORE = process.env.NEXT_PUBLIC_STORE_URL?.replace(/\/$/, "") || "http://localhost:3000";
+import { storefrontOriginFrom } from "@bismillah/shared";
+import { useEffect, useState } from "react";
 
 const POLICY_FIELDS: { slug: PolicySlug; label: string }[] = [
   { slug: "shipping", label: "Shipping" },
@@ -11,10 +10,10 @@ const POLICY_FIELDS: { slug: PolicySlug; label: string }[] = [
   { slug: "privacy", label: "Privacy" },
 ];
 
-function previewSrc(src: string) {
+function previewSrc(src: string, origin: string) {
   if (!src) return "";
   if (/^https?:\/\//i.test(src)) return src;
-  if (src.startsWith("/")) return `${STORE}${src}`;
+  if (src.startsWith("/")) return origin ? `${origin}${src}` : src;
   return "";
 }
 
@@ -29,7 +28,12 @@ function ImageField({
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const preview = previewSrc(value);
+  const [origin, setOrigin] = useState("");
+  useEffect(() => {
+    const configured = process.env.NEXT_PUBLIC_STORE_URL?.replace(/\/$/, "") ?? "";
+    setOrigin(storefrontOriginFrom(configured || window.location.origin));
+  }, []);
+  const preview = previewSrc(value, origin);
 
   async function onFile(file?: File) {
     if (!file) return;

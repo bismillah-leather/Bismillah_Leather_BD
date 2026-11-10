@@ -16,12 +16,13 @@ export default async function OrdersPage({
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
-  await requireAdmin();
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
   const prisma = getPrisma();
 
-  const orders = await prisma.order.findMany({
+  const [, orders] = await Promise.all([
+    requireAdmin(),
+    prisma.order.findMany({
     where: q
       ? {
           OR: [
@@ -40,10 +41,15 @@ export default async function OrdersPage({
       fulfillmentStatus: true,
       total: true,
       customerPhone: true,
+      customerSnapshot: true,
       channel: true,
       placedAt: true,
+      items: {
+        select: { id: true, name: true, qty: true, variantLabel: true, lineTotal: true },
+      },
     },
-  });
+    }),
+  ]);
 
   return (
     <div>
@@ -63,15 +69,34 @@ export default async function OrdersPage({
         {orders.length === 0 ? (
           <li className="px-4 py-10 text-sm text-muted-foreground">No orders yet.</li>
         ) : (
-          orders.map((o) => (
-            <li key={o.id} className="grid gap-4 px-4 py-4 lg:grid-cols-[1fr_auto]">
-              <div>
-                <p className="text-sm font-medium">
+          orders.map((o) => {
+            const snap =
+              o.customerSnapshot && typeof o.customerSnapshot === "object" && !Array.isArray(o.customerSnapshot)
+                ? (o.customerSnapshot as { name?: string; city?: string })
+                : {};
+            const customerName = typeof snap.name === "string" && snap.name.trim() ? snap.name : "Customer";
+            return (
+            <li key={o.id} className="grid gap-4 bg-white px-4 py-4 text-black lg:grid-cols-[1fr_auto]">
+              <div className="min-w-0">
+                <p className="text-base font-medium text-black">
                   {o.number}{" "}
-                  <span className="text-primary">{formatPaisa(o.total)}</span>
+                  <span className="tabular-nums">{formatPaisa(o.total)}</span>
                 </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {o.customerPhone} · {o.channel} ·{" "}
+                <p className="mt-1 text-sm text-neutral-700">
+                  {customerName} · {o.customerPhone}
+                  {snap.city ? ` · ${snap.city}` : ""}
+                </p>
+                <ul className="mt-2 grid gap-1 text-sm text-black">
+                  {o.items.map((item) => (
+                    <li key={item.id}>
+                      {item.name}
+                      {item.variantLabel ? ` · ${item.variantLabel}` : ""} × {item.qty}
+                      <span className="ml-2 tabular-nums text-neutral-600">{formatPaisa(item.lineTotal)}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-1 text-xs text-neutral-500">
+                  {o.channel} ·{" "}
                   {o.placedAt.toLocaleString(undefined, {
                     month: "short",
                     day: "numeric",
@@ -116,7 +141,8 @@ export default async function OrdersPage({
                 </div>
               </div>
             </li>
-          ))
+            );
+          })
         )}
       </ul>
     </div>

@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { AdminPageHeader } from "@/components/admin-page-header";
 import { StatusSelect } from "@/components/status-select";
 import { requireAdmin } from "@/lib/admin-auth";
-import { adminMediaSrc } from "@/lib/media-url";
+import { adminMediaSrc, requestStoreOrigin } from "@/lib/media-url";
 import { ProductDeleteButton } from "../product-delete-button";
 import { ProductVideoEditor } from "./product-video-editor";
 
@@ -17,6 +17,7 @@ export default async function ProductDetailPage({
   params: Promise<{ id: string }>;
 }) {
   await requireAdmin();
+  const origin = await requestStoreOrigin();
   const { id } = await params;
   const prisma = getPrisma();
 
@@ -60,6 +61,7 @@ export default async function ProductDetailPage({
   const videoUrl = product.media.find((item) => item.type === "video")?.storageKey ?? null;
   const imageUrl = adminMediaSrc(
     product.media.find((item) => item.type === "image")?.storageKey,
+    origin,
   );
 
   return (

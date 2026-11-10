@@ -4,9 +4,30 @@
 @source "./**/*.{ts,tsx}";
 @source "../../../packages/ui/src/**/*.{ts,tsx}";
 
-/* Flat console background — drop storefront-style radial washes */
+/* Same black / white palette as the storefront. :root in the shared theme would otherwise win. */
+html:root {
+  --background: #ffffff;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --primary: #000000;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #000000;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+  --accent: #000000;
+  --accent-foreground: #ffffff;
+  --border: #e5e5e5;
+  --input: #d4d4d4;
+  --ring: #000000;
+  background: #ffffff;
+  color: #000000;
+}
+
 body {
-  background: var(--background);
+  background: #ffffff;
+  color: #000000;
 }
 
 @keyframes admin-auth-rise {
@@ -59,12 +80,11 @@ body {
   height: 2.75rem;
   width: 100%;
   border-radius: var(--radius);
-  border: 1px solid rgba(243, 238, 230, 0.16);
-  background: #171410;
+  border: 1px solid #d4d4d4;
+  background: #ffffff;
   padding-inline: 0.75rem;
-  color: var(--foreground);
+  color: #000000;
   outline: none;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .admin-field:focus-visible {
@@ -115,14 +135,14 @@ body {
 }
 
 .admin-btn-ghost {
-  border: 1px solid rgba(243, 238, 230, 0.18);
-  color: #f3eee6;
-  background: transparent;
+  border: 1px solid #d4d4d4;
+  color: #000000;
+  background: #ffffff;
 }
 
 .admin-btn-ghost:hover:not(:disabled) {
-  border-color: rgba(198, 161, 91, 0.55);
-  color: #e4c98a;
+  border-color: #000000;
+  color: #000000;
 }
 
 .admin-btn-danger {
@@ -144,8 +164,8 @@ body {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 0.25rem;
-  border: 1px solid var(--border);
-  background: rgba(42, 36, 30, 0.55);
+  border: 1px solid #e5e5e5;
+  background: #f5f5f5;
   padding: 0.25rem;
 }
 
@@ -188,8 +208,8 @@ body {
 }
 
 .admin-kpi:hover {
-  border-color: rgba(243, 238, 230, 0.22);
-  background: color-mix(in oklab, var(--card) 88%, var(--secondary));
+  border-color: #000000;
+  background: #f5f5f5;
 }
 
 .admin-kpi-label {
@@ -225,11 +245,11 @@ body {
 }
 
 .admin-attention:hover {
-  border-color: rgba(243, 238, 230, 0.22);
+  border-color: #000000;
 }
 
 .admin-attention-urgent {
-  border-color: rgba(198, 161, 91, 0.35);
+  border-color: #000000;
 }
 
 .admin-module {
@@ -243,8 +263,8 @@ body {
 }
 
 .admin-module:hover {
-  border-color: rgba(243, 238, 230, 0.22);
-  background: color-mix(in oklab, var(--card) 88%, var(--secondary));
+  border-color: #000000;
+  background: #f5f5f5;
 }
 
 .admin-bar {
@@ -258,16 +278,16 @@ body {
   display: block;
   width: 70%;
   border-radius: 2px 2px 0 0;
-  background: linear-gradient(to top, rgba(198, 161, 91, 0.25), #e4c98a);
-  box-shadow: 0 0 16px rgba(198, 161, 91, 0.2);
+  background: #000000;
   transition: height 0.35s ease;
 }
 
 .admin-sidebar {
   box-sizing: border-box;
   overflow: hidden;
-  border-bottom: 1px solid rgba(243, 238, 230, 0.08);
-  background: #14110e;
+  border-bottom: 1px solid #000000;
+  background: #000000;
+  color: #ffffff;
 }
 
 @media (min-width: 768px) {
@@ -278,20 +298,19 @@ body {
 }
 
 .admin-canvas {
-  background:
-    radial-gradient(900px 320px at 100% -10%, rgba(198, 161, 91, 0.1), transparent 55%),
-    #0e0c0a;
+  background: #ffffff;
+  color: #000000;
 }
 
 .admin-brand {
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  border: 1px solid rgba(198, 161, 91, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 1.1rem;
-  background: linear-gradient(145deg, rgba(198, 161, 91, 0.16), rgba(0, 0, 0, 0.2));
+  background: transparent;
   padding: 0.85rem 0.9rem;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  color: #ffffff;
 }
 
 .admin-brand-mark {
@@ -300,8 +319,8 @@ body {
   height: 2.6rem;
   place-items: center;
   border-radius: 0.85rem;
-  background: linear-gradient(160deg, #f0d7a2, #c6a15b 55%, #8a6a2e);
-  color: #1a1208;
+  background: #ffffff;
+  color: #000000;
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -317,7 +336,7 @@ body {
   overflow: hidden;
   border-radius: 0.7rem;
   padding: 0 0.75rem;
-  color: rgba(243, 238, 230, 0.78);
+  color: rgba(255, 255, 255, 0.72);
   font-size: 0.875rem;
   line-height: 1;
   transition: background-color 0.15s ease, color 0.15s ease;
@@ -331,31 +350,27 @@ body {
 }
 
 .admin-nav-link:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #f3eee6;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
 }
 
 .admin-nav-link[data-active="true"] {
-  background: rgba(198, 161, 91, 0.16);
-  color: #f6e7c3;
+  background: #ffffff;
+  color: #000000;
 }
 
 .admin-nav-link[data-active="true"] svg {
-  color: #e4c98a;
+  color: #000000;
 }
 
 .admin-hero {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(198, 161, 91, 0.28);
+  border: 1px solid #000000;
   border-radius: 1.35rem;
-  background:
-    radial-gradient(520px 220px at 92% -20%, rgba(228, 201, 138, 0.28), transparent 58%),
-    linear-gradient(165deg, #2a231b 0%, #16130f 42%, #0d0b09 100%);
+  background: #000000;
+  color: #ffffff;
   padding: 1.4rem 1.35rem 1.25rem;
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .admin-figure {
@@ -370,7 +385,113 @@ body {
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(243, 238, 230, 0.45);
+  color: #737373;
+}
+
+/* Sidebar stays black like the shop header, so ink tokens must flip. */
+.admin-sidebar .text-primary,
+.admin-sidebar .text-primary\/80 {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.admin-sidebar .text-muted-foreground {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.admin-sidebar .border-border,
+.admin-sidebar .border-white\/8 {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.admin-sidebar .bg-primary {
+  background: #ffffff;
+}
+
+.admin-sidebar .text-primary-foreground {
+  color: #000000;
+}
+
+.admin-hero .text-primary,
+.admin-hero .text-\[\#e4c98a\],
+.admin-hero .text-\[\#e4c98a\]\/80,
+.admin-hero .text-\[\#f4e2bc\],
+.admin-hero .text-\[\#f6efe4\] {
+  color: #ffffff;
+}
+
+.admin-hero .text-\[\#cbbfae\],
+.admin-hero .text-muted-foreground {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.admin-hero .bg-\[\#120f0c\] {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.admin-hero .admin-btn-ghost {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: #ffffff;
+}
+
+.admin-hero .admin-btn-primary {
+  background: #ffffff;
+  color: #000000;
+}
+
+.admin-hero .border-white\/10,
+.admin-hero .border-white\/8 {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.admin-hero .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Cream and gold were for the old dark console. On white they must read as the shop. */
+.text-\[\#f6efe4\],
+.text-\[\#f4e2bc\],
+.text-\[\#e4c98a\],
+.text-\[\#f6e7c3\] {
+  color: #000000;
+}
+
+.text-\[\#cbbfae\],
+.text-\[\#d9d0c4\] {
+  color: #737373;
+}
+
+.text-\[\#f0b2a6\] {
+  color: #b42318;
+}
+
+.bg-\[\#0e0c0a\],
+.bg-\[\#120f0c\],
+.bg-\[\#14110e\],
+.bg-\[\#171410\],
+.bg-\[\#1c1814\] {
+  background-color: #f5f5f5;
+}
+
+.bg-\[\#c6a15b\]\/18,
+.bg-white\/6,
+.bg-white\/8 {
+  background-color: #f5f5f5;
+}
+
+.border-white\/6,
+.border-white\/8,
+.border-white\/10,
+.border-white\/12 {
+  border-color: #e5e5e5;
+}
+
+.admin-canvas .text-white\/20 {
+  color: #a3a3a3;
+}
+
+.hover\:bg-white\/5:hover {
+  background-color: #f5f5f5;
 }
 
 @media (min-width: 640px) {

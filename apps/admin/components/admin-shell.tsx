@@ -23,9 +23,6 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { LogoutButton } from "./logout-button";
 
-const STORE_URL =
-  process.env.NEXT_PUBLIC_STORE_URL?.replace(/\/$/, "") || "http://localhost:3000";
-
 const NAV_GROUPS: {
   label: string;
   items: { label: string; href: string; icon: LucideIcon }[];
@@ -81,10 +78,12 @@ export function AdminShell({
   children,
   userName,
   userRole,
+  storeHref = "/",
 }: {
   children: ReactNode;
   userName: string;
   userRole: string;
+  storeHref?: string;
 }) {
   const pathname = usePathname() || "";
   const section =
@@ -101,7 +100,7 @@ export function AdminShell({
               <span className="font-display block truncate text-lg leading-none tracking-tight">
                 Bismillah
               </span>
-              <span className="mt-1 block text-[10px] tracking-[0.18em] text-primary uppercase">
+              <span className="mt-1 block text-[10px] tracking-[0.18em] text-white/55 uppercase">
                 Admin
               </span>
             </span>
@@ -111,7 +110,7 @@ export function AdminShell({
         <nav className="flex-1 overflow-x-hidden overflow-y-auto px-3 pb-4" aria-label="Admin">
           {NAV_GROUPS.map((group) => (
             <div key={group.label} className="mb-4">
-              <p className="px-3 pb-1.5 text-[10px] font-medium tracking-[0.16em] text-primary/80 uppercase">
+              <p className="px-3 pb-1.5 text-[10px] font-medium tracking-[0.16em] text-white/45 uppercase">
                 {group.label}
               </p>
               <ul className="grid gap-0.5">
@@ -136,14 +135,14 @@ export function AdminShell({
           ))}
         </nav>
 
-        <div className="border-t border-white/8 p-3">
-          <div className="flex items-center gap-3 rounded-2xl border border-white/8 bg-black/25 px-3 py-3">
+        <div className="border-t border-white/15 p-3">
+          <div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/8 px-3 py-3">
             <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
               {initials(userName)}
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{userName}</p>
-              <p className="mt-0.5 text-[10px] tracking-[0.16em] text-primary uppercase">
+              <p className="mt-0.5 text-[10px] tracking-[0.16em] text-white/55 uppercase">
                 {userRole}
               </p>
             </div>
@@ -155,17 +154,17 @@ export function AdminShell({
       </aside>
 
       <div className="admin-canvas flex min-w-0 flex-col">
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-4 border-b border-white/8 bg-[#0e0c0a]/80 px-5 backdrop-blur-xl sm:px-8">
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-4 border-b border-black/10 bg-white/90 px-5 backdrop-blur-xl sm:px-8">
           <div className="min-w-0">
             <p className="text-[10px] tracking-[0.2em] text-primary uppercase">Console</p>
             <p className="truncate font-display text-xl leading-none tracking-tight">{section}</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <a
-              href={STORE_URL}
+              href={storeHref}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex h-10 items-center gap-1.5 rounded-full border border-white/12 px-3.5 text-xs font-medium text-foreground/80 transition hover:border-primary/40 hover:text-primary"
+              className="inline-flex h-10 items-center gap-1.5 rounded-full border border-black/15 px-3.5 text-xs font-medium text-black transition hover:border-black hover:bg-black hover:text-white"
             >
               View store
               <ExternalLink className="size-3.5" strokeWidth={1.75} />

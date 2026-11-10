@@ -7,10 +7,9 @@ import { PageCreateForm } from "./page-create-form";
 import { StorefrontStudio } from "./storefront-studio";
 
 export default async function ContentPage() {
-  await requireAdmin();
   const prisma = getPrisma();
-
-  const [pages, sections, studioSections, policyPages] = await Promise.all([
+  const [, pages, sections, policyPages] = await Promise.all([
+    requireAdmin(),
     prisma.page.findMany({
       orderBy: { updatedAt: "desc" },
       take: 50,
@@ -32,17 +31,17 @@ export default async function ContentPage() {
         title: true,
         isActive: true,
         sortOrder: true,
+        payload: true,
       },
-    }),
-    prisma.homeSection.findMany({
-      where: { key: { in: ["hero", "about", "trust", "featured"] } },
-      select: { key: true, payload: true },
     }),
     prisma.page.findMany({
       where: { slug: { in: [...POLICY_SLUGS] } },
       select: { slug: true, title: true, body: true },
     }),
   ]);
+  const studioSections = sections.filter((section) =>
+    ["hero", "about", "trust", "featured"].includes(section.key),
+  );
   const draft = readStorefrontDraft({ sections: studioSections, pages: policyPages });
 
   return (

@@ -11,10 +11,10 @@ const ROLES = [
 ] as const;
 
 const fieldClass =
-  "h-12 border-white/18 bg-card/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] focus-visible:border-primary";
+  "h-12 border border-neutral-300 bg-white text-black shadow-none focus-visible:border-black";
 
 const selectClass =
-  "flex h-12 w-full rounded-md border border-white/18 bg-card/80 px-3 text-sm text-foreground outline-none shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] focus-visible:border-primary";
+  "flex h-12 w-full rounded-md border border-neutral-300 bg-white px-3 text-sm text-black outline-none focus-visible:border-black";
 
 export function RegisterForm({
   masterReady,

@@ -19,6 +19,7 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { LiveViewers } from "./live-viewers";
 import { ProductCardActions } from "./product-card-actions";
 
 const AUTO_MS = 4800;
@@ -435,6 +436,7 @@ export function FlashSaleSection({ sale: initialSale }: { sale: FlashSaleConfig 
                       />
                     )}
 
+                    <LiveViewers slug={product.slug} className="absolute top-3 right-3 z-20" />
                     <Image
                       src={product.image}
                       alt=""

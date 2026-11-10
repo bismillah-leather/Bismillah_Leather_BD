@@ -2,6 +2,7 @@ import { getPrisma } from "@bismillah/db";
 import { hash, verify } from "@node-rs/argon2";
 import { timingSafeEqual } from "node:crypto";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import {
   clearAdminSessionCookie,
   getAdminSession,
@@ -49,41 +50,51 @@ export function isMasterKeyConfigured(): boolean {
   return expected.length >= 12;
 }
 
-export async function requireAdmin(): Promise<AdminSession> {
-  const session = await getAdminSession();
-  // Cookie clear happens in proxy / logout route — not in RSC.
-  if (!session) redirect("/");
+const ACTIVE_MS = 30_000;
+const activeCache = new Map<string, { expires: number; session: AdminSession }>();
+
+/** Drop a cached staff row after logout, deactivation, or a profile change. */
+export function forgetAdminCache(id: string) {
+  activeCache.delete(id);
+}
+
+async function resolveAdmin(session: AdminSession): Promise<AdminSession | null> {
+  const hit = activeCache.get(session.sub);
+  if (hit && hit.expires > Date.now()) return hit.session;
 
   const prisma = getPrisma();
   const user = await prisma.adminUser.findUnique({
     where: { id: session.sub },
     select: { id: true, isActive: true, email: true, name: true, role: true },
   });
-  if (!user?.isActive) redirect("/");
-  return {
+  if (!user?.isActive) {
+    activeCache.delete(session.sub);
+    return null;
+  }
+  const next: AdminSession = {
     sub: user.id,
     email: user.email,
     name: user.name,
     role: user.role,
   };
+  activeCache.set(user.id, { expires: Date.now() + ACTIVE_MS, session: next });
+  return next;
 }
+
+export const requireAdmin = cache(async (): Promise<AdminSession> => {
+  const session = await getAdminSession();
+  // Cookie clear happens in proxy / logout route — not in RSC.
+  if (!session) redirect("/");
+  const user = await resolveAdmin(session);
+  if (!user) redirect("/");
+  return user;
+});
 
 /** For route handlers — returns null instead of redirecting. */
 export async function getActiveAdmin(): Promise<AdminSession | null> {
   const session = await getAdminSession();
   if (!session) return null;
-  const prisma = getPrisma();
-  const user = await prisma.adminUser.findUnique({
-    where: { id: session.sub },
-    select: { id: true, isActive: true, email: true, name: true, role: true },
-  });
-  if (!user?.isActive) return null;
-  return {
-    sub: user.id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
-  };
+  return resolveAdmin(session);
 }
 
 export type LoginResult =
@@ -203,6 +214,7 @@ export async function logoutAdmin() {
       // ignore audit failures on logout
     }
   }
+  if (session) forgetAdminCache(session.sub);
   await clearAdminSessionCookie();
 }
 

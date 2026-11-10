@@ -2,7 +2,7 @@ import { getPrisma } from "@bismillah/db";
 import { formatPaisa } from "@bismillah/shared";
 import { AdminPageHeader } from "@/components/admin-page-header";
 import { requireAdmin } from "@/lib/admin-auth";
-import { adminMediaSrc } from "@/lib/media-url";
+import { adminMediaSrc, requestStoreOrigin } from "@/lib/media-url";
 import { CouponCreateForm } from "./coupon-create-form";
 import { CouponRow } from "./coupon-row";
 import type { CouponCatalogItem } from "./coupon-products";
@@ -14,6 +14,7 @@ function formatCouponValue(type: string, value: bigint) {
 
 export default async function CouponsPage() {
   await requireAdmin();
+  const origin = await requestStoreOrigin();
   const prisma = getPrisma();
   const [coupons, products] = await Promise.all([
     prisma.coupon.findMany({
@@ -58,7 +59,7 @@ export default async function CouponsPage() {
     id: product.id,
     name: product.name,
     pricePaisa: (product.variants[0]?.price ?? 0n).toString(),
-    image: adminMediaSrc(product.media[0]?.storageKey),
+    image: adminMediaSrc(product.media[0]?.storageKey, origin),
   }));
 
   return (

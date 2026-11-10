@@ -4,6 +4,7 @@ import { formatPaisa, galleryFor, type ShowcaseProduct } from "@bismillah/shared
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { LiveViewers } from "./live-viewers";
 import { ProductCardActions } from "./product-card-actions";
 
 function pickBestSellers(catalog: ShowcaseProduct[]): ShowcaseProduct[] {
@@ -104,7 +105,8 @@ export function BestSellersSection({ products }: { products: ShowcaseProduct[] }
               ) : null}
             </div>
 
-            <div className="absolute top-4 right-4 flex gap-1">
+            <LiveViewers slug={featured.slug} className="absolute top-4 right-4 z-10" />
+            <div className="absolute top-14 right-4 flex gap-1">
               {best.map((product, index) => (
                 <button
                   key={product.slug}
@@ -175,6 +177,10 @@ export function BestSellersSection({ products }: { products: ShowcaseProduct[] }
                     </span>
                     <span className="relative size-14 shrink-0 overflow-hidden bg-neutral-800 sm:size-16">
                       <Image src={product.image} alt="" fill sizes="64px" className="object-cover" />
+                      <LiveViewers
+                        slug={product.slug}
+                        className="absolute top-1 right-1 z-10 px-1 py-0.5"
+                      />
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{product.name}</span>
@@ -206,7 +212,7 @@ function BestGridCard({ product, rank }: { product: ShowcaseProduct; rank: numbe
   const color = product.colors[0] ?? "Black";
 
   return (
-    <article className="flex h-full flex-col border border-white/15 bg-white/5 p-2">
+    <article className="relative flex h-full flex-col border border-white/15 bg-white/5 p-2">
       <Link href={`/product/${product.slug}`} className="relative block aspect-[3/4] overflow-hidden bg-neutral-900">
         <Image
           src={product.image}
@@ -219,6 +225,7 @@ function BestGridCard({ product, rank }: { product: ShowcaseProduct; rank: numbe
           #{rank}
         </span>
       </Link>
+      <LiveViewers slug={product.slug} className="absolute top-4 right-4 z-10" />
       <div className="mt-3 flex flex-1 flex-col px-0.5">
         <Link href={`/product/${product.slug}`}>
           <h3 className="text-sm text-white">{product.name}</h3>

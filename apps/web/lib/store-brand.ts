@@ -6,6 +6,7 @@ import {
   type StoreBrand,
 } from "@bismillah/shared";
 import { cache } from "react";
+import { remember } from "./remember";
 
 function asString(value: unknown, fallback = ""): string {
   if (typeof value === "string") return value;
@@ -13,7 +14,7 @@ function asString(value: unknown, fallback = ""): string {
   return String(value);
 }
 
-export const getStoreBrand = cache(async (): Promise<StoreBrand> => {
+async function loadStoreBrand(): Promise<StoreBrand> {
   const base = defaultStoreBrand();
   try {
     const prisma = getPrisma();
@@ -57,4 +58,8 @@ export const getStoreBrand = cache(async (): Promise<StoreBrand> => {
   } catch {
     return { ...base, name: BRAND.name };
   }
+}
+
+export const getStoreBrand = cache(async (): Promise<StoreBrand> => {
+  return remember("store-brand", 20_000, loadStoreBrand);
 });

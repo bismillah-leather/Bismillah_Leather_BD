@@ -7,6 +7,7 @@ import {
   type ShowcaseProduct,
 } from "@bismillah/shared";
 import { cache } from "react";
+import { remember } from "./remember";
 
 type DbProductRow = {
   id: string;
@@ -98,18 +99,20 @@ const productSelect = {
 } as const;
 
 export const listPublishedProducts = cache(async (): Promise<ShowcaseProduct[]> => {
-  try {
-    const prisma = getPrisma();
-    const rows = await prisma.product.findMany({
-      where: { deletedAt: null, status: "published" },
-      orderBy: [{ isFeatured: "desc" }, { soldCount: "desc" }, { updatedAt: "desc" }],
-      select: productSelect,
-    });
-    if (rows.length === 0) return [...SHOWCASE_PRODUCTS];
-    return rows.map(mapRow);
-  } catch {
-    return [...SHOWCASE_PRODUCTS];
-  }
+  return remember("published-products", 20_000, async () => {
+    try {
+      const prisma = getPrisma();
+      const rows = await prisma.product.findMany({
+        where: { deletedAt: null, status: "published" },
+        orderBy: [{ isFeatured: "desc" }, { soldCount: "desc" }, { updatedAt: "desc" }],
+        select: productSelect,
+      });
+      if (rows.length === 0) return [...SHOWCASE_PRODUCTS];
+      return rows.map(mapRow);
+    } catch {
+      return [...SHOWCASE_PRODUCTS];
+    }
+  });
 });
 
 export const getPublishedProduct = cache(

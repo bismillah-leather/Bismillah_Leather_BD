@@ -43,7 +43,7 @@ export default async function StatementsPage({
               key={preset.id}
               href={`/statements?preset=${preset.id}`}
               data-active={range.preset === preset.id ? "true" : "false"}
-              className="inline-flex h-10 items-center rounded-full border border-white/12 px-4 text-[11px] tracking-wide uppercase data-[active=true]:border-[#c6a15b] data-[active=true]:bg-[#c6a15b] data-[active=true]:text-[#1a140f]"
+              className="inline-flex h-10 items-center rounded-full border border-neutral-300 px-4 text-[11px] tracking-wide text-black uppercase data-[active=true]:border-black data-[active=true]:bg-black data-[active=true]:text-white"
             >
               {preset.label}
             </Link>

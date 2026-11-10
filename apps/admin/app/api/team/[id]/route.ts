@@ -1,6 +1,6 @@
 import { getPrisma } from "@bismillah/db";
 import { NextResponse } from "next/server";
-import { getActiveAdmin, type AdminRoleName } from "@/lib/admin-auth";
+import { forgetAdminCache, getActiveAdmin, type AdminRoleName } from "@/lib/admin-auth";
 
 const ASSIGNABLE = new Set<AdminRoleName>(["manager", "staff", "support"]);
 
@@ -82,6 +82,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Nothing to update." }, { status: 400 });
   }
 
+  forgetAdminCache(id);
   const updated = await prisma.adminUser.update({
     where: { id },
     data,

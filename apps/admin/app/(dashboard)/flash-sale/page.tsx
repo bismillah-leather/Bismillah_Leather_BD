@@ -12,9 +12,6 @@ import { AdminPageHeader } from "@/components/admin-page-header";
 
 type ProductOption = { name: string; slug: string; sku: string; pricePaisa: string };
 
-const STORE_API =
-  process.env.NEXT_PUBLIC_STORE_URL?.replace(/\/$/, "") || "http://localhost:3000";
-
 type SelectedProduct = {
   slug: string;
   durationHours: string;
@@ -123,7 +120,7 @@ export default function FlashSaleAdminPage() {
     (async () => {
       try {
         const [saleRes, productsRes] = await Promise.all([
-          fetch(`${STORE_API}/api/flash-sale`, { cache: "no-store" }),
+          fetch("/admin/api/flash-sale", { cache: "no-store" }),
           fetch("/admin/api/products", { cache: "no-store" }),
         ]);
         if (!saleRes.ok) throw new Error("Failed to load");
@@ -146,7 +143,7 @@ export default function FlashSaleAdminPage() {
         if (cancelled) return;
         setStatus("error");
         setMessage(
-          `Could not reach store API at ${STORE_API}. Start the web app on port 3000.`,
+          "Could not load the flash sale. Refresh and try again.",
         );
       }
     })();
@@ -313,7 +310,7 @@ export default function FlashSaleAdminPage() {
     }
 
     try {
-      const res = await fetch(`${STORE_API}/api/flash-sale`, {
+      const res = await fetch("/admin/api/flash-sale", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

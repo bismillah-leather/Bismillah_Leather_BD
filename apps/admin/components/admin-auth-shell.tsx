@@ -55,7 +55,7 @@ export function AdminAuthShell({
             <ul className="mt-9 grid gap-3.5 border-t border-white/10 pt-7">
               {POINTS.map((point) => (
                 <li key={point} className="flex items-center gap-3 text-sm text-white/80">
-                  <span className="h-px w-6 shrink-0 bg-primary/80" aria-hidden />
+                  <span className="h-px w-6 shrink-0 bg-white/80" aria-hidden />
                   {point}
                 </li>
               ))}
@@ -74,7 +74,7 @@ export function AdminAuthShell({
           className="pointer-events-none absolute inset-0 opacity-[0.045]"
           style={{
             backgroundImage:
-              "radial-gradient(circle at 20% 20%, #c6a15b 0.55px, transparent 0.65px), radial-gradient(circle at 80% 70%, #c6a15b 0.4px, transparent 0.5px)",
+              "radial-gradient(circle at 20% 20%, #000 0.55px, transparent 0.65px), radial-gradient(circle at 80% 70%, #000 0.4px, transparent 0.5px)",
             backgroundSize: "28px 28px, 42px 42px",
           }}
         />
