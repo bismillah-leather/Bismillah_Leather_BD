@@ -3,6 +3,7 @@
 import { formatPaisa, parseTakaToPaisa } from "@bismillah/shared";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { postAdminImage } from "@/lib/admin-image";
 import { NewToggle } from "./new-toggle";
 import { ProductDeleteButton } from "./product-delete-button";
 
@@ -99,24 +100,13 @@ export function ProductShelfCard({ product }: { product: ShelfProduct }) {
   async function onPhoto(file: File | undefined) {
     if (!file) return;
     setUploading(true);
-    setMessage("");
+    setMessage("Preparing photo…");
     try {
-      const body = new FormData();
-      body.set("file", file);
-      const res = await fetch(`/admin/api/products/${product.id}/image`, {
-        method: "POST",
-        body,
-      });
-      const data = (await res.json().catch(() => ({}))) as { url?: string; src?: string; error?: string };
-      if (!res.ok || !data.url) {
-        setMessage(data.error ?? "Photo was not saved.");
-        return;
-      }
-      setImage(data.src || data.url);
+      const data = await postAdminImage(`/admin/api/products/${product.id}/image`, file);
+      setImage(data.src);
       setMessage("Photo saved");
-      router.refresh();
-    } catch {
-      setMessage("Network error.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Photo was not saved.");
     } finally {
       setUploading(false);
     }

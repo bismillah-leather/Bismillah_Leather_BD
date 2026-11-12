@@ -9,6 +9,9 @@ loadEnvConfig(rootDir);
 const nextConfig: NextConfig = {
   // Public URL is /admin/* via Vercel Services rewrites.
   basePath: "/admin",
+  experimental: {
+    proxyClientMaxBodySize: "4mb",
+  },
   // Avoid /admin ↔ /admin/ redirect loops with basePath + proxy rewrites.
   skipTrailingSlashRedirect: true,
   transpilePackages: ["@bismillah/ui", "@bismillah/shared", "@bismillah/db"],

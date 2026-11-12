@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { postAdminImage } from "@/lib/admin-image";
 
 type CategoryOption = { id: string; name: string; path: string };
 
@@ -78,16 +79,11 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
       }
       const createdId = (data as { product?: { id?: string; name?: string } }).product?.id;
       if (photo && createdId) {
-        const body = new FormData();
-        body.set("file", photo);
-        const imageRes = await fetch(`/admin/api/products/${createdId}/image`, {
-          method: "POST",
-          body,
-        });
-        if (!imageRes.ok) {
-          const imageData = (await imageRes.json().catch(() => ({}))) as { error?: string };
+        try {
+          await postAdminImage(`/admin/api/products/${createdId}/image`, photo);
+        } catch (error) {
           setOk(`Added “${data.product?.name ?? name}”, but the photo was not stored.`);
-          setError(imageData.error ?? "Photo upload failed.");
+          setError(error instanceof Error ? error.message : "Photo upload failed.");
           setPhoto(null);
           router.refresh();
           return;

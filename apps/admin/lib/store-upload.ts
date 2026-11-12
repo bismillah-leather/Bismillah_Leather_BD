@@ -43,7 +43,7 @@ function saveLocalShopImage(key: string, bytes: Buffer) {
 /** Store a photo on R2 when it is configured, otherwise in the shop's public uploads folder. */
 export async function storeUploadedImage(key: string, bytes: Buffer, contentType: string) {
   if (readR2Config()) return putR2Object(key, bytes, contentType);
-  if (process.env.VERCEL === "1") {
+  if (process.env.VERCEL === "1" || process.env.VERCEL_ENV) {
     throw new Error("Image hosting is not set up yet. Add the R2 keys.");
   }
   return saveLocalShopImage(key, bytes);

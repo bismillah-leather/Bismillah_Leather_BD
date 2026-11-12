@@ -4,7 +4,9 @@ import { getActiveAdmin } from "@/lib/admin-auth";
 import { requestStoreOrigin } from "@/lib/media-url";
 import { imageExtension, storeUploadedImage } from "@/lib/store-upload";
 
-const MAX_BYTES = 8 * 1024 * 1024;
+export const maxDuration = 30;
+
+const MAX_BYTES = 4 * 1024 * 1024;
 
 export async function POST(
   request: Request,

@@ -80,6 +80,7 @@ export async function putR2Object(key: string, body: Buffer, contentType: string
       authorization,
     },
     body: new Uint8Array(body),
+    signal: AbortSignal.timeout(15_000),
   });
 
   if (!response.ok) {

@@ -28,6 +28,13 @@ async function readSession(request: NextRequest) {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  // Do not buffer photo uploads through the proxy — large files freeze the live admin.
+  if (
+    request.method === "POST" &&
+    (pathname === "/api/content/image" || /\/api\/products\/[^/]+\/image$/.test(pathname))
+  ) {
+    return NextResponse.next();
+  }
   const { token, session } = await readSession(request);
 
   if (

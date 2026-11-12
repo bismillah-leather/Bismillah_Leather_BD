@@ -4,6 +4,7 @@ import { blankLanding, type LandingPage } from "@bismillah/shared";
 import { Copy, ExternalLink, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AdminPageHeader } from "@/components/admin-page-header";
+import { postAdminImage } from "@/lib/admin-image";
 
 const inputClass =
   "h-10 w-full border border-[#d4d4d4] bg-white px-3 text-sm text-black outline-none focus:border-black";
@@ -51,18 +52,11 @@ function ImageField({
   async function upload(file: File) {
     setBusy(true);
     setError("");
-    const body = new FormData();
-    body.set("file", file);
     try {
-      const response = await fetch("/admin/api/content/image", { method: "POST", body });
-      const data = (await response.json()) as { url?: string; error?: string };
-      if (!response.ok || !data.url) {
-        setError(data.error || "Upload failed.");
-        return;
-      }
+      const data = await postAdminImage("/admin/api/content/image", file);
       onChange(data.url);
-    } catch {
-      setError("Upload failed.");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Upload failed.");
     } finally {
       setBusy(false);
     }

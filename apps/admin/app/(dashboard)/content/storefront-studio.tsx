@@ -3,6 +3,7 @@
 import type { FeaturedCard, HeroSlide, PolicySlug, StorefrontDraft, TrustItem } from "@bismillah/shared";
 import { storefrontOriginFrom } from "@bismillah/shared";
 import { useEffect, useState } from "react";
+import { postAdminImage } from "@/lib/admin-image";
 
 const POLICY_FIELDS: { slug: PolicySlug; label: string }[] = [
   { slug: "shipping", label: "Shipping" },
@@ -40,17 +41,10 @@ function ImageField({
     setUploading(true);
     setError(null);
     try {
-      const body = new FormData();
-      body.set("file", file);
-      const res = await fetch("/admin/api/content/image", { method: "POST", body });
-      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
-      if (!res.ok || !data.url) {
-        setError(data.error ?? "Upload failed.");
-        return;
-      }
+      const data = await postAdminImage("/admin/api/content/image", file);
       onChange(data.url);
-    } catch {
-      setError("Network error.");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Upload failed.");
     } finally {
       setUploading(false);
     }
