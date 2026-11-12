@@ -51,3 +51,7 @@ packages/db/src/generated
 
 # local engines started without Docker
 .local
+
+# shop photos saved when R2 is not configured
+apps/web/public/uploads/**
+!apps/web/public/uploads/.gitkeep

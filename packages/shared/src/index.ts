@@ -75,4 +75,12 @@ export type {
 export { BD_DISTRICTS, divisionForDistrict } from "./bd-geo";
 export type { BdDistrict } from "./bd-geo";
 export { isLoopbackHost, originFromProxyHeaders, storefrontOriginFrom } from "./public-origin";
+export { blankLanding, cleanLandingHref, cleanLandingImage, normalizeLandingList } from "./landing-page";
+export type {
+  LandingBenefit,
+  LandingFaq,
+  LandingPage,
+  LandingQuote,
+  LandingStat,
+} from "./landing-page";
 

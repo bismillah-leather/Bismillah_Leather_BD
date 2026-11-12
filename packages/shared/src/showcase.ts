@@ -13,6 +13,8 @@ export type ShowcaseProduct = {
   tone: LeatherTone;
   kind: ProductKind;
   inStock: boolean;
+  /** Red NEW badge. Admin turns this on per product. */
+  isNew?: boolean;
   blurb: string;
   /** Extra bullets under Description (optional). */
   highlights?: readonly string[];

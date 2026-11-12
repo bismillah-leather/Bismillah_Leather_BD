@@ -26,7 +26,7 @@ export default async function SecurityPage() {
       <AdminPageHeader
         eyebrow="Protection"
         title="Security"
-        description="Rate-limit hits, lockouts, and failed admin sign-ins. Login capped at 10 / 15 min per IP; lock after 5 bad passwords."
+        description="Checkout is capped at 5 tries / 10 min per IP and 4 / 30 min per phone. Repeat and too-fast orders are blocked. Suspicious ones stay, marked Check order."
       />
 
       <section className="mt-8">

@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useCart } from "@/hooks/use-cart";
 import { addToCart } from "@/lib/cart";
 import { useCartUi } from "./cart-provider";
+import { NewBadge } from "./new-badge";
 
 const AUTO_MS = 3800;
 
@@ -259,6 +260,9 @@ export function CartDrawer() {
                   sizes="56px"
                   className="object-cover"
                 />
+                {current.isNew ? (
+                  <NewBadge className="absolute top-1 left-1 z-10 h-4 px-1 text-[8px]" />
+                ) : null}
               </Link>
               <div className="min-w-0 flex-1">
                 <Link

@@ -3,6 +3,7 @@
 import { formatPaisa, parseTakaToPaisa } from "@bismillah/shared";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { NewToggle } from "./new-toggle";
 import { ProductDeleteButton } from "./product-delete-button";
 
 export type ShelfProduct = {
@@ -11,6 +12,7 @@ export type ShelfProduct = {
   slug: string;
   status: string;
   isFeatured: boolean;
+  isNew: boolean;
   categoryName: string;
   image: string | null;
   sku: string | null;
@@ -50,6 +52,7 @@ export function ProductShelfCard({ product }: { product: ShelfProduct }) {
   const [stock, setStock] = useState(String(product.stock));
   const [status, setStatus] = useState(product.status);
   const [featured, setFeatured] = useState(product.isFeatured);
+  const [markedNew, setMarkedNew] = useState(product.isNew);
   const [image, setImage] = useState(product.image);
   const [pending, setPending] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -57,7 +60,8 @@ export function ProductShelfCard({ product }: { product: ShelfProduct }) {
 
   useEffect(() => {
     setImage(product.image);
-  }, [product.image]);
+    setMarkedNew(product.isNew);
+  }, [product.image, product.isNew]);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -103,13 +107,13 @@ export function ProductShelfCard({ product }: { product: ShelfProduct }) {
         method: "POST",
         body,
       });
-      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      const data = (await res.json().catch(() => ({}))) as { url?: string; src?: string; error?: string };
       if (!res.ok || !data.url) {
         setMessage(data.error ?? "Photo was not saved.");
         return;
       }
-      setImage(data.url);
-      setMessage("Photo saved on R2");
+      setImage(data.src || data.url);
+      setMessage("Photo saved");
       router.refresh();
     } catch {
       setMessage("Network error.");
@@ -130,6 +134,11 @@ export function ProductShelfCard({ product }: { product: ShelfProduct }) {
               No photo
             </div>
           )}
+          {markedNew ? (
+            <span className="absolute top-2 left-2 bg-[#e10600] px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.12em] text-white uppercase">
+              New
+            </span>
+          ) : null}
         </div>
         <div className="grid gap-2">
           <input
@@ -198,6 +207,7 @@ export function ProductShelfCard({ product }: { product: ShelfProduct }) {
               />
               Featured
             </label>
+            <NewToggle productId={product.id} initial={product.isNew} onChange={setMarkedNew} />
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <label className="admin-btn-ghost h-9 cursor-pointer px-3 text-[11px]">

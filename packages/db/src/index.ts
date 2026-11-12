@@ -10,3 +10,4 @@ export {
 export type { FlashSalePutBody } from "./flash-sale-record";
 export { readStoredProductVideos, writeStoredProductVideos } from "./product-videos-record";
 export type { ProductVideoMap } from "./product-videos-record";
+export { readLandingPages, readPublishedLanding, writeLandingPages } from "./landing-pages-record";

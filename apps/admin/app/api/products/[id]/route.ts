@@ -80,6 +80,7 @@ export async function PATCH(
     name?: string;
     description?: string;
     isFeatured?: boolean;
+    isNew?: boolean;
     primaryCategoryId?: string;
   } = {};
 
@@ -88,6 +89,7 @@ export async function PATCH(
   }
   if (typeof body.description === "string") data.description = body.description.trim();
   if (typeof body.isFeatured === "boolean") data.isFeatured = body.isFeatured;
+  if (typeof body.isNew === "boolean") data.isNew = body.isNew;
   if (typeof body.categoryId === "string" && body.categoryId) {
     data.primaryCategoryId = body.categoryId;
   }
@@ -127,11 +129,11 @@ export async function PATCH(
       ? await prisma.product.update({
           where: { id },
           data,
-          select: { id: true, name: true, isFeatured: true },
+          select: { id: true, name: true, isFeatured: true, isNew: true },
         })
       : await prisma.product.findUniqueOrThrow({
           where: { id },
-          select: { id: true, name: true, isFeatured: true },
+          select: { id: true, name: true, isFeatured: true, isNew: true },
         });
 
   if (hasPrice || hasStock || hasSale || clearSale) {

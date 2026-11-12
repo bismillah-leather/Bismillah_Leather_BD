@@ -1,6 +1,6 @@
 "use client";
 
-import { formatPaisa, normalizeBdPhone } from "@bismillah/shared";
+import { BD_DISTRICTS, formatPaisa, normalizeBdPhone } from "@bismillah/shared";
 import { Minus, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -20,6 +20,8 @@ export function CheckoutForm() {
   const { hydrated, items, count, setQty, remove } = useCart();
   const [bootstrapped, setBootstrapped] = useState(false);
   const [shipping, setShipping] = useState<ShippingZone>("inside");
+  const [city, setCity] = useState("Dhaka");
+  const startedAt = useRef(0);
   const [payment, setPayment] = useState<"cod" | "ssl">("cod");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -29,6 +31,10 @@ export function CheckoutForm() {
   const [orderItems, setOrderItems] = useState<CartItemView[]>([]);
   const [doneTotal, setDoneTotal] = useState(0n);
   const [doneShipping, setDoneShipping] = useState<ShippingZone>("inside");
+
+  useEffect(() => {
+    startedAt.current = Date.now();
+  }, []);
 
   // Seed cart from ?product=… before we decide empty vs ready (Buy now race fix).
   useEffect(() => {
@@ -134,6 +140,9 @@ export function CheckoutForm() {
             city,
             postal: String(data.get("postal") ?? ""),
             shipping,
+            customerNote: String(data.get("note") ?? ""),
+            company: String(data.get("company") ?? ""),
+            startedAt: startedAt.current,
             items: lines.map((item) => ({ slug: item.slug, color: item.color, qty: item.qty })),
           });
           if (!result.ok) {
@@ -154,6 +163,13 @@ export function CheckoutForm() {
       }}
     >
       <div className="order-2 border-t border-border lg:order-1 lg:border-t-0 lg:border-r">
+        <input
+          name="company"
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          className="pointer-events-none absolute h-0 w-0 opacity-0"
+        />
         <div className="border-b border-border px-5 py-5 sm:px-8">
           <Link href="/" className="font-display text-2xl tracking-tight">
             Bismillah Leather
@@ -223,19 +239,33 @@ export function CheckoutForm() {
                 className="h-12 rounded-md border border-input bg-white px-3 outline-none focus-visible:border-foreground"
               />
               <div className="grid gap-3 sm:grid-cols-2">
-                <input
-                  name="city"
-                  required
-                  autoComplete="address-level2"
-                  placeholder="City"
-                  className="h-12 rounded-md border border-input bg-white px-3 outline-none focus-visible:border-foreground"
-                />
-                <input
-                  name="postal"
-                  autoComplete="postal-code"
-                  placeholder="Postal code (optional)"
-                  className="h-12 rounded-md border border-input bg-white px-3 outline-none focus-visible:border-foreground"
-                />
+                <label className="grid gap-1.5 text-sm">
+                  <span className="text-xs tracking-[0.12em] text-muted-foreground uppercase">District</span>
+                  <select
+                    name="city"
+                    required
+                    value={city}
+                    onChange={(event) => {
+                      const next = event.target.value;
+                      setCity(next);
+                      setShipping(next === "Dhaka" ? "inside" : "outside");
+                    }}
+                    className="h-12 rounded-md border border-input bg-white px-3 outline-none focus-visible:border-foreground"
+                  >
+                    {BD_DISTRICTS.map((district) => (
+                      <option key={district}>{district}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="grid gap-1.5 text-sm">
+                  <span className="text-xs tracking-[0.12em] text-muted-foreground uppercase">Postal code</span>
+                  <input
+                    name="postal"
+                    autoComplete="postal-code"
+                    placeholder="Optional"
+                    className="h-12 rounded-md border border-input bg-white px-3 outline-none focus-visible:border-foreground"
+                  />
+                </label>
               </div>
               <input
                 name="phone"
@@ -245,6 +275,15 @@ export function CheckoutForm() {
                 placeholder="Phone"
                 className="h-12 rounded-md border border-input bg-white px-3 outline-none focus-visible:border-foreground"
               />
+              <label className="grid gap-1.5 text-sm">
+                <span className="text-xs tracking-[0.12em] text-muted-foreground uppercase">Note</span>
+                <textarea
+                  name="note"
+                  rows={2}
+                  placeholder="Colour, size, or a landmark (optional)"
+                  className="rounded-md border border-input bg-white px-3 py-2 outline-none focus-visible:border-foreground"
+                />
+              </label>
             </div>
           </section>
 

@@ -9,7 +9,9 @@ export type SecurityAlert = {
     | "admin_rate_limit"
     | "admin_master_login"
     | "admin_register"
-    | "customer_rate_limit";
+    | "customer_rate_limit"
+    | "checkout_rate_limit"
+    | "fake_order";
   ip?: string;
   detail: string;
 };

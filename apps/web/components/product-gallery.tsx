@@ -3,15 +3,18 @@
 import Image from "next/image";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { LiveViewers } from "./live-viewers";
+import { NewBadge } from "./new-badge";
 
 export function ProductGallery({
   images,
   alt,
   slug,
+  isNew = false,
 }: {
   images: readonly string[];
   alt: string;
   slug?: string;
+  isNew?: boolean;
 }) {
   const shots = images.length > 0 ? images : ["/catalog/wallet-black-long.jpg"];
   const [active, setActive] = useState(0);
@@ -82,9 +85,12 @@ export function ProductGallery({
           className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"
         />
 
-        <span className="pointer-events-none absolute top-4 left-4 bg-black/80 px-2.5 py-1 text-[10px] tracking-[0.18em] text-white uppercase backdrop-blur-sm">
-          Bismillah
-        </span>
+        <div className="pointer-events-none absolute top-4 left-4 z-10 flex items-center gap-2">
+          {isNew ? <NewBadge /> : null}
+          <span className="bg-black/80 px-2.5 py-1 text-[10px] tracking-[0.18em] text-white uppercase backdrop-blur-sm">
+            Bismillah
+          </span>
+        </div>
         {slug ? <LiveViewers slug={slug} pinned className="absolute top-4 right-4 z-10" /> : null}
 
         <span

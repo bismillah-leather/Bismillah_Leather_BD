@@ -13,10 +13,11 @@ const STATUSES = ["draft", "scheduled", "published", "archived"] as const;
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; badge?: string }>;
 }) {
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
+  const onlyNew = sp.badge === "new";
   const status = STATUSES.includes(sp.status as (typeof STATUSES)[number])
     ? (sp.status as (typeof STATUSES)[number])
     : undefined;
@@ -28,6 +29,7 @@ export default async function ProductsPage({
     prisma.product.findMany({
       where: {
         deletedAt: null,
+        ...(onlyNew ? { isNew: true } : {}),
         ...(status ? { status } : {}),
         ...(q
           ? {
@@ -46,6 +48,7 @@ export default async function ProductsPage({
         slug: true,
         status: true,
         isFeatured: true,
+        isNew: true,
         soldCount: true,
         updatedAt: true,
         primaryCategory: { select: { id: true, name: true, sortOrder: true } },
@@ -84,7 +87,7 @@ export default async function ProductsPage({
       <AdminPageHeader
         eyebrow="Catalog"
         title="Products"
-        description="Each product has a photo, Save edit, and Delete. New photos are stored on R2. Add a product with the button below."
+        description="Tap New on a product to put the red badge on its card, the product page, and the suggestions. Save edit still updates the price, stock, and photo."
       />
 
       <ul className="mt-6 grid gap-3 sm:grid-cols-4">
@@ -119,11 +122,16 @@ export default async function ProductsPage({
           <AdminSearch placeholder="Search name or slug…" />
         </Suspense>
         <div className="flex flex-wrap gap-1.5">
-          <FilterChip href="/products" label="All" active={!status} />
+          <FilterChip href="/products" label="All" active={!status && !onlyNew} />
+          <FilterChip
+            href={`/products?badge=new${q ? `&q=${encodeURIComponent(q)}` : ""}`}
+            label="New"
+            active={onlyNew}
+          />
           {STATUSES.map((s) => (
             <FilterChip
               key={s}
-              href={`/products?status=${s}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
+              href={`/products?status=${s}${q ? `&q=${encodeURIComponent(q)}` : ""}${onlyNew ? "&badge=new" : ""}`}
               label={s}
               active={status === s}
             />
@@ -165,6 +173,7 @@ function groupByCategory(
     slug: string;
     status: string;
     isFeatured: boolean;
+    isNew: boolean;
     primaryCategory: { name: string; sortOrder: number };
     variants: Array<{ sku: string; price: bigint; salePrice: bigint | null; stockOnHand: number }>;
     media: Array<{ storageKey: string }>;
@@ -181,6 +190,7 @@ function groupByCategory(
       slug: product.slug,
       status: product.status,
       isFeatured: product.isFeatured,
+      isNew: product.isNew,
       categoryName: key,
       image: adminMediaSrc(product.media[0]?.storageKey, origin),
       sku: variant?.sku ?? null,

@@ -1,26 +1,13 @@
 import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
-import { putR2Object, readR2Config } from "@/lib/r2";
-
-const ALLOWED = new Map([
-  ["image/jpeg", "jpg"],
-  ["image/png", "png"],
-  ["image/webp", "webp"],
-  ["image/avif", "avif"],
-  ["image/gif", "gif"],
-]);
+import { requestStoreOrigin } from "@/lib/media-url";
+import { imageExtension, storeUploadedImage } from "@/lib/store-upload";
 
 const MAX_BYTES = 8 * 1024 * 1024;
 
 export async function POST(request: Request) {
   const admin = await getActiveAdmin();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  if (!readR2Config()) {
-    return NextResponse.json(
-      { error: "Image hosting is not set up yet. Paste a /catalog image path, or add the R2 keys." },
-      { status: 503 },
-    );
-  }
 
   let form: FormData;
   try {
@@ -33,7 +20,7 @@ export async function POST(request: Request) {
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "Choose an image file." }, { status: 400 });
   }
-  const ext = ALLOWED.get(file.type);
+  const ext = imageExtension(file);
   if (!ext) {
     return NextResponse.json({ error: "Use JPG, PNG, WebP, AVIF, or GIF." }, { status: 400 });
   }
@@ -44,10 +31,17 @@ export async function POST(request: Request) {
   const bytes = Buffer.from(await file.arrayBuffer());
   const key = `content/${Date.now().toString(36)}.${ext}`;
   try {
-    const url = await putR2Object(key, bytes, file.type);
-    return NextResponse.json({ url });
+    const url = await storeUploadedImage(key, bytes, file.type || `image/${ext}`);
+    const origin = await requestStoreOrigin();
+    const src = url.startsWith("/") && origin ? `${origin}${url}` : url;
+    return NextResponse.json({ url, src });
   } catch (error) {
     console.error("[admin] content image upload failed:", error);
-    return NextResponse.json({ error: "Could not store the photo on R2." }, { status: 502 });
+    const message = error instanceof Error ? error.message : "Could not store the photo.";
+    const status = message.includes("not set up") ? 503 : 502;
+    return NextResponse.json(
+      { error: status === 503 ? message : "Could not store the photo." },
+      { status },
+    );
   }
 }

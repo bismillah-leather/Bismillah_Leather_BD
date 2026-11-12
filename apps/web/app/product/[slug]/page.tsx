@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { NewBadge } from "@/components/new-badge";
 import { ProductBuy } from "@/components/product-buy";
 import { ProductGallery } from "@/components/product-gallery";
 import { ProductGrid } from "@/components/product-grid";
@@ -92,12 +93,20 @@ async function ProductContent({ params }: { params: Promise<{ slug: string }> })
           </nav>
 
           <div className="mt-6 grid gap-8 lg:grid-cols-2 lg:gap-12">
-            <ProductGallery images={galleryFor(product)} alt={product.name} slug={product.slug} />
+            <ProductGallery
+              images={galleryFor(product)}
+              alt={product.name}
+              slug={product.slug}
+              isNew={product.isNew}
+            />
             <div>
               <p className="text-[10px] tracking-[0.28em] text-muted-foreground uppercase">
                 {product.kind} · {categoryLabel}
               </p>
-              <h1 className="font-display mt-2 text-3xl tracking-tight sm:text-4xl">{product.name}</h1>
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <h1 className="font-display text-3xl tracking-tight sm:text-4xl">{product.name}</h1>
+                {product.isNew ? <NewBadge className="h-6 px-2 text-[11px]" /> : null}
+              </div>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">
                 {product.blurb} Same piece you see on Facebook Reels — packed from {brand.addressShort}{" "}
                 after a confirmation call.

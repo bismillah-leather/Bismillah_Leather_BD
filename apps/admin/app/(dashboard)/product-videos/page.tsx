@@ -5,13 +5,13 @@ import { useEffect, useMemo, useState } from "react";
 import { AdminPageHeader } from "@/components/admin-page-header";
 
 type VideoMap = Record<string, string>;
-type ProductOption = { name: string; slug: string; sku: string };
+type ProductOption = { name: string; slug: string; sku: string; image: string };
 
 export default function ProductVideosPage() {
   const [map, setMap] = useState<VideoMap>({});
   const [draft, setDraft] = useState<VideoMap>({});
   const [catalog, setCatalog] = useState<ProductOption[]>(() =>
-    SHOWCASE_PRODUCTS.map((p) => ({ name: p.name, slug: p.slug, sku: p.sku })),
+    SHOWCASE_PRODUCTS.map((p) => ({ name: p.name, slug: p.slug, sku: p.sku, image: p.image })),
   );
   const [status, setStatus] = useState<"idle" | "loading" | "saving" | "saved" | "error">(
     "loading",
@@ -135,14 +135,23 @@ export default function ProductVideosPage() {
           return (
             <li
               key={product.slug}
-              className="grid gap-2 px-4 py-4 sm:grid-cols-[minmax(0,14rem)_1fr] sm:items-center sm:gap-4"
+              className="grid gap-3 px-4 py-3 sm:grid-cols-[minmax(0,16rem)_1fr] sm:items-center sm:gap-4"
             >
-              <div>
-                <p className="text-sm font-medium">{product.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {product.sku}
-                  {live ? " · live" : ""}
-                </p>
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="grid size-14 shrink-0 place-items-center overflow-hidden border border-black/10 bg-neutral-100">
+                  {product.image ? (
+                    <img src={product.image} alt="" className="size-full object-cover" />
+                  ) : (
+                    <span className="text-[10px] text-neutral-400">No photo</span>
+                  )}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{product.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {product.sku}
+                    {live ? " · live" : ""}
+                  </p>
+                </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <input

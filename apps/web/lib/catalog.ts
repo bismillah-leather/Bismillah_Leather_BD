@@ -15,6 +15,7 @@ type DbProductRow = {
   slug: string;
   description: string;
   ogImageKey: string | null;
+  isNew: boolean;
   primaryCategory: { slug: string; path: string };
   variants: Array<{
     sku: string;
@@ -67,6 +68,7 @@ function mapRow(row: DbProductRow): ShowcaseProduct {
     tone: inferTone(row.name, fallback?.tone),
     kind: fallback?.kind ?? inferKind(categorySlug),
     inStock: available > 0 || (fallback?.inStock ?? false),
+    isNew: row.isNew,
     blurb: row.description?.trim() || fallback?.blurb || "",
     highlights: fallback?.highlights,
     videoUrl: video?.storageKey || fallback?.videoUrl || null,
@@ -79,6 +81,7 @@ const productSelect = {
   slug: true,
   description: true,
   ogImageKey: true,
+  isNew: true,
   primaryCategory: { select: { slug: true, path: true } },
   variants: {
     where: { isActive: true },
@@ -104,7 +107,12 @@ export const listPublishedProducts = cache(async (): Promise<ShowcaseProduct[]> 
       const prisma = getPrisma();
       const rows = await prisma.product.findMany({
         where: { deletedAt: null, status: "published" },
-        orderBy: [{ isFeatured: "desc" }, { soldCount: "desc" }, { updatedAt: "desc" }],
+        orderBy: [
+          { isNew: "desc" },
+          { isFeatured: "desc" },
+          { soldCount: "desc" },
+          { updatedAt: "desc" },
+        ],
         select: productSelect,
       });
       if (rows.length === 0) return [...SHOWCASE_PRODUCTS];

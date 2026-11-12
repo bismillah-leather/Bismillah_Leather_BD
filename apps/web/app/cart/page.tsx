@@ -8,6 +8,7 @@ import { useMemo } from "react";
 import { useCart } from "@/hooks/use-cart";
 import { addToCart } from "@/lib/cart";
 import { openCartDrawer } from "@/components/cart-provider";
+import { NewBadge } from "@/components/new-badge";
 
 export default function CartPage() {
   const { hydrated, items, count, setQty, remove } = useCart();
@@ -230,6 +231,7 @@ export default function CartPage() {
                         sizes="(min-width:1024px) 20vw, 45vw"
                         className="object-cover transition duration-500 hover:scale-105"
                       />
+                      {product.isNew ? <NewBadge className="absolute top-2 left-2 z-10" /> : null}
                     </Link>
                     <p className="mt-3 line-clamp-2 text-sm font-medium leading-snug">
                       {product.name}

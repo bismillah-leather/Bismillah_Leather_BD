@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { LiveViewers } from "./live-viewers";
+import { NewBadge } from "./new-badge";
 import { ProductCardActions } from "./product-card-actions";
 
 function facesFor(product: ShowcaseProduct) {
@@ -58,21 +59,19 @@ export function ProductCard({ product }: { product: ShowcaseProduct }) {
           />
         ))}
 
-        {product.salePaisa ? (
-          <span className="absolute top-2.5 left-2.5 bg-black px-2 py-1 text-[10px] tracking-[0.12em] text-white uppercase">
-            Sale
-          </span>
-        ) : null}
-
-        {!product.inStock ? (
-          <span
-            className={`absolute left-2.5 bg-black px-2 py-1 text-[10px] tracking-[0.12em] text-white uppercase ${
-              product.salePaisa ? "top-10" : "top-2.5"
-            }`}
-          >
-            Sold out
-          </span>
-        ) : null}
+        <div className="absolute top-2.5 left-2.5 z-10 flex flex-col items-start gap-1.5">
+          {product.isNew ? <NewBadge /> : null}
+          {product.salePaisa ? (
+            <span className="bg-black px-1.5 py-0.5 text-[10px] tracking-[0.12em] text-white uppercase">
+              Sale
+            </span>
+          ) : null}
+          {!product.inStock ? (
+            <span className="bg-black px-1.5 py-0.5 text-[10px] tracking-[0.12em] text-white uppercase">
+              Sold out
+            </span>
+          ) : null}
+        </div>
 
         {faces.length > 1 ? (
           <div className="absolute bottom-2.5 left-1/2 flex -translate-x-1/2 gap-1 opacity-0 transition group-hover:opacity-100">

@@ -32,7 +32,11 @@ const nextConfig: NextConfig = {
   // Vercel multi-service currently 404s /_next/image; serve public/catalog directly.
   images: {
     unoptimized: true,
-    localPatterns: [{ pathname: "/catalog/**" }, { pathname: "/support-avatar.jpg" }],
+    localPatterns: [
+      { pathname: "/catalog/**" },
+      { pathname: "/uploads/**" },
+      { pathname: "/support-avatar.jpg" },
+    ],
     remotePatterns: [
       { protocol: "https", hostname: "**.r2.dev", pathname: "/**" },
       { protocol: "https", hostname: "**.r2.cloudflarestorage.com", pathname: "/**" },

@@ -1,15 +1,8 @@
 import { getPrisma } from "@bismillah/db";
 import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
-import { readR2Config, putR2Object } from "@/lib/r2";
-
-const ALLOWED = new Map([
-  ["image/jpeg", "jpg"],
-  ["image/png", "png"],
-  ["image/webp", "webp"],
-  ["image/avif", "avif"],
-  ["image/gif", "gif"],
-]);
+import { requestStoreOrigin } from "@/lib/media-url";
+import { imageExtension, storeUploadedImage } from "@/lib/store-upload";
 
 const MAX_BYTES = 8 * 1024 * 1024;
 
@@ -19,12 +12,6 @@ export async function POST(
 ) {
   const admin = await getActiveAdmin();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  if (!readR2Config()) {
-    return NextResponse.json(
-      { error: "Image hosting is not set up yet. Add the R2 keys in .env." },
-      { status: 503 },
-    );
-  }
 
   const { id } = await ctx.params;
   const prisma = getPrisma();
@@ -45,7 +32,7 @@ export async function POST(
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "Choose an image file." }, { status: 400 });
   }
-  const ext = ALLOWED.get(file.type);
+  const ext = imageExtension(file);
   if (!ext) {
     return NextResponse.json({ error: "Use JPG, PNG, WebP, AVIF, or GIF." }, { status: 400 });
   }
@@ -58,10 +45,15 @@ export async function POST(
 
   let url: string;
   try {
-    url = await putR2Object(key, bytes, file.type);
+    url = await storeUploadedImage(key, bytes, file.type || `image/${ext}`);
   } catch (error) {
     console.error("[admin] product image upload failed:", error);
-    return NextResponse.json({ error: "Could not store the photo on R2." }, { status: 502 });
+    const message = error instanceof Error ? error.message : "Could not store the photo.";
+    const status = message.includes("not set up") ? 503 : 502;
+    return NextResponse.json(
+      { error: status === 503 ? message : "Could not store the photo." },
+      { status },
+    );
   }
 
   const existing = await prisma.productMedia.findFirst({
@@ -103,5 +95,7 @@ export async function POST(
     },
   });
 
-  return NextResponse.json({ ok: true, url });
+  const origin = await requestStoreOrigin();
+  const src = url.startsWith("/") && origin ? `${origin}${url}` : url;
+  return NextResponse.json({ ok: true, url, src });
 }

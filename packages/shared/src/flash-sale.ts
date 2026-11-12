@@ -225,10 +225,16 @@ export function flashSaleItemForSlug(
 }
 
 /** Products still inside their own flash window. */
-export function flashSaleProducts(sale: FlashSaleConfig, now = new Date()): ShowcaseProduct[] {
-  const bySlug = Object.fromEntries(
-    SHOWCASE_PRODUCTS.map((p) => [p.slug, p]),
-  ) as Record<string, ShowcaseProduct>;
+export function flashSaleProducts(
+  sale: FlashSaleConfig,
+  now = new Date(),
+  catalog: readonly ShowcaseProduct[] = SHOWCASE_PRODUCTS,
+): ShowcaseProduct[] {
+  const source = catalog.length > 0 ? catalog : SHOWCASE_PRODUCTS;
+  const bySlug = Object.fromEntries(source.map((p) => [p.slug, p])) as Record<
+    string,
+    ShowcaseProduct
+  >;
   const items = sale.items?.length ? sale.items : normalizeFlashSale(sale).items;
   return items
     .filter((item) => isFlashSaleItemLive(item, now))

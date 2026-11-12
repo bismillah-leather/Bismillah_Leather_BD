@@ -39,6 +39,8 @@ model Product {
   seoDescription    String?       @map("seo_description") @db.Text
   ogImageKey        String?       @map("og_image_key")
   isFeatured        Boolean       @default(false) @map("is_featured")
+  /// Red NEW badge on the card, product page, and suggestions.
+  isNew             Boolean       @default(false) @map("is_new")
   /// Maintained by a Postgres trigger. Do not write this from the app.
   searchVector      Unsupported("tsvector")? @map("search_vector")
   /// Denormalized. Updated from the outbox, never on the read path.
@@ -62,6 +64,7 @@ model Product {
   @@index([primaryCategoryId, status, publishedAt(sort: Desc), id])
   @@index([status, publishedAt(sort: Desc), id])
   @@index([isFeatured, status])
+  @@index([isNew, status])
   @@map("products")
 }
 

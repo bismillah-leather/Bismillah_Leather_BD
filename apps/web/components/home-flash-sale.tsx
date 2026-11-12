@@ -1,10 +1,11 @@
 import { Suspense } from "react";
 import { FlashSaleSection } from "@/components/flash-sale-section";
+import { listPublishedProducts } from "@/lib/catalog";
 import { readFlashSale } from "@/lib/flash-sale-store";
 
 async function HomeFlashSaleInner() {
-  const sale = await readFlashSale();
-  return <FlashSaleSection sale={sale} />;
+  const [sale, catalog] = await Promise.all([readFlashSale(), listPublishedProducts()]);
+  return <FlashSaleSection sale={sale} catalog={catalog} />;
 }
 
 function FlashSaleFallback() {

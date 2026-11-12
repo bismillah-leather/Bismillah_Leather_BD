@@ -6,6 +6,7 @@ import { AdminPageHeader } from "@/components/admin-page-header";
 import { StatusSelect } from "@/components/status-select";
 import { requireAdmin } from "@/lib/admin-auth";
 import { adminMediaSrc, requestStoreOrigin } from "@/lib/media-url";
+import { NewToggle } from "../new-toggle";
 import { ProductDeleteButton } from "../product-delete-button";
 import { ProductVideoEditor } from "./product-video-editor";
 
@@ -30,6 +31,7 @@ export default async function ProductDetailPage({
       description: true,
       status: true,
       isFeatured: true,
+      isNew: true,
       soldCount: true,
       updatedAt: true,
       publishedAt: true,
@@ -156,6 +158,14 @@ export default async function ProductDetailPage({
               Featured
             </dt>
             <dd className="mt-1">{product.isFeatured ? "Yes" : "No"}</dd>
+          </div>
+          <div>
+            <dt className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
+              Store badge
+            </dt>
+            <dd className="mt-2">
+              <NewToggle productId={product.id} initial={product.isNew} />
+            </dd>
           </div>
           <div className="sm:col-span-2">
             <dt className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">

@@ -8,6 +8,7 @@ import {
   formatPaisa,
   isFlashSaleLive,
   type FlashSaleConfig,
+  type ShowcaseProduct,
 } from "@bismillah/shared";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
@@ -20,6 +21,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { LiveViewers } from "./live-viewers";
+import { NewBadge } from "./new-badge";
 import { ProductCardActions } from "./product-card-actions";
 
 const AUTO_MS = 4800;
@@ -116,10 +118,19 @@ function stageSpacing() {
   return 240;
 }
 
-export function FlashSaleSection({ sale: initialSale }: { sale: FlashSaleConfig }) {
+export function FlashSaleSection({
+  sale: initialSale,
+  catalog,
+}: {
+  sale: FlashSaleConfig;
+  catalog?: readonly ShowcaseProduct[];
+}) {
   const [sale, setSale] = useState(initialSale);
   const [now, setNow] = useState(() => Date.now());
-  const products = useMemo(() => flashSaleProducts(sale, new Date(now)), [sale, now]);
+  const products = useMemo(
+    () => flashSaleProducts(sale, new Date(now), catalog),
+    [sale, now, catalog],
+  );
 
   const trackRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -437,6 +448,7 @@ export function FlashSaleSection({ sale: initialSale }: { sale: FlashSaleConfig 
                     )}
 
                     <LiveViewers slug={product.slug} className="absolute top-3 right-3 z-20" />
+                    {product.isNew ? <NewBadge className="absolute top-3 left-3 z-20" /> : null}
                     <Image
                       src={product.image}
                       alt=""

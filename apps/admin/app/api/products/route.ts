@@ -1,6 +1,7 @@
 import { getPrisma } from "@bismillah/db";
 import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
+import { adminMediaSrc, requestStoreOrigin } from "@/lib/media-url";
 
 function slugify(input: string) {
   return input
@@ -16,22 +17,32 @@ export async function GET() {
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 
   const prisma = getPrisma();
-  const products = await prisma.product.findMany({
-    where: { deletedAt: null },
-    orderBy: { name: "asc" },
-    take: 200,
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      status: true,
-      variants: {
-        where: { isActive: true },
-        take: 1,
-        select: { sku: true, price: true },
+  const [origin, products] = await Promise.all([
+    requestStoreOrigin(),
+    prisma.product.findMany({
+      where: { deletedAt: null },
+      orderBy: { name: "asc" },
+      take: 200,
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        status: true,
+        ogImageKey: true,
+        media: {
+          where: { type: "image" },
+          orderBy: { sortOrder: "asc" },
+          take: 1,
+          select: { storageKey: true },
+        },
+        variants: {
+          where: { isActive: true },
+          take: 1,
+          select: { sku: true, price: true },
+        },
       },
-    },
-  });
+    }),
+  ]);
 
   return NextResponse.json({
     products: products.map((p) => ({
@@ -41,6 +52,7 @@ export async function GET() {
       status: p.status,
       sku: p.variants[0]?.sku ?? "",
       pricePaisa: (p.variants[0]?.price ?? 0n).toString(),
+      image: adminMediaSrc(p.media[0]?.storageKey || p.ogImageKey, origin) ?? "",
     })),
   });
 }

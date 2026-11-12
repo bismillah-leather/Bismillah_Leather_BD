@@ -268,7 +268,7 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
               className="admin-field h-auto py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:text-primary-foreground"
             />
             <span className="text-xs text-muted-foreground">
-              {photo ? photo.name : "Stored on R2 and shown on the storefront."}
+              {photo ? photo.name : "Shown on the storefront after you add the product."}
             </span>
           </label>
 

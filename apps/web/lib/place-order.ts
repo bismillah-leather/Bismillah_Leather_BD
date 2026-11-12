@@ -18,6 +18,12 @@ export type PlaceOrderInput = {
   postal: string;
   shipping: string;
   items: Array<{ slug: string; color: string; qty: number }>;
+  customerNote?: string;
+  landingPage?: string;
+  /** Honeypot. Real customers leave this empty. */
+  company?: string;
+  /** When the form was opened, ms since epoch. */
+  startedAt?: number;
 };
 
 export type PlaceOrderResult = { ok: true; number: string } | { ok: false; error: string };
@@ -26,6 +32,58 @@ class OrderReject extends Error {}
 
 function clean(value: string, max: number) {
   return value.trim().slice(0, max);
+}
+
+function looksFake(name: string, address: string) {
+  const folded = `${name} ${address}`.toLowerCase();
+  if (name.length < 2) return true;
+  if (/^(.)\1{4,}$/i.test(name.replace(/\s/g, ""))) return true;
+  if (/\b(test|fake|asdf|qwerty|spam)\b/.test(folded)) return true;
+  if (address.length < 6) return true;
+  return false;
+}
+
+async function reviewOrder(
+  prisma: ReturnType<typeof getPrisma>,
+  input: { phone: string; name: string; address: string },
+): Promise<{ ok: true; tags: string[] } | { ok: false; error: string }> {
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const recent = await prisma.order.findMany({
+    where: {
+      customerPhone: input.phone,
+      placedAt: { gte: since },
+      status: { not: "cancelled" },
+    },
+    orderBy: { placedAt: "desc" },
+    take: 8,
+    select: { status: true, placedAt: true, customerSnapshot: true },
+  });
+
+  if (recent.length >= 4) {
+    return {
+      ok: false,
+      error: "Too many orders from this number today. Call the shop if you still need a piece.",
+    };
+  }
+
+  const duplicate = recent.find((order) => {
+    if (order.status !== "pending" && order.status !== "confirmed") return false;
+    if (Date.now() - order.placedAt.getTime() > 3 * 60 * 60 * 1000) return false;
+    const snap = order.customerSnapshot;
+    if (!snap || typeof snap !== "object" || Array.isArray(snap)) return false;
+    const prior = (snap as { address?: string }).address ?? "";
+    return prior.trim().toLowerCase() === input.address.trim().toLowerCase();
+  });
+  if (duplicate) {
+    return {
+      ok: false,
+      error: "We already have this order. We'll call this number to confirm.",
+    };
+  }
+
+  const tags = ["website"];
+  if (recent.length >= 2 || looksFake(input.name, input.address)) tags.push("needs-review");
+  return { ok: true, tags };
 }
 
 function emailFrom(contact: string): string | null {
@@ -47,6 +105,11 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
   const city = clean(input.city, 80);
   const postal = clean(input.postal, 20);
   const shipping = input.shipping === "outside" ? "outside" : input.shipping === "inside" ? "inside" : "";
+  const customerNote = clean(input.customerNote ?? "", 240);
+  const landingPage =
+    typeof input.landingPage === "string" && /^\/l\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(input.landingPage)
+      ? input.landingPage
+      : "";
 
   if (!phone) return { ok: false, error: "Enter a valid Bangladesh mobile number." };
   if (!lastName || !address || !city || !shipping) {
@@ -80,6 +143,9 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
       select: { number: true },
     });
     if (existing) return { ok: true, number: existing.number };
+
+    const guard = await reviewOrder(prisma, { phone, name, address });
+    if (!guard.ok) return guard;
 
     const products = await prisma.product.findMany({
       where: { slug: { in: lines.map((line) => line.slug) }, deletedAt: null, status: "published" },
@@ -219,6 +285,9 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
             discountTotal: 0n,
             deliveryFee,
             total,
+            customerNote: customerNote || null,
+            landingPage: landingPage || null,
+            tags: guard.tags,
             idempotencyKey: key,
             items: {
               create: priced.map((line) => ({
@@ -244,7 +313,7 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
               create: {
                 field: "status",
                 toValue: "pending",
-                note: "Placed on the website",
+                note: landingPage ? `Placed from ${landingPage}` : "Placed on the website",
               },
             },
             reservations: {

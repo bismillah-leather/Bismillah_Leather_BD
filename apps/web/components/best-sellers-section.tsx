@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { LiveViewers } from "./live-viewers";
+import { NewBadge } from "./new-badge";
 import { ProductCardActions } from "./product-card-actions";
 
 function pickBestSellers(catalog: ShowcaseProduct[]): ShowcaseProduct[] {
@@ -98,6 +99,7 @@ export function BestSellersSection({ products }: { products: ShowcaseProduct[] }
               <span className="bg-white px-2.5 py-1 text-xs font-medium tracking-wide text-black">
                 #{active + 1}
               </span>
+              {featured.isNew ? <NewBadge /> : null}
               {featured.salePaisa ? (
                 <span className="border border-white/40 px-2.5 py-1 text-xs tracking-wide text-white">
                   Sale
@@ -221,8 +223,9 @@ function BestGridCard({ product, rank }: { product: ShowcaseProduct; rank: numbe
           sizes="(min-width: 1024px) 22vw, 50vw"
           className="object-cover transition duration-500 hover:scale-105"
         />
-        <span className="absolute top-2 left-2 bg-white px-2 py-0.5 text-[10px] font-medium text-black">
-          #{rank}
+        <span className="absolute top-2 left-2 flex flex-col items-start gap-1">
+          <span className="bg-white px-2 py-0.5 text-[10px] font-medium text-black">#{rank}</span>
+          {product.isNew ? <NewBadge /> : null}
         </span>
       </Link>
       <LiveViewers slug={product.slug} className="absolute top-4 right-4 z-10" />
