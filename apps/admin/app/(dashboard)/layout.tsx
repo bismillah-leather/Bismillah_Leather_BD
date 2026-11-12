@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
+import { Suspense } from "react";
 import { AdminShell } from "@/components/admin-shell";
 import { requireAdmin } from "@/lib/admin-auth";
 import { requestStoreOrigin } from "@/lib/media-url";
+import DashboardLoading from "./loading";
 
 function isRedirect(error: unknown) {
   return (
@@ -19,7 +21,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     const storeHref = await requestStoreOrigin();
     return (
       <AdminShell userName={session.name} userRole={session.role} storeHref={storeHref}>
-        {children}
+        <Suspense fallback={<DashboardLoading />}>{children}</Suspense>
       </AdminShell>
     );
   } catch (error) {

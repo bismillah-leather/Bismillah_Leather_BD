@@ -50,7 +50,7 @@ export function isMasterKeyConfigured(): boolean {
   return expected.length >= 12;
 }
 
-const ACTIVE_MS = 30_000;
+const ACTIVE_MS = 120_000;
 const activeCache = new Map<string, { expires: number; session: AdminSession }>();
 
 /** Drop a cached staff row after logout, deactivation, or a profile change. */

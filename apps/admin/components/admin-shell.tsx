@@ -13,6 +13,7 @@ import {
   Shield,
   ShoppingBag,
   Ticket,
+  Truck,
   UserCog,
   UserRound,
   Users,
@@ -24,6 +25,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { AdminPrefetch } from "./admin-prefetch";
 import { LogoutButton } from "./logout-button";
 
 const NAV_GROUPS: {
@@ -35,6 +37,7 @@ const NAV_GROUPS: {
     items: [
       { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { label: "Orders", href: "/orders", icon: ShoppingBag },
+      { label: "Couriers", href: "/couriers", icon: Truck },
       { label: "Statements", href: "/statements", icon: Landmark },
       { label: "Customers", href: "/customers", icon: Users },
     ],
@@ -101,6 +104,7 @@ export function AdminShell({
 
   return (
     <div className="admin-shell min-h-dvh md:grid md:grid-cols-[17.5rem_minmax(0,1fr)]">
+      <AdminPrefetch />
       {menuOpen ? (
         <button
           type="button"
@@ -149,6 +153,7 @@ export function AdminShell({
                     <li key={item.href}>
                       <Link
                         href={item.href}
+                        prefetch
                         data-active={active ? "true" : "false"}
                         className="admin-nav-link"
                       >

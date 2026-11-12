@@ -1,6 +1,7 @@
 import { getPrisma, Prisma } from "@bismillah/db";
 import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
+import { forgetAdminLists } from "@/lib/ttl-cache";
 
 const EDITABLE = new Set([
   "store.name",
@@ -58,5 +59,6 @@ export async function PATCH(request: Request) {
     },
   });
 
+  forgetAdminLists();
   return NextResponse.json({ ok: true });
 }

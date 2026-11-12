@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { CheckoutForm } from "@/components/checkout-form";
+import { sslcommerzReady } from "@/lib/sslcommerz";
 
 export const metadata: Metadata = {
   title: "Checkout",
@@ -18,7 +19,7 @@ export default function CheckoutPage() {
         }
       >
         <div className="px-4 sm:px-6">
-          <CheckoutForm />
+          <CheckoutForm onlinePay={sslcommerzReady()} />
         </div>
       </Suspense>
     </div>

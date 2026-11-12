@@ -4,10 +4,10 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { listSecurityAlerts } from "@/lib/security-alerts";
 
 export default async function SecurityPage() {
-  await requireAdmin();
   const prisma = getPrisma();
 
-  const [alerts, locked, recentFails] = await Promise.all([
+  const [, alerts, locked, recentFails] = await Promise.all([
+    requireAdmin(),
     listSecurityAlerts(40),
     prisma.adminUser.findMany({
       where: { lockedUntil: { gt: new Date() } },

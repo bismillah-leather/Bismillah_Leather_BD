@@ -16,7 +16,7 @@ const SHIPPING = {
   outside: { label: "Outside Dhaka", paisa: 13_000n },
 } as const;
 
-export function CheckoutForm() {
+export function CheckoutForm({ onlinePay = false }: { onlinePay?: boolean }) {
   const { hydrated, items, count, setQty, remove } = useCart();
   const [bootstrapped, setBootstrapped] = useState(false);
   const [shipping, setShipping] = useState<ShippingZone>("inside");
@@ -143,10 +143,16 @@ export function CheckoutForm() {
             customerNote: String(data.get("note") ?? ""),
             company: String(data.get("company") ?? ""),
             startedAt: startedAt.current,
+            payment: payment === "ssl" ? "sslcommerz" : "cod",
             items: lines.map((item) => ({ slug: item.slug, color: item.color, qty: item.qty })),
           });
           if (!result.ok) {
             setError(result.error);
+            return;
+          }
+          if (result.payUrl) {
+            clearCart();
+            window.location.assign(result.payUrl);
             return;
           }
           setOrderItems(lines);
@@ -353,13 +359,33 @@ export function CheckoutForm() {
                   className="sr-only"
                 />
               </label>
-              <label className="flex cursor-not-allowed items-center gap-3 border-t border-input px-4 py-3.5 opacity-55">
-                <span className="flex size-4 items-center justify-center rounded-full border border-input" />
-                <span className="text-sm">
-                  <span className="font-medium">Online pay</span>
-                  <span className="ml-2 text-xs text-muted-foreground">bKash / card · soon</span>
+              <label
+                className={`flex items-center gap-3 border-t border-input px-4 py-3.5 ${
+                  onlinePay ? "cursor-pointer" : "cursor-not-allowed opacity-55"
+                } ${payment === "ssl" ? "bg-secondary/50" : "bg-white"}`}
+              >
+                <span
+                  className={`flex size-4 items-center justify-center rounded-full border ${
+                    payment === "ssl" ? "border-foreground" : "border-input"
+                  }`}
+                >
+                  {payment === "ssl" ? <span className="size-2 rounded-full bg-foreground" /> : null}
                 </span>
-                <input type="radio" name="payment" value="ssl" disabled className="sr-only" />
+                <span className="text-sm">
+                  <span className="font-medium">SSLCommerz</span>
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    {onlinePay ? "bKash, Nagad, card" : "Add the store keys to turn this on"}
+                  </span>
+                </span>
+                <input
+                  type="radio"
+                  name="payment"
+                  value="ssl"
+                  checked={payment === "ssl"}
+                  disabled={!onlinePay}
+                  onChange={() => setPayment("ssl")}
+                  className="sr-only"
+                />
               </label>
             </div>
           </section>
@@ -371,7 +397,13 @@ export function CheckoutForm() {
             disabled={pending}
             className="inline-flex h-12 w-full items-center justify-center rounded-md bg-foreground text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-60 lg:hidden"
           >
-            {pending ? "Placing order…" : `Place order · ${formatPaisa(total)}`}
+            {pending
+              ? payment === "ssl"
+                ? "Opening SSLCommerz…"
+                : "Placing order…"
+              : payment === "ssl"
+                ? `Pay ${formatPaisa(total)}`
+                : `Place order · ${formatPaisa(total)}`}
           </button>
           <div className="flex items-start gap-2 text-xs leading-5 text-muted-foreground lg:hidden">
             <ShieldCheck className="mt-0.5 size-4 shrink-0 text-foreground" strokeWidth={1.5} />
@@ -490,7 +522,13 @@ export function CheckoutForm() {
             disabled={pending}
             className="inline-flex h-12 w-full items-center justify-center rounded-md bg-foreground text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-60"
           >
-            {pending ? "Placing order…" : `Place order · ${formatPaisa(total)}`}
+            {pending
+              ? payment === "ssl"
+                ? "Opening SSLCommerz…"
+                : "Placing order…"
+              : payment === "ssl"
+                ? `Pay ${formatPaisa(total)}`
+                : `Place order · ${formatPaisa(total)}`}
           </button>
           <div className="mt-4 flex items-start gap-2 text-xs leading-5 text-muted-foreground">
             <ShieldCheck className="mt-0.5 size-4 shrink-0 text-foreground" strokeWidth={1.5} />

@@ -3,6 +3,7 @@ import {
   FULFILLMENT_STATUSES,
   ORDER_STATUSES,
   PAYMENT_STATUSES,
+  courierTrackingUrl,
   formatPaisa,
 } from "@bismillah/shared";
 import { Suspense } from "react";
@@ -10,7 +11,10 @@ import { AdminPageHeader } from "@/components/admin-page-header";
 import { AdminSearch } from "@/components/admin-search";
 import { StatusSelect } from "@/components/status-select";
 import { requireAdmin } from "@/lib/admin-auth";
+import { courierSetup } from "@/lib/couriers";
 import { adminMediaSrc, requestStoreOrigin } from "@/lib/media-url";
+import { remember } from "@/lib/ttl-cache";
+import { CourierActions } from "./courier-actions";
 
 export default async function OrdersPage({
   searchParams,
@@ -20,10 +24,12 @@ export default async function OrdersPage({
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
   const prisma = getPrisma();
+  const couriers = courierSetup();
 
   const [, origin, orders] = await Promise.all([
     requireAdmin(),
     requestStoreOrigin(),
+    remember(`orders:${q}`, 4_000, () =>
     prisma.order.findMany({
     where: q
       ? {
@@ -48,6 +54,22 @@ export default async function OrdersPage({
       landingPage: true,
       tags: true,
       placedAt: true,
+      payments: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { provider: true, method: true },
+      },
+      shipments: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          id: true,
+          courier: true,
+          consignmentId: true,
+          trackingCode: true,
+          status: true,
+        },
+      },
       items: {
         select: {
           id: true,
@@ -59,15 +81,7 @@ export default async function OrdersPage({
           variant: {
             select: {
               product: {
-                select: {
-                  ogImageKey: true,
-                  media: {
-                    where: { type: "image" },
-                    orderBy: { sortOrder: "asc" },
-                    take: 1,
-                    select: { storageKey: true },
-                  },
-                },
+                select: { ogImageKey: true },
               },
             },
           },
@@ -75,6 +89,7 @@ export default async function OrdersPage({
       },
     },
     }),
+    ),
   ]);
 
   return (
@@ -129,9 +144,7 @@ export default async function OrdersPage({
                 <ul className="mt-3 grid gap-2 text-sm text-black">
                   {o.items.map((item) => {
                     const image = adminMediaSrc(
-                      item.imageKey ||
-                        item.variant?.product.media[0]?.storageKey ||
-                        item.variant?.product.ogImageKey,
+                      item.imageKey || item.variant?.product.ogImageKey,
                       origin,
                     );
                     return (
@@ -186,6 +199,11 @@ export default async function OrdersPage({
                     value={o.paymentStatus}
                     options={PAYMENT_STATUSES}
                   />
+                  {o.payments[0]?.provider === "sslcommerz" ? (
+                    <p className="mt-1 text-[11px] tracking-wide text-neutral-500 uppercase">
+                      SSLCommerz · {o.payments[0].method}
+                    </p>
+                  ) : null}
                 </div>
                 <div>
                   <p className="mb-1 text-[10px] tracking-wide text-muted-foreground uppercase">
@@ -197,6 +215,31 @@ export default async function OrdersPage({
                     value={o.fulfillmentStatus}
                     options={FULFILLMENT_STATUSES}
                   />
+                  {o.status !== "cancelled" ? (
+                    <CourierActions
+                      orderId={o.id}
+                      steadfast={couriers.steadfast}
+                      pathao={couriers.pathao}
+                      shipment={
+                        o.shipments[0]
+                          ? {
+                              id: o.shipments[0].id,
+                              courier: o.shipments[0].courier,
+                              code: o.shipments[0].trackingCode || o.shipments[0].consignmentId || "",
+                              status: o.shipments[0].status,
+                              trackingUrl:
+                                o.shipments[0].courier === "steadfast" || o.shipments[0].courier === "pathao"
+                                  ? courierTrackingUrl(
+                                      o.shipments[0].courier,
+                                      o.shipments[0].trackingCode || o.shipments[0].consignmentId || "",
+                                      o.customerPhone,
+                                    )
+                                  : "",
+                            }
+                          : null
+                      }
+                    />
+                  ) : null}
                 </div>
               </div>
             </li>

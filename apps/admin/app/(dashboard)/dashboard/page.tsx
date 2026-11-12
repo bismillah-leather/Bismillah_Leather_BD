@@ -49,11 +49,16 @@ export default async function AdminHomePage() {
   const dayStarts = Array.from({ length: 7 }, (_, i) => daysAgo(6 - i));
   const [session, stats, alerts] = await Promise.all([
     requireAdmin(),
-    loadDashboardStats(weekAgo),
+    loadDashboardStats(weekAgo, today),
     listSecurityAlerts(4),
   ]);
   const {
-    weekOrders,
+    recentOrders,
+    daySeries,
+    ordersToday,
+    ordersWeek,
+    revenueToday,
+    revenueWeek,
     pending,
     unpaid,
     unfulfilled,
@@ -69,24 +74,20 @@ export default async function AdminHomePage() {
     topProducts,
   } = stats;
 
-  const todayOrders = weekOrders.filter((order) => order.placedAt >= today);
-  const sumTotal = (rows: typeof weekOrders) => rows.reduce((sum, order) => sum + order.total, 0n);
-  const revenueToday = sumTotal(todayOrders);
-  const revenueWeek = sumTotal(weekOrders);
-  const ordersToday = todayOrders.length;
-  const ordersWeek = weekOrders.length;
   const aovToday = ordersToday > 0 ? revenueToday / BigInt(ordersToday) : 0n;
   const aovWeek = ordersWeek > 0 ? revenueWeek / BigInt(ordersWeek) : 0n;
   const showTodayAov = ordersToday > 0;
-  const recentOrders = weekOrders.slice(0, 7);
 
   const series = dayStarts.map((start, i) => {
     const end = i === 6 ? new Date(now.getTime() + 1) : dayStarts[i + 1]!;
-    const bucket = weekOrders.filter((order) => order.placedAt >= start && order.placedAt < end);
+    const bucket = daySeries.find((day) => {
+      const at = new Date(day.start).getTime();
+      return at >= start.getTime() && at < end.getTime();
+    });
     return {
       label: shortDay(start),
-      count: bucket.length,
-      total: sumTotal(bucket),
+      count: bucket?.count ?? 0,
+      total: bucket?.total ?? 0n,
     };
   });
   const published = productGroups.find((row) => row.status === "published")?._count._all ?? 0;

@@ -18,8 +18,10 @@ export function createPrismaClient(connectionString: string): PrismaClient {
     new Pool({
       connectionString,
       max: poolMax(),
-      connectionTimeoutMillis: 8_000,
-      idleTimeoutMillis: 20_000,
+      connectionTimeoutMillis: 5_000,
+      idleTimeoutMillis: 15_000,
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 3_000,
     });
   globalForPrisma.pool = pool;
 

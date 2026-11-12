@@ -1,7 +1,9 @@
 import { getPrisma } from "@bismillah/db";
 import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
-import { adminMediaSrc, requestStoreOrigin } from "@/lib/media-url";
+import { loadCatalogPicker } from "@/lib/catalog-picker";
+import { requestStoreOrigin } from "@/lib/media-url";
+import { forgetAdminLists } from "@/lib/ttl-cache";
 
 function slugify(input: string) {
   return input
@@ -16,45 +18,9 @@ export async function GET() {
   const admin = await getActiveAdmin();
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 
-  const prisma = getPrisma();
-  const [origin, products] = await Promise.all([
-    requestStoreOrigin(),
-    prisma.product.findMany({
-      where: { deletedAt: null },
-      orderBy: { name: "asc" },
-      take: 200,
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        status: true,
-        ogImageKey: true,
-        media: {
-          where: { type: "image" },
-          orderBy: { sortOrder: "asc" },
-          take: 1,
-          select: { storageKey: true },
-        },
-        variants: {
-          where: { isActive: true },
-          take: 1,
-          select: { sku: true, price: true },
-        },
-      },
-    }),
-  ]);
-
-  return NextResponse.json({
-    products: products.map((p) => ({
-      id: p.id,
-      name: p.name,
-      slug: p.slug,
-      status: p.status,
-      sku: p.variants[0]?.sku ?? "",
-      pricePaisa: (p.variants[0]?.price ?? 0n).toString(),
-      image: adminMediaSrc(p.media[0]?.storageKey || p.ogImageKey, origin) ?? "",
-    })),
-  });
+  const origin = await requestStoreOrigin();
+  const products = await loadCatalogPicker(origin);
+  return NextResponse.json({ products });
 }
 
 export async function POST(request: Request) {
@@ -145,6 +111,7 @@ export async function POST(request: Request) {
       return created;
     });
 
+    forgetAdminLists();
     return NextResponse.json({ ok: true, product });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";

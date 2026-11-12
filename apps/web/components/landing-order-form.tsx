@@ -31,12 +31,14 @@ export function LandingOrderForm({
   note,
   button,
   products,
+  onlinePay = false,
 }: {
   landingPath: string;
   title: string;
   note: string;
   button: string;
   products: LandingProductPick[];
+  onlinePay?: boolean;
 }) {
   const first = products[0];
   const [lines, setLines] = useState<OrderLine[]>(
@@ -47,6 +49,7 @@ export function LandingOrderForm({
   const [color, setColor] = useState(product?.colors[0] ?? "Black");
   const [city, setCity] = useState("Dhaka");
   const [shipping, setShipping] = useState<"inside" | "outside">("inside");
+  const [payment, setPayment] = useState<"cod" | "ssl">("cod");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
@@ -131,11 +134,16 @@ export function LandingOrderForm({
       landingPage: landingPath,
       company: String(form.get("company") ?? ""),
       startedAt: startedAt.current,
+      payment: payment === "ssl" ? "sslcommerz" : "cod",
       items: lines.map((line) => ({ slug: line.slug, color: line.color, qty: line.qty })),
     });
     setPending(false);
     if (!result.ok) {
       setError(result.error);
+      return;
+    }
+    if (result.payUrl) {
+      window.location.assign(result.payUrl);
       return;
     }
     setOrderNumber(result.number);
@@ -312,11 +320,27 @@ export function LandingOrderForm({
 
           <div className="mt-4 border border-black/10">
             <p className="border-b border-black/10 px-3 py-2 text-[11px] tracking-[0.14em] text-neutral-500 uppercase">Payment</p>
-            <p className="flex items-center justify-between px-3 py-3 text-sm">
+            <button
+              type="button"
+              onClick={() => setPayment("cod")}
+              className={`flex w-full items-center justify-between px-3 py-3 text-left text-sm ${
+                payment === "cod" ? "bg-black text-white" : "bg-white"
+              }`}
+            >
               <span>Cash on delivery</span>
-              <span className="text-xs text-neutral-500">We call first</span>
-            </p>
-            <p className="border-t border-black/10 px-3 py-3 text-sm text-neutral-400">Online pay · bKash / card · soon</p>
+              <span className="text-xs">{payment === "cod" ? "Selected" : "We call first"}</span>
+            </button>
+            <button
+              type="button"
+              disabled={!onlinePay}
+              onClick={() => setPayment("ssl")}
+              className={`flex w-full items-center justify-between border-t border-black/10 px-3 py-3 text-left text-sm ${
+                payment === "ssl" ? "bg-black text-white" : onlinePay ? "bg-white" : "text-neutral-400"
+              }`}
+            >
+              <span>SSLCommerz · bKash, Nagad, card</span>
+              <span className="text-xs">{onlinePay ? (payment === "ssl" ? "Selected" : "Pay now") : "Not set up"}</span>
+            </button>
           </div>
 
           <div className="mt-4 grid gap-2 text-sm">
@@ -341,9 +365,17 @@ export function LandingOrderForm({
             disabled={pending}
             className="mt-5 inline-flex h-14 w-full items-center justify-center bg-black text-sm font-medium text-white disabled:opacity-60"
           >
-            {pending ? "Placing order…" : `${button} · ${formatPaisa(total)}`}
+            {pending
+              ? payment === "ssl"
+                ? "Opening SSLCommerz…"
+                : "Placing order…"
+              : payment === "ssl"
+                ? `Pay ${formatPaisa(total)}`
+                : `${button} · ${formatPaisa(total)}`}
           </button>
-          <p className="mt-3 text-center text-xs text-neutral-500">No online payment. We call before packing.</p>
+          <p className="mt-3 text-center text-xs text-neutral-500">
+            {payment === "ssl" ? "You will pay on the SSLCommerz page." : "Cash on delivery. We call before packing."}
+          </p>
         </form>
       </div>
     </section>

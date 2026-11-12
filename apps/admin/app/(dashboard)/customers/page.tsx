@@ -11,12 +11,13 @@ export default async function CustomersPage({
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
-  await requireAdmin();
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
   const prisma = getPrisma();
 
-  const customers = await prisma.customer.findMany({
+  const [, customers] = await Promise.all([
+    requireAdmin(),
+    prisma.customer.findMany({
     where: q
       ? {
           OR: [
@@ -38,7 +39,8 @@ export default async function CustomersPage({
       totalSpent: true,
       createdAt: true,
     },
-  });
+    }),
+  ]);
 
   return (
     <div>

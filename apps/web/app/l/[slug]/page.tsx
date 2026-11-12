@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LandingView } from "@/components/landing-view";
 import { listPublishedProducts } from "@/lib/catalog";
+import { sslcommerzReady } from "@/lib/sslcommerz";
 import { getStoreBrand } from "@/lib/store-brand";
 
 export const dynamic = "force-dynamic";
@@ -45,5 +46,12 @@ export default async function PublicLandingPage({
       colors: [...product.colors],
     };
   });
-  return <LandingView page={page} products={products} whatsappUrl={brand.whatsappUrl} />;
+  return (
+    <LandingView
+      page={page}
+      products={products}
+      whatsappUrl={brand.whatsappUrl}
+      onlinePay={sslcommerzReady()}
+    />
+  );
 }

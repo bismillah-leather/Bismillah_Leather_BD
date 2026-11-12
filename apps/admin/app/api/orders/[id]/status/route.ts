@@ -9,6 +9,7 @@ import {
 } from "@bismillah/shared";
 import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
+import { forgetAdminLists } from "@/lib/ttl-cache";
 
 type Body = {
   field?: "status" | "paymentStatus" | "fulfillmentStatus";
@@ -110,5 +111,6 @@ export async function PATCH(
     }),
   ]);
 
+  forgetAdminLists();
   return NextResponse.json({ ok: true });
 }

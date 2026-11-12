@@ -52,12 +52,7 @@ export default async function InventoryPage({
           select: {
             id: true,
             name: true,
-            media: {
-              where: { type: "image" as const },
-              orderBy: { sortOrder: "asc" as const },
-              take: 1,
-              select: { storageKey: true },
-            },
+            ogImageKey: true,
           },
         },
       },
@@ -188,7 +183,7 @@ export default async function InventoryPage({
             variants.map((variant) => {
               const state = stockState(variant.stockOnHand);
               const free = Math.max(0, variant.stockOnHand - variant.stockReserved);
-              const image = adminMediaSrc(variant.product.media[0]?.storageKey, origin);
+              const image = adminMediaSrc(variant.product.ogImageKey, origin);
               return (
                 <li key={variant.id} className="admin-panel px-3 py-3 sm:px-4">
                   <div className="grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">

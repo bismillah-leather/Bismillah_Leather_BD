@@ -1,6 +1,7 @@
 import { getPrisma } from "@bismillah/db";
 import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
+import { forgetAdminLists } from "@/lib/ttl-cache";
 
 export async function PATCH(
   request: Request,
@@ -58,5 +59,6 @@ export async function PATCH(
     }),
   ]);
 
+  forgetAdminLists();
   return NextResponse.json({ ok: true, stockOnHand: next });
 }

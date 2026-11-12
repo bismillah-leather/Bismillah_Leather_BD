@@ -1,4 +1,5 @@
 import { getPrisma } from "@bismillah/db";
+import { forgetAdminLists, remember } from "./ttl-cache";
 
 export type SecurityAlert = {
   id: string;
@@ -41,11 +42,14 @@ export async function pushSecurityAlert(
     create: { key: KEY, value: next },
     update: { value: next },
   });
+  forgetAdminLists();
 }
 
 export async function listSecurityAlerts(limit = 30): Promise<SecurityAlert[]> {
-  const prisma = getPrisma();
-  const row = await prisma.setting.findUnique({ where: { key: KEY } });
-  const list = Array.isArray(row?.value) ? (row.value as SecurityAlert[]) : [];
+  const list = await remember("security-alerts", 8_000, async () => {
+    const prisma = getPrisma();
+    const row = await prisma.setting.findUnique({ where: { key: KEY } });
+    return (Array.isArray(row?.value) ? row.value : []) as SecurityAlert[];
+  });
   return list.slice(0, limit);
 }

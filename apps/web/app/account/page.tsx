@@ -1,5 +1,5 @@
 import { getPrisma } from "@bismillah/db";
-import { BRAND, formatPaisa } from "@bismillah/shared";
+import { BRAND, courierTrackingUrl, formatPaisa } from "@bismillah/shared";
 import {
   MapPin,
   Package,
@@ -72,6 +72,16 @@ async function AccountDashboard() {
         items: {
           take: 1,
           select: { name: true, imageKey: true, qty: true },
+        },
+        shipments: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: {
+            courier: true,
+            trackingCode: true,
+            consignmentId: true,
+            status: true,
+          },
         },
       },
     }),
@@ -264,6 +274,12 @@ async function AccountDashboard() {
             <ul className="grid gap-3">
               {orders.map((o) => {
                 const first = o.items[0];
+                const booked = o.shipments[0];
+                const trackCode = booked?.trackingCode || booked?.consignmentId || "";
+                const trackUrl =
+                  booked && (booked.courier === "steadfast" || booked.courier === "pathao") && trackCode
+                    ? courierTrackingUrl(booked.courier, trackCode, customer?.phone ?? "")
+                    : "";
                 return (
                   <li
                     key={o.id}
@@ -295,6 +311,16 @@ async function AccountDashboard() {
                           {first.qty > 1 ? ` × ${first.qty}` : ""}
                           {o.items.length > 1 ? " + more" : ""}
                         </p>
+                      ) : null}
+                      {trackUrl ? (
+                        <a
+                          href={trackUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-2 inline-flex text-xs tracking-wide text-foreground underline"
+                        >
+                          Track parcel{booked?.status ? ` · ${booked.status}` : ""}
+                        </a>
                       ) : null}
                     </div>
                     <p className="text-base font-medium tabular-nums sm:text-right">

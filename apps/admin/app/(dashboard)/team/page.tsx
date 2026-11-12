@@ -6,11 +6,10 @@ import { isMasterKeyConfigured, requireAdmin } from "@/lib/admin-auth";
 import { TeamRowActions } from "./team-row-actions";
 
 export default async function TeamPage() {
-  const session = await requireAdmin();
   const prisma = getPrisma();
-  const canInvite = session.role === "owner" || session.role === "manager";
-
-  const staff = await prisma.adminUser.findMany({
+  const [session, staff] = await Promise.all([
+    requireAdmin(),
+    prisma.adminUser.findMany({
     orderBy: [{ role: "asc" }, { createdAt: "asc" }],
     select: {
       id: true,
@@ -23,8 +22,10 @@ export default async function TeamPage() {
       lastLoginAt: true,
       createdAt: true,
     },
-  });
+    }),
+  ]);
 
+  const canInvite = session.role === "owner" || session.role === "manager";
   const now = new Date();
   const activeCount = staff.filter((u) => u.isActive).length;
   const lockedCount = staff.filter((u) => u.lockedUntil && u.lockedUntil > now).length;

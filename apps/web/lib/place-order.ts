@@ -1,6 +1,7 @@
 import { getPrisma, Prisma } from "@bismillah/db";
 import { divisionForDistrict, normalizeBdPhone } from "@bismillah/shared";
 import { forget } from "./remember";
+import { sslcommerzReady, startSslcommerzCheckout } from "./sslcommerz";
 
 const SHIPPING = {
   inside: 8_000n,
@@ -24,9 +25,12 @@ export type PlaceOrderInput = {
   company?: string;
   /** When the form was opened, ms since epoch. */
   startedAt?: number;
+  payment?: "cod" | "sslcommerz";
 };
 
-export type PlaceOrderResult = { ok: true; number: string } | { ok: false; error: string };
+export type PlaceOrderResult =
+  | { ok: true; number: string; payUrl?: string }
+  | { ok: false; error: string };
 
 class OrderReject extends Error {}
 
@@ -135,14 +139,22 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
   const name = [firstName, lastName].filter(Boolean).join(" ");
   const email = emailFrom(input.contact);
   const deliveryFee = SHIPPING[shipping];
+  const payOnline = input.payment === "sslcommerz";
+  if (payOnline && !sslcommerzReady()) {
+    return { ok: false, error: "Online pay is not set up yet. Choose cash on delivery." };
+  }
 
   try {
     const prisma = getPrisma();
     const existing = await prisma.order.findUnique({
       where: { idempotencyKey: key },
-      select: { number: true },
+      select: { number: true, paymentStatus: true },
     });
-    if (existing) return { ok: true, number: existing.number };
+    if (existing) {
+      if (existing.paymentStatus === "paid") return { ok: true, number: existing.number };
+      if (payOnline || existing.paymentStatus === "pending") return startSslcommerzCheckout(existing.number);
+      return { ok: true, number: existing.number };
+    }
 
     const guard = await reviewOrder(prisma, { phone, name, address });
     if (!guard.ok) return guard;
@@ -201,6 +213,9 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
 
     const subtotal = priced.reduce((sum, line) => sum + line.lineTotal, 0n);
     const total = subtotal + deliveryFee;
+    if (payOnline && total < 1_000n) {
+      return { ok: false, error: "Online pay starts at ৳10. Choose cash on delivery for this order." };
+    }
 
     const number = await prisma.$transaction(
       async (tx) => {
@@ -279,7 +294,7 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
             channel: "website",
             source: "direct",
             status: "pending",
-            paymentStatus: "unpaid",
+            paymentStatus: payOnline ? "pending" : "unpaid",
             fulfillmentStatus: "unfulfilled",
             subtotal,
             discountTotal: 0n,
@@ -301,14 +316,18 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
                 lineTotal: line.lineTotal,
               })),
             },
-            payments: {
-              create: {
-                provider: "cod",
-                method: "cod",
-                amount: total,
-                status: "unpaid",
-              },
-            },
+            ...(payOnline
+              ? {}
+              : {
+                  payments: {
+                    create: {
+                      provider: "cod",
+                      method: "cod" as const,
+                      amount: total,
+                      status: "unpaid" as const,
+                    },
+                  },
+                }),
             history: {
               create: {
                 field: "status",
@@ -332,6 +351,7 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
     );
 
     forget("published-products");
+    if (payOnline) return startSslcommerzCheckout(number);
     return { ok: true, number };
   } catch (error) {
     if (error instanceof OrderReject) return { ok: false, error: error.message };
@@ -340,7 +360,10 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
         where: { idempotencyKey: key },
         select: { number: true },
       });
-      if (row) return { ok: true, number: row.number };
+      if (row) {
+        if (payOnline) return startSslcommerzCheckout(row.number);
+        return { ok: true, number: row.number };
+      }
     }
     console.error("[web] place order failed:", error);
     return { ok: false, error: "Could not place the order. Try again in a moment." };

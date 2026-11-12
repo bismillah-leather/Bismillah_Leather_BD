@@ -2,6 +2,7 @@ import { readStoredProductVideos, writeStoredProductVideos, type ProductVideoMap
 import { isSupportedVideoUrl } from "@bismillah/shared";
 import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
+import { forgetAdminLists } from "@/lib/ttl-cache";
 
 export async function GET() {
   const admin = await getActiveAdmin();
@@ -46,5 +47,6 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Could not save product videos." }, { status: 500 });
   }
 
+  forgetAdminLists();
   return NextResponse.json(next);
 }

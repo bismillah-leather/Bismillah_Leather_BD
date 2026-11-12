@@ -7,6 +7,7 @@ import {
 } from "@bismillah/shared";
 import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
+import { forgetAdminLists } from "@/lib/ttl-cache";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return typeof value === "object" && value !== null && !Array.isArray(value)
@@ -146,5 +147,6 @@ export async function PUT(request: Request) {
     });
   });
 
+  forgetAdminLists();
   return NextResponse.json({ ok: true });
 }

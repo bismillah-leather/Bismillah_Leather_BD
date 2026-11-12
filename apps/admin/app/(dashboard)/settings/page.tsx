@@ -12,9 +12,10 @@ function asString(value: unknown, fallback = "") {
 }
 
 export default async function SettingsPage() {
-  await requireAdmin();
   const prisma = getPrisma();
-  const rows = await prisma.setting.findMany({
+  const [, rows] = await Promise.all([
+    requireAdmin(),
+    prisma.setting.findMany({
     where: {
       key: {
         in: [
@@ -31,7 +32,8 @@ export default async function SettingsPage() {
         ],
       },
     },
-  });
+    }),
+  ]);
   const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
 
   return (

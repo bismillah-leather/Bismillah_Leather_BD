@@ -2,7 +2,8 @@ import { getPrisma } from "@bismillah/db";
 import { formatPaisa } from "@bismillah/shared";
 import { AdminPageHeader } from "@/components/admin-page-header";
 import { requireAdmin } from "@/lib/admin-auth";
-import { adminMediaSrc, requestStoreOrigin } from "@/lib/media-url";
+import { loadCatalogPicker } from "@/lib/catalog-picker";
+import { requestStoreOrigin } from "@/lib/media-url";
 import { CouponCreateForm } from "./coupon-create-form";
 import { CouponRow } from "./coupon-row";
 import type { CouponCatalogItem } from "./coupon-products";
@@ -13,10 +14,10 @@ function formatCouponValue(type: string, value: bigint) {
 }
 
 export default async function CouponsPage() {
-  await requireAdmin();
   const origin = await requestStoreOrigin();
   const prisma = getPrisma();
-  const [coupons, products] = await Promise.all([
+  const [, coupons, picker] = await Promise.all([
+    requireAdmin(),
     prisma.coupon.findMany({
       orderBy: { createdAt: "desc" },
       take: 80,
@@ -32,34 +33,14 @@ export default async function CouponsPage() {
         _count: { select: { redemptions: true } },
       },
     }),
-    prisma.product.findMany({
-      where: { deletedAt: null, status: { not: "archived" } },
-      orderBy: { name: "asc" },
-      take: 200,
-      select: {
-        id: true,
-        name: true,
-        variants: {
-          where: { isActive: true },
-          orderBy: { createdAt: "asc" },
-          take: 1,
-          select: { price: true },
-        },
-        media: {
-          where: { type: "image" },
-          orderBy: { sortOrder: "asc" },
-          take: 1,
-          select: { storageKey: true },
-        },
-      },
-    }),
+    loadCatalogPicker(origin),
   ]);
 
-  const catalog: CouponCatalogItem[] = products.map((product) => ({
+  const catalog: CouponCatalogItem[] = picker.map((product) => ({
     id: product.id,
     name: product.name,
-    pricePaisa: (product.variants[0]?.price ?? 0n).toString(),
-    image: adminMediaSrc(product.media[0]?.storageKey, origin),
+    pricePaisa: product.pricePaisa,
+    image: product.image || null,
   }));
 
   return (

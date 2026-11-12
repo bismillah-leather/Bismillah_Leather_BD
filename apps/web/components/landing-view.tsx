@@ -11,8 +11,10 @@ export function LandingView({
   page,
   products,
   whatsappUrl,
+  onlinePay = false,
 }: {
   page: LandingPage;
+  onlinePay?: boolean;
   products: LandingProductPick[];
   whatsappUrl: string;
 }) {
@@ -126,6 +128,7 @@ export function LandingView({
         note={page.orderNote}
         button={page.orderButton}
         products={products}
+        onlinePay={onlinePay}
       />
 
       {page.faqs.length > 0 ? (

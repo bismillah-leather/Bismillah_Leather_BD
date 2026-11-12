@@ -2,6 +2,7 @@ import { getPrisma } from "@bismillah/db";
 import { parseTakaToPaisa } from "@bismillah/shared";
 import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
+import { forgetAdminLists } from "@/lib/ttl-cache";
 
 export async function DELETE(
   _request: Request,
@@ -58,6 +59,7 @@ export async function DELETE(
     });
   });
 
+  forgetAdminLists();
   return NextResponse.json({ ok: true });
 }
 
@@ -189,5 +191,6 @@ export async function PATCH(
     },
   });
 
+  forgetAdminLists();
   return NextResponse.json({ ok: true, product });
 }

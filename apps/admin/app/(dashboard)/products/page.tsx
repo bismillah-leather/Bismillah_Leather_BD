@@ -51,6 +51,7 @@ export default async function ProductsPage({
         isNew: true,
         soldCount: true,
         updatedAt: true,
+        ogImageKey: true,
         primaryCategory: { select: { id: true, name: true, sortOrder: true } },
         variants: {
           where: { isActive: true },
@@ -58,13 +59,6 @@ export default async function ProductsPage({
           take: 1,
           select: { sku: true, price: true, salePrice: true, stockOnHand: true },
         },
-        media: {
-          where: { type: "image" },
-          orderBy: { sortOrder: "asc" },
-          take: 1,
-          select: { storageKey: true },
-        },
-        _count: { select: { variants: true } },
       },
     }),
     prisma.category.findMany({
@@ -174,9 +168,9 @@ function groupByCategory(
     status: string;
     isFeatured: boolean;
     isNew: boolean;
+    ogImageKey: string | null;
     primaryCategory: { name: string; sortOrder: number };
     variants: Array<{ sku: string; price: bigint; salePrice: bigint | null; stockOnHand: number }>;
-    media: Array<{ storageKey: string }>;
   }>,
   origin: string,
 ) {
@@ -192,7 +186,7 @@ function groupByCategory(
       isFeatured: product.isFeatured,
       isNew: product.isNew,
       categoryName: key,
-      image: adminMediaSrc(product.media[0]?.storageKey, origin),
+      image: adminMediaSrc(product.ogImageKey, origin),
       sku: variant?.sku ?? null,
       priceTaka: variant ? String(Number(variant.price) / 100) : "",
       salePriceTaka: variant?.salePrice != null ? String(Number(variant.salePrice) / 100) : "",

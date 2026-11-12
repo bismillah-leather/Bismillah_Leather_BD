@@ -17,10 +17,12 @@ export default async function StatementsPage({
 }: {
   searchParams: Promise<{ preset?: string; from?: string; to?: string }>;
 }) {
-  await requireAdmin();
   const sp = await searchParams;
   const range = resolveStatementRange(sp);
-  const book = range.error ? null : await loadStatement(range);
+  const [, book] = await Promise.all([
+    requireAdmin(),
+    range.error ? Promise.resolve(null) : loadStatement(range),
+  ]);
   const query = new URLSearchParams({
     preset: range.preset,
     from: range.fromDate,

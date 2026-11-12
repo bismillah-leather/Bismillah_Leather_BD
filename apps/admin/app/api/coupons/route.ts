@@ -1,6 +1,7 @@
 import { getPrisma } from "@bismillah/db";
 import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
+import { forgetAdminLists } from "@/lib/ttl-cache";
 
 export async function POST(request: Request) {
   const admin = await getActiveAdmin();
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
         after: { code: coupon.code, type, amount },
       },
     });
+    forgetAdminLists();
     return NextResponse.json({ ok: true, id: coupon.id, code: coupon.code });
   } catch {
     return NextResponse.json({ error: "Could not create coupon (code may exist)." }, { status: 409 });
