@@ -1,4 +1,3 @@
-import { loadRootEnv } from "@bismillah/db";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
@@ -14,7 +13,6 @@ export type AdminSession = {
 };
 
 function secretKey() {
-  loadRootEnv();
   const secret = process.env.SESSION_SECRET;
   if (!secret || secret.length < 16) {
     throw new Error("SESSION_SECRET must be set (16+ chars)");
@@ -33,7 +31,6 @@ export async function signAdminSession(payload: AdminSession): Promise<string> {
 
 export async function verifyAdminToken(token: string): Promise<AdminSession | null> {
   try {
-    loadRootEnv();
     const secret = process.env.SESSION_SECRET;
     if (!secret || secret.length < 16) return null;
     const { payload } = await jwtVerify(token, new TextEncoder().encode(secret), {

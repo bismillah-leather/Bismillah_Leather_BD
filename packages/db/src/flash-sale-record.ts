@@ -7,8 +7,6 @@ import {
 } from "@bismillah/shared";
 import { Prisma } from "./generated/prisma/client";
 import { readJsonSetting, writeJsonSetting } from "./json-setting";
-import { promises as fs } from "node:fs";
-import path from "node:path";
 
 const KEY = "flash_sale";
 
@@ -36,23 +34,6 @@ export async function readStoredFlashSale(): Promise<FlashSaleConfig | null> {
   const value = await readJsonSetting(KEY);
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   return serializeFlashSale(value as FlashSaleConfig);
-}
-
-async function readLegacyFlashFile(): Promise<FlashSaleConfig | null> {
-  const candidates = [
-    path.join(process.cwd(), "data", "flash-sale.json"),
-    path.join(process.cwd(), "../web/data/flash-sale.json"),
-    path.join(process.cwd(), "../../apps/web/data/flash-sale.json"),
-  ];
-  for (const file of candidates) {
-    try {
-      const raw = await fs.readFile(file, "utf8");
-      return serializeFlashSale(JSON.parse(raw) as FlashSaleConfig);
-    } catch {
-      // try the next location
-    }
-  }
-  return null;
 }
 
 export async function writeStoredFlashSale(sale: FlashSaleConfig): Promise<FlashSaleConfig> {
@@ -129,16 +110,5 @@ export function mergeFlashSalePut(
 }
 
 export async function readFlashSaleForAdmin(): Promise<FlashSaleConfig> {
-  const stored = await readStoredFlashSale();
-  if (stored) return stored;
-  const legacy = await readLegacyFlashFile();
-  if (legacy) {
-    try {
-      await writeStoredFlashSale(legacy);
-    } catch {
-      // Keep serving the file copy if the database write is unavailable.
-    }
-    return legacy;
-  }
-  return defaultFlashSale();
+  return (await readStoredFlashSale()) ?? defaultFlashSale();
 }

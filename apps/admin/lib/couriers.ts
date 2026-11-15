@@ -25,10 +25,12 @@ export function courierSetup() {
       process.env.PATHAO_PASSWORD?.trim(),
   );
   const provider = (process.env.COURIER_PROVIDER || "").trim().toLowerCase();
+  const preferred: "pathao" | "steadfast" | null =
+    provider === "pathao" || provider === "steadfast" ? provider : null;
   return {
     steadfast,
     pathao,
-    preferred: provider === "pathao" || provider === "steadfast" ? provider : null,
+    preferred,
     pathaoMode: process.env.PATHAO_MODE === "sandbox" ? "sandbox" : "live",
   };
 }
@@ -388,7 +390,7 @@ export async function bookCourier(orderId: string, courier: CourierName, actorId
 
   const token = await pathaoToken();
   const storeIds = await pathaoStoreIds(token);
-  const destination = await pathaoDestination(token, snap.city, address);
+  const destination = await pathaoDestination(token, snap.city || "", address);
   const senderPhone = bdMobile11(process.env.PATHAO_SENDER_PHONE || BRAND.phoneE164);
 
   let lastError = "Pathao did not book the parcel.";
