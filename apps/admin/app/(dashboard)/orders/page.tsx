@@ -220,6 +220,7 @@ export default async function OrdersPage({
                       orderId={o.id}
                       steadfast={couriers.steadfast}
                       pathao={couriers.pathao}
+                      preferred={couriers.preferred}
                       shipment={
                         o.shipments[0]
                           ? {

@@ -7,11 +7,13 @@ export function CourierActions({
   orderId,
   steadfast,
   pathao,
+  preferred = null,
   shipment,
 }: {
   orderId: string;
   steadfast: boolean;
   pathao: boolean;
+  preferred?: "pathao" | "steadfast" | null;
   shipment: {
     id: string;
     courier: string;
@@ -93,7 +95,7 @@ export function CourierActions({
           type="button"
           disabled={!steadfast || pending !== ""}
           onClick={() => void book("steadfast")}
-          className="admin-btn-primary h-9 px-3 text-[11px] disabled:opacity-40"
+          className={`${preferred === "pathao" ? "admin-btn-ghost" : "admin-btn-primary"} h-9 px-3 text-[11px] disabled:opacity-40`}
         >
           {pending === "steadfast" ? "Booking…" : "Steadfast"}
         </button>
@@ -101,7 +103,7 @@ export function CourierActions({
           type="button"
           disabled={!pathao || pending !== ""}
           onClick={() => void book("pathao")}
-          className="admin-btn-ghost h-9 px-3 text-[11px] disabled:opacity-40"
+          className={`${preferred === "pathao" ? "admin-btn-primary" : "admin-btn-ghost"} h-9 px-3 text-[11px] disabled:opacity-40`}
         >
           {pending === "pathao" ? "Booking…" : "Pathao"}
         </button>

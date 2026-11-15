@@ -1,4 +1,4 @@
-import { getPrisma, Prisma } from "@bismillah/db";
+import { getPrisma, loadRootEnv, Prisma } from "@bismillah/db";
 import {
   BRAND,
   bdMobile11,
@@ -12,31 +12,90 @@ const PATHAO_SANDBOX = "https://courier-api-sandbox.pathao.com";
 
 type CourierName = "steadfast" | "pathao";
 
-type TokenCache = { token: string; refresh: string; expiresAt: number };
+type TokenCache = { token: string; refresh: string; expiresAt: number; base: string };
 const pathaoCache = globalThis as unknown as { __blPathaoToken?: TokenCache };
 
-function pathaoSenderPhone() {
-  return bdMobile11(process.env.PATHAO_SENDER_PHONE || BRAND.phoneE164);
-}
-
 export function courierSetup() {
+  loadRootEnv();
   const steadfast = Boolean(process.env.STEADFAST_API_KEY && process.env.STEADFAST_SECRET_KEY);
   const pathao = Boolean(
-    process.env.PATHAO_CLIENT_ID &&
-      process.env.PATHAO_CLIENT_SECRET &&
-      process.env.PATHAO_USERNAME &&
-      process.env.PATHAO_PASSWORD &&
-      pathaoSenderPhone(),
+    process.env.PATHAO_CLIENT_ID?.trim() &&
+      process.env.PATHAO_CLIENT_SECRET?.trim() &&
+      process.env.PATHAO_USERNAME?.trim() &&
+      process.env.PATHAO_PASSWORD?.trim(),
   );
+  const provider = (process.env.COURIER_PROVIDER || "").trim().toLowerCase();
   return {
     steadfast,
     pathao,
-    pathaoMode: process.env.PATHAO_MODE === "live" ? "live" : "sandbox",
+    preferred: provider === "pathao" || provider === "steadfast" ? provider : null,
+    pathaoMode: process.env.PATHAO_MODE === "sandbox" ? "sandbox" : "live",
   };
 }
 
+function pathaoHosts() {
+  loadRootEnv();
+  if (process.env.PATHAO_MODE === "sandbox") {
+    return [PATHAO_SANDBOX];
+  }
+  const custom = process.env.PATHAO_BASE_URL?.trim().replace(/\/+$/, "") ?? "";
+  return [...new Set([custom, PATHAO_LIVE].filter(Boolean))];
+}
+
 function pathaoBase() {
-  return process.env.PATHAO_MODE === "live" ? PATHAO_LIVE : PATHAO_SANDBOX;
+  return pathaoCache.__blPathaoToken?.base || pathaoHosts()[0] || PATHAO_LIVE;
+}
+
+function pathaoMessage(payload: {
+  message?: string;
+  errors?: Record<string, string[] | string>;
+}) {
+  const details = Object.values(payload.errors ?? {})
+    .flatMap((value) => (Array.isArray(value) ? value : [value]))
+    .filter(Boolean);
+  return [payload.message, ...details].filter(Boolean).join(" — ") || "Pathao request failed.";
+}
+
+async function pathaoGet(token: string, path: string) {
+  const response = await fetch(`${pathaoBase()}${path}`, {
+    headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(20_000),
+  });
+  return (await response.json().catch(() => ({}))) as {
+    data?: { data?: Array<Record<string, unknown>> } | Array<Record<string, unknown>>;
+    message?: string;
+  };
+}
+
+function rowsOf(payload: {
+  data?: { data?: Array<Record<string, unknown>> } | Array<Record<string, unknown>>;
+}) {
+  if (Array.isArray(payload.data)) return payload.data;
+  return Array.isArray(payload.data?.data) ? payload.data.data : [];
+}
+
+function matchNamed(rows: Array<Record<string, unknown>>, haystack: string, nameKey: string) {
+  const hay = haystack.toLowerCase();
+  return (
+    rows.find((row) => String(row[nameKey] ?? "").toLowerCase() && hay.includes(String(row[nameKey]).toLowerCase())) ??
+    rows[0]
+  );
+}
+
+async function pathaoDestination(token: string, cityText: string, address: string) {
+  const hay = `${cityText} ${address}`;
+  let cities = rowsOf(await pathaoGet(token, "/aladdin/api/v1/city-list"));
+  if (cities.length === 0) {
+    cities = rowsOf(await pathaoGet(token, "/aladdin/api/v1/countries/1/city-list"));
+  }
+  const city = matchNamed(cities, hay, "city_name");
+  const cityId = Number(city?.city_id);
+  if (!cityId) throw new Error("Pathao city list was empty.");
+  const zones = rowsOf(await pathaoGet(token, `/aladdin/api/v1/cities/${cityId}/zone-list`));
+  const zone = matchNamed(zones, hay, "zone_name");
+  const zoneId = Number(zone?.zone_id);
+  if (!zoneId) throw new Error("Pathao zone was not found for this city.");
+  return { cityId, zoneId };
 }
 
 function takaFromPaisa(paisa: bigint) {
@@ -55,52 +114,77 @@ function snapshotOf(value: unknown) {
 }
 
 async function pathaoToken() {
+  loadRootEnv();
   const cached = pathaoCache.__blPathaoToken;
   if (cached && cached.expiresAt > Date.now() + 60_000) return cached.token;
 
-  const body =
+  const passwordBody = {
+    client_id: process.env.PATHAO_CLIENT_ID?.trim(),
+    client_secret: process.env.PATHAO_CLIENT_SECRET?.trim(),
+    username: process.env.PATHAO_USERNAME?.trim(),
+    password: process.env.PATHAO_PASSWORD?.trim(),
+    grant_type: "password",
+  };
+  const refreshBody =
     cached?.refresh && cached.expiresAt > Date.now() - 24 * 60 * 60 * 1000
       ? {
-          client_id: process.env.PATHAO_CLIENT_ID,
-          client_secret: process.env.PATHAO_CLIENT_SECRET,
+          client_id: passwordBody.client_id,
+          client_secret: passwordBody.client_secret,
           refresh_token: cached.refresh,
           grant_type: "refresh_token",
         }
-      : {
-          client_id: process.env.PATHAO_CLIENT_ID,
-          client_secret: process.env.PATHAO_CLIENT_SECRET,
-          username: process.env.PATHAO_USERNAME,
-          password: process.env.PATHAO_PASSWORD,
-          grant_type: "password",
-        };
+      : null;
 
-  const response = await fetch(`${pathaoBase()}/aladdin/api/v1/issue-token`, {
-    method: "POST",
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(20_000),
-  });
-  const payload = (await response.json().catch(() => ({}))) as {
-    access_token?: string;
-    refresh_token?: string;
-    expires_in?: number;
-    message?: string;
-  };
-  if (!response.ok || !payload.access_token) {
-    pathaoCache.__blPathaoToken = undefined;
-    throw new Error(payload.message || "Pathao login failed.");
+  let lastMessage = "Pathao login failed.";
+  for (const base of pathaoHosts()) {
+    for (const body of refreshBody ? [refreshBody, passwordBody] : [passwordBody]) {
+      const response = await fetch(`${base}/aladdin/api/v1/issue-token`, {
+        method: "POST",
+        headers: { Accept: "application/json", "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(20_000),
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        access_token?: string;
+        refresh_token?: string;
+        expires_in?: number;
+        message?: string;
+      };
+      if (response.ok && payload.access_token) {
+        pathaoCache.__blPathaoToken = {
+          token: payload.access_token,
+          refresh: payload.refresh_token || cached?.refresh || "",
+          expiresAt: Date.now() + Math.max(120, payload.expires_in ?? 3600) * 1000,
+          base,
+        };
+        return payload.access_token;
+      }
+      lastMessage = payload.message || lastMessage;
+    }
   }
-  pathaoCache.__blPathaoToken = {
-    token: payload.access_token,
-    refresh: payload.refresh_token || cached?.refresh || "",
-    expiresAt: Date.now() + Math.max(120, payload.expires_in ?? 3600) * 1000,
-  };
-  return payload.access_token;
+
+  pathaoCache.__blPathaoToken = undefined;
+  throw new Error(lastMessage);
 }
 
-async function pathaoStoreId(token: string) {
-  const configured = process.env.PATHAO_STORE_ID?.trim();
-  if (configured) return Number(configured);
+function configuredPathaoStoreIds() {
+  const raw = [process.env.PATHAO_STORE_IDS, process.env.PATHAO_STORE_ID]
+    .filter(Boolean)
+    .join(",");
+  const ids = [
+    ...new Set(
+      raw
+        .split(/[,\s]+/)
+        .map((part) => Number(part.trim()))
+        .filter((id) => Number.isInteger(id) && id > 0),
+    ),
+  ];
+  return ids;
+}
+
+async function pathaoStoreIds(token: string) {
+  const configured = configuredPathaoStoreIds();
+  if (configured.length > 0) return configured;
   const response = await fetch(`${pathaoBase()}/aladdin/api/v1/stores`, {
     headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
     signal: AbortSignal.timeout(20_000),
@@ -110,9 +194,11 @@ async function pathaoStoreId(token: string) {
     message?: string;
   };
   const list = Array.isArray(payload.data) ? payload.data : payload.data?.data;
-  const storeId = list?.[0]?.store_id;
-  if (!response.ok || !storeId) throw new Error(payload.message || "Pathao store was not found.");
-  return storeId;
+  const ids = (list ?? [])
+    .map((row) => Number(row.store_id))
+    .filter((id) => Number.isInteger(id) && id > 0);
+  if (!response.ok || ids.length === 0) throw new Error(payload.message || "Pathao store was not found.");
+  return ids;
 }
 
 function stepsToward(current: FulfillmentStatus, wanted: FulfillmentStatus): FulfillmentStatus[] {
@@ -215,7 +301,7 @@ export async function bookCourier(orderId: string, courier: CourierName, actorId
     return { ok: false as const, error: "Add STEADFAST_API_KEY and STEADFAST_SECRET_KEY." };
   }
   if (courier === "pathao" && !setup.pathao) {
-    return { ok: false as const, error: "Add the Pathao client, login, and sender phone env values." };
+    return { ok: false as const, error: "Add PATHAO_CLIENT_ID, PATHAO_CLIENT_SECRET, PATHAO_USERNAME, and PATHAO_PASSWORD." };
   }
 
   const prisma = getPrisma();
@@ -301,53 +387,61 @@ export async function bookCourier(orderId: string, courier: CourierName, actorId
   }
 
   const token = await pathaoToken();
-  const storeId = await pathaoStoreId(token);
-  const senderPhone = pathaoSenderPhone();
-  if (!senderPhone) return { ok: false as const, error: "PATHAO_SENDER_PHONE must be an 11-digit mobile." };
-  const response = await fetch(`${pathaoBase()}/aladdin/api/v1/orders`, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      store_id: storeId,
-      merchant_order_id: order.number,
-      sender_name: (process.env.PATHAO_SENDER_NAME || "Bismillah Leather").slice(0, 50),
-      sender_phone: senderPhone,
-      recipient_name: name,
-      recipient_phone: phone,
-      recipient_address: address,
-      delivery_type: 48,
-      item_type: 2,
-      item_quantity: Math.max(1, pieces),
-      item_weight: 0.5,
-      amount_to_collect: collect,
-      item_description: description,
-      special_instruction: (order.customerNote || "").slice(0, 200),
-    }),
-    signal: AbortSignal.timeout(20_000),
-  });
-  const payload = (await response.json().catch(() => ({}))) as {
-    message?: string;
-    data?: { consignment_id?: string; order_status?: string };
-  };
-  const consignmentId = payload.data?.consignment_id ?? "";
-  if (!response.ok || !consignmentId) {
-    return { ok: false as const, error: payload.message || "Pathao did not book the parcel." };
+  const storeIds = await pathaoStoreIds(token);
+  const destination = await pathaoDestination(token, snap.city, address);
+  const senderPhone = bdMobile11(process.env.PATHAO_SENDER_PHONE || BRAND.phoneE164);
+
+  let lastError = "Pathao did not book the parcel.";
+  for (const storeId of storeIds) {
+    const response = await fetch(`${pathaoBase()}/aladdin/api/v1/orders`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        store_id: storeId,
+        merchant_order_id: order.number,
+        sender_name: (process.env.PATHAO_SENDER_NAME || BRAND.name).slice(0, 50),
+        sender_phone: senderPhone,
+        recipient_name: name,
+        recipient_phone: phone,
+        recipient_address: address,
+        recipient_city: destination.cityId,
+        recipient_zone: destination.zoneId,
+        delivery_type: 48,
+        item_type: 2,
+        item_quantity: Math.max(1, pieces),
+        item_weight: 0.5,
+        amount_to_collect: collect,
+        item_description: description,
+        special_instruction: (order.customerNote || "").slice(0, 200),
+      }),
+      signal: AbortSignal.timeout(20_000),
+    });
+    const payload = (await response.json().catch(() => ({}))) as {
+      message?: string;
+      errors?: Record<string, string[] | string>;
+      data?: { consignment_id?: string; order_status?: string };
+    };
+    const consignmentId = payload.data?.consignment_id ?? "";
+    if (response.ok && consignmentId) {
+      await saveShipment({
+        orderId: order.id,
+        courier,
+        consignmentId,
+        trackingCode: consignmentId,
+        status: payload.data?.order_status || "pending",
+        codPaisa,
+        actorId,
+        payload: { consignmentId, storeId },
+      });
+      return { ok: true as const };
+    }
+    lastError = pathaoMessage(payload);
   }
-  await saveShipment({
-    orderId: order.id,
-    courier,
-    consignmentId,
-    trackingCode: consignmentId,
-    status: payload.data?.order_status || "pending",
-    codPaisa,
-    actorId,
-    payload: { consignmentId },
-  });
-  return { ok: true as const };
+  return { ok: false as const, error: lastError };
 }
 
 export async function refreshShipment(shipmentId: string) {

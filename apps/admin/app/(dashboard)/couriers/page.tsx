@@ -45,7 +45,8 @@ export default async function CouriersPage() {
           <p className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">Pathao</p>
           <p className="font-display mt-2 text-2xl">{setup.pathao ? "Ready" : "Add keys"}</p>
           <p className="mt-2 text-xs leading-5 text-muted-foreground">
-            Client id, secret, username, password, and sender phone. Mode is {setup.pathaoMode}.
+            Client id, secret, username, password, and store id. Mode is {setup.pathaoMode}.
+            Live books a real Pathao parcel.
           </p>
         </li>
       </ul>
@@ -73,6 +74,7 @@ export default async function CouriersPage() {
                     orderId={shipment.order.id}
                     steadfast={setup.steadfast}
                     pathao={setup.pathao}
+                    preferred={setup.preferred}
                     shipment={{
                       id: shipment.id,
                       courier: shipment.courier,
