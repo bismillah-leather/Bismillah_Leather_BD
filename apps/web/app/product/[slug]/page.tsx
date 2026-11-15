@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { NewBadge } from "@/components/new-badge";
 import { ProductBuy } from "@/components/product-buy";
 import { ProductGallery } from "@/components/product-gallery";
 import { ProductGrid } from "@/components/product-grid";
@@ -11,7 +10,6 @@ import { ProductInfoSection } from "@/components/product-info-section";
 import { TrustStrip } from "@/components/trust-strip";
 import { getPublishedProduct, listPublishedProducts } from "@/lib/catalog";
 import { videoUrlForSlug } from "@/lib/product-videos-store";
-import { getStoreBrand } from "@/lib/store-brand";
 
 export function generateStaticParams() {
   return SHOWCASE_PRODUCTS.map((product) => ({ slug: product.slug }));
@@ -41,10 +39,9 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
 async function ProductContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const [product, catalog, brand] = await Promise.all([
+  const [product, catalog] = await Promise.all([
     getPublishedProduct(slug),
     listPublishedProducts(),
-    getStoreBrand(),
   ]);
   if (!product) notFound();
 
@@ -99,22 +96,7 @@ async function ProductContent({ params }: { params: Promise<{ slug: string }> })
               slug={product.slug}
               isNew={product.isNew}
             />
-            <div>
-              <p className="text-[10px] tracking-[0.28em] text-muted-foreground uppercase">
-                {product.kind} · {categoryLabel}
-              </p>
-              <div className="mt-2 flex flex-wrap items-center gap-3">
-                <h1 className="font-display text-3xl tracking-tight sm:text-4xl">{product.name}</h1>
-                {product.isNew ? <NewBadge className="h-6 px-2 text-[11px]" /> : null}
-              </div>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                {product.blurb} Same piece you see on Facebook Reels — packed from {brand.addressShort}{" "}
-                after a confirmation call.
-              </p>
-              <div className="mt-6">
-                <ProductBuy product={view} />
-              </div>
-            </div>
+            <ProductBuy product={view} categoryLabel={categoryLabel} />
           </div>
         </div>
       </section>

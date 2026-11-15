@@ -4,9 +4,8 @@ import { formatPaisa, galleryFor, type ShowcaseProduct } from "@bismillah/shared
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { LiveViewers } from "./live-viewers";
-import { NewBadge } from "./new-badge";
 import { ProductCardActions } from "./product-card-actions";
+import { ProductShotBadges } from "./product-shot-badges";
 
 function pickBestSellers(catalog: ShowcaseProduct[]): ShowcaseProduct[] {
   const onSale = catalog.filter((product) => product.salePaisa);
@@ -99,7 +98,6 @@ export function BestSellersSection({ products }: { products: ShowcaseProduct[] }
               <span className="bg-white px-2.5 py-1 text-xs font-medium tracking-wide text-black">
                 #{active + 1}
               </span>
-              {featured.isNew ? <NewBadge /> : null}
               {featured.salePaisa ? (
                 <span className="border border-white/40 px-2.5 py-1 text-xs tracking-wide text-white">
                   Sale
@@ -107,7 +105,7 @@ export function BestSellersSection({ products }: { products: ShowcaseProduct[] }
               ) : null}
             </div>
 
-            <LiveViewers slug={featured.slug} className="absolute top-4 right-4 z-10" />
+            <ProductShotBadges slug={featured.slug} isNew={featured.isNew} className="top-4 right-4" />
             <div className="absolute top-14 right-4 flex gap-1">
               {best.map((product, index) => (
                 <button
@@ -179,9 +177,10 @@ export function BestSellersSection({ products }: { products: ShowcaseProduct[] }
                     </span>
                     <span className="relative size-14 shrink-0 overflow-hidden bg-neutral-800 sm:size-16">
                       <Image src={product.image} alt="" fill sizes="64px" className="object-cover" />
-                      <LiveViewers
+                      <ProductShotBadges
                         slug={product.slug}
-                        className="absolute top-1 right-1 z-10 px-1 py-0.5"
+                        isNew={product.isNew}
+                        className="top-1 right-1"
                       />
                     </span>
                     <span className="min-w-0 flex-1">
@@ -225,10 +224,9 @@ function BestGridCard({ product, rank }: { product: ShowcaseProduct; rank: numbe
         />
         <span className="absolute top-2 left-2 flex flex-col items-start gap-1">
           <span className="bg-white px-2 py-0.5 text-[10px] font-medium text-black">#{rank}</span>
-          {product.isNew ? <NewBadge /> : null}
         </span>
       </Link>
-      <LiveViewers slug={product.slug} className="absolute top-4 right-4 z-10" />
+      <ProductShotBadges slug={product.slug} isNew={product.isNew} className="top-4 right-4" />
       <div className="mt-3 flex flex-1 flex-col px-0.5">
         <Link href={`/product/${product.slug}`}>
           <h3 className="text-sm text-white">{product.name}</h3>

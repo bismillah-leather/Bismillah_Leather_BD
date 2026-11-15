@@ -8,6 +8,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { adminMediaSrc, requestStoreOrigin } from "@/lib/media-url";
 import { NewToggle } from "../new-toggle";
 import { ProductDeleteButton } from "../product-delete-button";
+import { ProductEditForm } from "./product-edit-form";
 import { ProductVideoEditor } from "./product-video-editor";
 
 const STATUSES = ["draft", "scheduled", "published", "archived"] as const;
@@ -22,40 +23,44 @@ export default async function ProductDetailPage({
   const { id } = await params;
   const prisma = getPrisma();
 
-  const product = await prisma.product.findFirst({
-    where: { id, deletedAt: null },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      description: true,
-      status: true,
-      isFeatured: true,
-      isNew: true,
-      soldCount: true,
-      updatedAt: true,
-      publishedAt: true,
-      primaryCategory: { select: { name: true, slug: true } },
-      variants: {
-        where: { isActive: true },
-        orderBy: { createdAt: "asc" },
-        take: 5,
-        select: {
-          id: true,
-          sku: true,
-          price: true,
-          salePrice: true,
-          stockOnHand: true,
-          stockReserved: true,
+  const [product, categories] = await Promise.all([
+    prisma.product.findFirst({
+      where: { id, deletedAt: null },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        status: true,
+        isFeatured: true,
+        isNew: true,
+        soldCount: true,
+        primaryCategoryId: true,
+        primaryCategory: { select: { name: true } },
+        variants: {
+          where: { isActive: true },
+          orderBy: { createdAt: "asc" },
+          take: 5,
+          select: {
+            sku: true,
+            price: true,
+            salePrice: true,
+            stockOnHand: true,
+            stockReserved: true,
+          },
+        },
+        media: {
+          orderBy: { sortOrder: "asc" },
+          select: { type: true, storageKey: true },
         },
       },
-      media: {
-        orderBy: { sortOrder: "asc" },
-        select: { type: true, storageKey: true },
-      },
-      _count: { select: { variants: true, media: true } },
-    },
-  });
+    }),
+    prisma.category.findMany({
+      where: { deletedAt: null, isActive: true },
+      orderBy: { sortOrder: "asc" },
+      select: { id: true, name: true },
+    }),
+  ]);
 
   if (!product) notFound();
 
@@ -80,7 +85,7 @@ export default async function ProductDetailPage({
       <AdminPageHeader
         eyebrow="Catalog"
         title={product.name}
-        description={`/${product.slug} · ${product.primaryCategory.name}. Add or remove the product film below.`}
+        description={`/${product.slug} · ${product.primaryCategory.name}. Edit everything on this page, then Save.`}
       />
 
       <ul className="mt-6 grid gap-3 sm:grid-cols-4">
@@ -103,9 +108,7 @@ export default async function ProductDetailPage({
         </li>
         <li className="admin-metric">
           <p className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">Stock</p>
-          <p className="font-display mt-1.5 text-2xl">
-            {variant ? variant.stockOnHand - variant.stockReserved : 0}
-          </p>
+          <p className="font-display mt-1.5 text-2xl">{variant?.stockOnHand ?? 0}</p>
         </li>
         <li className="admin-metric">
           <p className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">Sold</p>
@@ -125,64 +128,34 @@ export default async function ProductDetailPage({
           )}
         </div>
         <div className="grid gap-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-[11px] tracking-[0.2em] text-primary uppercase">Details</p>
-            <h2 className="font-display mt-1 text-2xl tracking-tight">Product info</h2>
-          </div>
-          <ProductDeleteButton
-            productId={product.id}
-            productName={product.name}
-            redirectTo="/products"
-          />
-        </div>
-        <dl className="grid gap-3 text-sm sm:grid-cols-2">
-          <div>
-            <dt className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">SKU</dt>
-            <dd className="mt-1">{variant?.sku ?? "—"}</dd>
-          </div>
-          <div>
-            <dt className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
-              Category
-            </dt>
-            <dd className="mt-1">{product.primaryCategory.name}</dd>
-          </div>
-          <div>
-            <dt className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
-              Variants
-            </dt>
-            <dd className="mt-1">{product._count.variants}</dd>
-          </div>
-          <div>
-            <dt className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
-              Featured
-            </dt>
-            <dd className="mt-1">{product.isFeatured ? "Yes" : "No"}</dd>
-          </div>
-          <div>
-            <dt className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
-              Store badge
-            </dt>
-            <dd className="mt-2">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] tracking-[0.2em] text-primary uppercase">Details</p>
+              <h2 className="font-display mt-1 text-2xl tracking-tight">Edit product</h2>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
               <NewToggle productId={product.id} initial={product.isNew} />
-            </dd>
+              <ProductDeleteButton
+                productId={product.id}
+                productName={product.name}
+                redirectTo="/products"
+              />
+            </div>
           </div>
-          <div className="sm:col-span-2">
-            <dt className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
-              Description
-            </dt>
-            <dd className="mt-1 text-muted-foreground">
-              {product.description?.trim() || "No description yet."}
-            </dd>
-          </div>
-        </dl>
-        {variant ? (
-          <p className="text-xs text-muted-foreground">
-            <Link href="/inventory" className="text-primary hover:underline">
-              Adjust stock in Inventory
-            </Link>
-          </p>
-        ) : null}
+          <ProductEditForm
+            product={{
+              id: product.id,
+              name: product.name,
+              description: product.description,
+              categoryId: product.primaryCategoryId,
+              sku: variant?.sku ?? "",
+              priceTaka: variant ? String(Number(variant.price) / 100) : "1500",
+              salePriceTaka: variant?.salePrice != null ? String(Number(variant.salePrice) / 100) : "",
+              stock: variant?.stockOnHand ?? 0,
+              isFeatured: product.isFeatured,
+            }}
+            categories={categories}
+          />
         </div>
       </section>
 

@@ -1,5 +1,6 @@
 import { getPrisma, Prisma } from "@bismillah/db";
 import {
+  BRAND,
   bdMobile11,
   canTransitionFulfillment,
   type FulfillmentStatus,
@@ -14,6 +15,10 @@ type CourierName = "steadfast" | "pathao";
 type TokenCache = { token: string; refresh: string; expiresAt: number };
 const pathaoCache = globalThis as unknown as { __blPathaoToken?: TokenCache };
 
+function pathaoSenderPhone() {
+  return bdMobile11(process.env.PATHAO_SENDER_PHONE || BRAND.phoneE164);
+}
+
 export function courierSetup() {
   const steadfast = Boolean(process.env.STEADFAST_API_KEY && process.env.STEADFAST_SECRET_KEY);
   const pathao = Boolean(
@@ -21,7 +26,7 @@ export function courierSetup() {
       process.env.PATHAO_CLIENT_SECRET &&
       process.env.PATHAO_USERNAME &&
       process.env.PATHAO_PASSWORD &&
-      process.env.PATHAO_SENDER_PHONE,
+      pathaoSenderPhone(),
   );
   return {
     steadfast,
@@ -297,7 +302,7 @@ export async function bookCourier(orderId: string, courier: CourierName, actorId
 
   const token = await pathaoToken();
   const storeId = await pathaoStoreId(token);
-  const senderPhone = bdMobile11(process.env.PATHAO_SENDER_PHONE ?? "");
+  const senderPhone = pathaoSenderPhone();
   if (!senderPhone) return { ok: false as const, error: "PATHAO_SENDER_PHONE must be an 11-digit mobile." };
   const response = await fetch(`${pathaoBase()}/aladdin/api/v1/orders`, {
     method: "POST",

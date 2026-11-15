@@ -14,13 +14,17 @@ export type ShelfProduct = {
   status: string;
   isFeatured: boolean;
   isNew: boolean;
+  categoryId: string;
   categoryName: string;
+  description: string;
   image: string | null;
   sku: string | null;
   priceTaka: string;
   salePriceTaka: string;
   stock: number;
 };
+
+type CategoryOption = { id: string; name: string };
 
 const STATUSES = ["draft", "scheduled", "published", "archived"] as const;
 
@@ -45,9 +49,17 @@ function PricePreview({ regular, sale }: { regular: string; sale: string }) {
   }
 }
 
-export function ProductShelfCard({ product }: { product: ShelfProduct }) {
+export function ProductShelfCard({
+  product,
+  categories,
+}: {
+  product: ShelfProduct;
+  categories: CategoryOption[];
+}) {
   const router = useRouter();
   const [name, setName] = useState(product.name);
+  const [description, setDescription] = useState(product.description);
+  const [categoryId, setCategoryId] = useState(product.categoryId);
   const [priceTaka, setPriceTaka] = useState(product.priceTaka);
   const [salePriceTaka, setSalePriceTaka] = useState(product.salePriceTaka);
   const [stock, setStock] = useState(String(product.stock));
@@ -74,6 +86,8 @@ export function ProductShelfCard({ product }: { product: ShelfProduct }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
+          description,
+          categoryId,
           isFeatured: featured,
           priceTaka: Number(priceTaka),
           salePriceTaka: salePriceTaka.trim() === "" ? null : Number(salePriceTaka),
@@ -138,9 +152,30 @@ export function ProductShelfCard({ product }: { product: ShelfProduct }) {
             required
           />
           <p className="truncate text-[11px] text-muted-foreground">
-            {product.categoryName} · /{product.slug}
+            /{product.slug}
             {product.sku ? ` · ${product.sku}` : ""}
           </p>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={2}
+            placeholder="Description on the product page"
+            className="admin-field h-auto min-h-[4.5rem] py-2 text-sm"
+          />
+          <label className="grid gap-1 text-[11px] text-muted-foreground">
+            Category
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="admin-field h-9 text-xs"
+            >
+              {categories.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="grid grid-cols-3 gap-2">
             <label className="grid gap-1 text-[11px] text-muted-foreground">
               Price (৳)
@@ -164,7 +199,7 @@ export function ProductShelfCard({ product }: { product: ShelfProduct }) {
               />
             </label>
             <label className="grid gap-1 text-[11px] text-muted-foreground">
-              Stock
+              Stock (on product page)
               <input
                 type="number"
                 min={0}

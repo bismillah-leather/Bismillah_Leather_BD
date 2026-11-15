@@ -2,8 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
-import { LiveViewers } from "./live-viewers";
-import { NewBadge } from "./new-badge";
+import { ProductShotBadges } from "./product-shot-badges";
 
 export function ProductGallery({
   images,
@@ -85,13 +84,14 @@ export function ProductGallery({
           className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"
         />
 
-        <div className="pointer-events-none absolute top-4 left-4 z-10 flex items-center gap-2">
-          {isNew ? <NewBadge /> : null}
+        <div className="pointer-events-none absolute top-4 left-4 z-10">
           <span className="bg-black/80 px-2.5 py-1 text-[10px] tracking-[0.18em] text-white uppercase backdrop-blur-sm">
             Bismillah
           </span>
         </div>
-        {slug ? <LiveViewers slug={slug} pinned className="absolute top-4 right-4 z-10" /> : null}
+        {slug ? (
+          <ProductShotBadges slug={slug} isNew={isNew} className="top-4 right-4" />
+        ) : null}
 
         <span
           className={`pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/75 px-3 py-1.5 text-[10px] tracking-[0.16em] text-white uppercase backdrop-blur-sm transition ${

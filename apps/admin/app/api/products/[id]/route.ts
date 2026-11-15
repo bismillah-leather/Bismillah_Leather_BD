@@ -2,6 +2,7 @@ import { getPrisma } from "@bismillah/db";
 import { parseTakaToPaisa } from "@bismillah/shared";
 import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
+import { uniqueSku } from "@/lib/catalog-write";
 import { forgetAdminLists } from "@/lib/ttl-cache";
 
 export async function DELETE(
@@ -95,6 +96,8 @@ export async function PATCH(
   if (typeof body.categoryId === "string" && body.categoryId) {
     data.primaryCategoryId = body.categoryId;
   }
+  const sku =
+    typeof body.sku === "string" ? body.sku.trim().toUpperCase() : "";
 
   const priceTaka =
     typeof body.priceTaka === "number"
@@ -121,7 +124,7 @@ export async function PATCH(
   const hasSale =
     !clearSale && salePriceTaka != null && Number.isFinite(salePriceTaka) && salePriceTaka > 0;
 
-  if (Object.keys(data).length === 0 && !hasPrice && !hasStock && !hasSale && !clearSale) {
+  if (Object.keys(data).length === 0 && !hasPrice && !hasStock && !hasSale && !clearSale && !sku) {
     return NextResponse.json({ error: "Nothing to update." }, { status: 400 });
   }
 
@@ -138,44 +141,77 @@ export async function PATCH(
           select: { id: true, name: true, isFeatured: true, isNew: true },
         });
 
-  if (hasPrice || hasStock || hasSale || clearSale) {
-    const variant = await prisma.productVariant.findFirst({
+  if (data.primaryCategoryId) {
+    const category = await prisma.category.findFirst({
+      where: { id: data.primaryCategoryId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!category) {
+      return NextResponse.json({ error: "Category not found." }, { status: 404 });
+    }
+    await prisma.productCategory.deleteMany({ where: { productId: id } });
+    await prisma.productCategory.create({
+      data: { productId: id, categoryId: data.primaryCategoryId },
+    });
+  }
+
+  if (hasPrice || hasStock || hasSale || clearSale || sku) {
+    let variant = await prisma.productVariant.findFirst({
       where: { productId: id, isActive: true },
       orderBy: { createdAt: "asc" },
       select: { id: true, price: true },
     });
-    if (variant) {
-      let price: bigint | undefined;
-      let salePrice: bigint | null | undefined;
-      if (hasPrice) {
-        try {
-          price = parseTakaToPaisa(String(priceTaka));
-        } catch {
-          return NextResponse.json({ error: "Invalid price." }, { status: 400 });
-        }
+
+    let price: bigint | undefined;
+    let salePrice: bigint | null | undefined;
+    if (hasPrice) {
+      try {
+        price = parseTakaToPaisa(String(priceTaka));
+      } catch {
+        return NextResponse.json({ error: "Invalid price." }, { status: 400 });
       }
-      if (hasSale) {
-        try {
-          salePrice = parseTakaToPaisa(String(salePriceTaka));
-        } catch {
-          return NextResponse.json({ error: "Invalid sale price." }, { status: 400 });
-        }
-        const regular = price ?? variant.price;
-        if (salePrice >= regular) {
-          return NextResponse.json(
-            { error: "Sale price must be lower than the regular price." },
-            { status: 400 },
-          );
-        }
-      } else if (clearSale) {
-        salePrice = null;
+    }
+    if (hasSale) {
+      try {
+        salePrice = parseTakaToPaisa(String(salePriceTaka));
+      } catch {
+        return NextResponse.json({ error: "Invalid sale price." }, { status: 400 });
       }
+      const regular = price ?? variant?.price ?? 0n;
+      if (salePrice >= regular) {
+        return NextResponse.json(
+          { error: "Sale price must be lower than the regular price." },
+          { status: 400 },
+        );
+      }
+    } else if (clearSale) {
+      salePrice = null;
+    }
+
+    if (!variant) {
+      const nextSku = await uniqueSku(
+        prisma,
+        sku || `BL-${product.id.replace(/-/g, "").slice(0, 8).toUpperCase()}`,
+      );
+      variant = await prisma.productVariant.create({
+        data: {
+          productId: id,
+          sku: nextSku,
+          price: price ?? 150000n,
+          salePrice: salePrice ?? null,
+          stockOnHand: hasStock ? Math.trunc(stock) : 0,
+          isActive: true,
+        },
+        select: { id: true, price: true },
+      });
+    } else {
       await prisma.productVariant.update({
         where: { id: variant.id },
         data: {
           ...(price != null ? { price } : {}),
           ...(salePrice !== undefined ? { salePrice } : {}),
           ...(hasStock ? { stockOnHand: Math.trunc(stock) } : {}),
+          ...(sku.length >= 3 ? { sku: await uniqueSku(prisma, sku, variant.id) } : {}),
         },
       });
     }

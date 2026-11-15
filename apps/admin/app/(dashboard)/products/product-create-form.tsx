@@ -17,18 +17,20 @@ function slugify(input: string) {
 
 export function ProductCreateForm({ categories }: { categories: CategoryOption[] }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
+  const [newCategory, setNewCategory] = useState("");
   const [sku, setSku] = useState("");
   const [skuTouched, setSkuTouched] = useState(false);
   const [priceTaka, setPriceTaka] = useState("1500");
   const [stock, setStock] = useState("10");
-  const [status, setStatus] = useState<"draft" | "published">("draft");
+  const [status, setStatus] = useState<"draft" | "published">("published");
   const [isFeatured, setIsFeatured] = useState(false);
+  const [isNew, setIsNew] = useState(false);
   const [photo, setPhoto] = useState<File | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,23 +63,25 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
           name,
           slug: previewSlug,
           description,
-          categoryId,
+          categoryId: categoryId || undefined,
+          categoryName: newCategory.trim() || undefined,
           sku,
           priceTaka: Number(priceTaka),
           stock: Number(stock),
           status,
           isFeatured,
+          isNew,
         }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         error?: string;
-        product?: { name: string };
+        product?: { id?: string; name?: string };
       };
       if (!res.ok) {
         setError(data.error ?? "Could not create product.");
         return;
       }
-      const createdId = (data as { product?: { id?: string; name?: string } }).product?.id;
+      const createdId = data.product?.id;
       if (photo && createdId) {
         try {
           await postAdminImage(`/admin/api/products/${createdId}/image`, photo);
@@ -89,7 +93,7 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
           return;
         }
       }
-      setOk(`Added “${data.product?.name ?? name}”.`);
+      setOk(`Added “${data.product?.name ?? name}”. It is on the store if status is Published.`);
       setName("");
       setSlug("");
       setSlugTouched(false);
@@ -98,8 +102,10 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
       setSkuTouched(false);
       setPriceTaka("1500");
       setStock("10");
-      setStatus("draft");
+      setStatus("published");
       setIsFeatured(false);
+      setIsNew(false);
+      setNewCategory("");
       setPhoto(null);
       router.refresh();
     } catch {
@@ -109,22 +115,10 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
     }
   }
 
-  if (categories.length === 0) {
-    return (
-      <p className="admin-panel mt-6 px-4 py-6 text-sm text-muted-foreground">
-        No categories found. Run seed so products can be assigned a category.
-      </p>
-    );
-  }
-
   return (
     <section className="mt-8">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="admin-btn-primary"
-      >
-        {open ? "Close" : "Add"}
+      <button type="button" onClick={() => setOpen((v) => !v)} className="admin-btn-primary">
+        {open ? "Close" : "Add product"}
       </button>
 
       {open ? (
@@ -169,31 +163,53 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
               <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
                 Category
               </span>
-              <select
-                required
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="admin-field"
-              >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              {categories.length > 0 ? (
+                <select
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="admin-field"
+                >
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  placeholder="Wallets"
+                  className="admin-field"
+                />
+              )}
             </label>
+
+            {categories.length > 0 ? (
+              <label className="grid gap-2 text-sm">
+                <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
+                  Or new category
+                </span>
+                <input
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  placeholder="Leave empty to use the list"
+                  className="admin-field"
+                />
+              </label>
+            ) : null}
 
             <label className="grid gap-2 text-sm">
               <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
                 SKU
               </span>
               <input
-                required
                 value={sku}
                 onChange={(e) => {
                   setSkuTouched(true);
                   setSku(e.target.value.toUpperCase());
                 }}
+                placeholder="Auto if empty"
                 className="admin-field"
               />
             </label>
@@ -215,7 +231,7 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
 
             <label className="grid gap-2 text-sm">
               <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
-                Stock
+                Stock (on product page)
               </span>
               <input
                 required
@@ -237,8 +253,8 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
                 onChange={(e) => setStatus(e.target.value as "draft" | "published")}
                 className="admin-field"
               >
+                <option value="published">Published (live on store)</option>
                 <option value="draft">Draft</option>
-                <option value="published">Published</option>
               </select>
             </label>
 
@@ -249,7 +265,16 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
                 onChange={(e) => setIsFeatured(e.target.checked)}
                 className="size-4 accent-primary"
               />
-              Featured on storefront
+              Featured
+            </label>
+            <label className="flex items-center gap-3 self-end pb-2 text-sm">
+              <input
+                type="checkbox"
+                checked={isNew}
+                onChange={(e) => setIsNew(e.target.checked)}
+                className="size-4 accent-primary"
+              />
+              NEW badge
             </label>
           </div>
 
@@ -263,9 +288,6 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
               onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
               className="admin-field h-auto py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:text-primary-foreground"
             />
-            <span className="text-xs text-muted-foreground">
-              {photo ? photo.name : "Shown on the storefront after you add the product."}
-            </span>
           </label>
 
           <label className="grid gap-2 text-sm">

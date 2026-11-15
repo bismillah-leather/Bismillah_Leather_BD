@@ -4,9 +4,8 @@ import { formatPaisa, SHOWCASE_PRODUCTS, type ShowcaseProduct } from "@bismillah
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { LiveViewers } from "./live-viewers";
-import { NewBadge } from "./new-badge";
 import { ProductCardActions } from "./product-card-actions";
+import { ProductShotBadges } from "./product-shot-badges";
 
 function facesFor(product: ShowcaseProduct) {
   const related = SHOWCASE_PRODUCTS.filter(
@@ -60,7 +59,6 @@ export function ProductCard({ product }: { product: ShowcaseProduct }) {
         ))}
 
         <div className="absolute top-2.5 left-2.5 z-10 flex flex-col items-start gap-1.5">
-          {product.isNew ? <NewBadge /> : null}
           {product.salePaisa ? (
             <span className="bg-black px-1.5 py-0.5 text-[10px] tracking-[0.12em] text-white uppercase">
               Sale
@@ -86,7 +84,7 @@ export function ProductCard({ product }: { product: ShowcaseProduct }) {
           </div>
         ) : null}
       </Link>
-      <LiveViewers slug={product.slug} className="absolute top-2.5 right-2.5 z-10" />
+      <ProductShotBadges slug={product.slug} isNew={product.isNew} />
 
       <div className="mt-2.5 flex flex-1 flex-col">
         <Link href={`/product/${product.slug}`}>

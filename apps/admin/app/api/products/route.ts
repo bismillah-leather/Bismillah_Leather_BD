@@ -2,17 +2,9 @@ import { getPrisma } from "@bismillah/db";
 import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
 import { loadCatalogPicker } from "@/lib/catalog-picker";
+import { ensureCategory, slugify, uniqueProductSlug, uniqueSku } from "@/lib/catalog-write";
 import { requestStoreOrigin } from "@/lib/media-url";
 import { forgetAdminLists } from "@/lib/ttl-cache";
-
-function slugify(input: string) {
-  return input
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 80);
-}
 
 export async function GET() {
   const admin = await getActiveAdmin();
@@ -36,27 +28,19 @@ export async function POST(request: Request) {
 
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const description = typeof body.description === "string" ? body.description.trim() : "";
-  const categoryId = typeof body.categoryId === "string" ? body.categoryId : "";
-  const sku = typeof body.sku === "string" ? body.sku.trim().toUpperCase() : "";
+  const categoryIdRaw = typeof body.categoryId === "string" ? body.categoryId : "";
+  const categoryName = typeof body.categoryName === "string" ? body.categoryName.trim() : "";
+  const skuRaw = typeof body.sku === "string" ? body.sku.trim().toUpperCase() : "";
   const priceTaka = Number(body.priceTaka);
   const stock = Number(body.stock ?? 0);
   const status =
-    body.status === "published" || body.status === "draft" ? body.status : "draft";
+    body.status === "draft" || body.status === "archived" ? body.status : "published";
   const isFeatured = body.isFeatured === true;
+  const isNew = body.isNew === true;
   const slugRaw = typeof body.slug === "string" ? body.slug : name;
-  const slug = slugify(slugRaw);
 
   if (name.length < 2) {
     return NextResponse.json({ error: "Name must be at least 2 characters." }, { status: 400 });
-  }
-  if (!slug) {
-    return NextResponse.json({ error: "Valid slug required." }, { status: 400 });
-  }
-  if (!categoryId) {
-    return NextResponse.json({ error: "Category required." }, { status: 400 });
-  }
-  if (!sku || sku.length < 3) {
-    return NextResponse.json({ error: "SKU must be at least 3 characters." }, { status: 400 });
   }
   if (!Number.isFinite(priceTaka) || priceTaka <= 0) {
     return NextResponse.json({ error: "Price must be a positive taka amount." }, { status: 400 });
@@ -66,18 +50,20 @@ export async function POST(request: Request) {
   }
 
   const prisma = getPrisma();
-  const category = await prisma.category.findFirst({
-    where: { id: categoryId, deletedAt: null, isActive: true },
-    select: { id: true },
-  });
-  if (!category) {
-    return NextResponse.json({ error: "Category not found." }, { status: 404 });
-  }
-
   const pricePaisa = BigInt(Math.round(priceTaka * 100));
 
   try {
     const product = await prisma.$transaction(async (tx) => {
+      const categoryId = await ensureCategory(tx, {
+        categoryId: categoryIdRaw || undefined,
+        categoryName,
+      });
+      const slug = await uniqueProductSlug(tx, slugify(slugRaw) || name);
+      const skuSeed =
+        skuRaw ||
+        `BL-${slug.replace(/-/g, "").slice(0, 8).toUpperCase() || "ITEM"}-${Math.floor(Math.random() * 90 + 10)}`;
+      const sku = await uniqueSku(tx, skuSeed);
+
       const created = await tx.product.create({
         data: {
           name,
@@ -87,6 +73,7 @@ export async function POST(request: Request) {
           publishedAt: status === "published" ? new Date() : null,
           primaryCategoryId: categoryId,
           isFeatured,
+          isNew,
           categories: { create: [{ categoryId }] },
           variants: {
             create: {
@@ -105,7 +92,14 @@ export async function POST(request: Request) {
           action: "product.create",
           entityType: "Product",
           entityId: created.id,
-          after: { name: created.name, slug: created.slug, status: created.status, sku, priceTaka, stock },
+          after: {
+            name: created.name,
+            slug: created.slug,
+            status: created.status,
+            sku,
+            priceTaka,
+            stock,
+          },
         },
       });
       return created;
@@ -116,19 +110,6 @@ export async function POST(request: Request) {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("[admin] product.create failed:", message);
-    const conflict =
-      /unique|duplicate|already exists/i.test(message) ||
-      (typeof err === "object" &&
-        err !== null &&
-        "code" in err &&
-        (err as { code?: string }).code === "P2002");
-    return NextResponse.json(
-      {
-        error: conflict
-          ? "Slug or SKU already exists."
-          : "Could not create product.",
-      },
-      { status: conflict ? 409 : 500 },
-    );
+    return NextResponse.json({ error: "Could not create product." }, { status: 500 });
   }
 }

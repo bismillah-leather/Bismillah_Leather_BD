@@ -261,7 +261,7 @@ export function CartDrawer() {
                   className="object-cover"
                 />
                 {current.isNew ? (
-                  <NewBadge className="absolute top-1 left-1 z-10 h-4 px-1 text-[8px]" />
+                  <NewBadge className="absolute top-1 right-1 z-10 h-4 px-1 text-[8px]" />
                 ) : null}
               </Link>
               <div className="min-w-0 flex-1">

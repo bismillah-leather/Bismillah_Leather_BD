@@ -13,6 +13,8 @@ export type ShowcaseProduct = {
   tone: LeatherTone;
   kind: ProductKind;
   inStock: boolean;
+  /** Remaining sellable units. Admin stock on the product is what customers see. */
+  stockQty?: number;
   /** Red NEW badge. Admin turns this on per product. */
   isNew?: boolean;
   blurb: string;
@@ -350,6 +352,7 @@ export type ProductView = {
   tone: LeatherTone;
   kind: ProductKind;
   inStock: boolean;
+  stockQty: number;
   image: string;
   pricePaisa: string;
   comparePaisa: string | null;
@@ -391,6 +394,7 @@ export function toProductView(
     tone: product.tone,
     kind: product.kind,
     inStock: product.inStock,
+    stockQty: Math.max(0, product.stockQty ?? (product.inStock ? 8 : 0)),
     image: product.image,
     pricePaisa: (product.salePaisa ?? product.pricePaisa).toString(),
     comparePaisa: product.salePaisa ? product.pricePaisa.toString() : null,

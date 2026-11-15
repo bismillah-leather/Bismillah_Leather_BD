@@ -1,6 +1,7 @@
 import { getPrisma } from "@bismillah/db";
 import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
+import { forgetAdminLists } from "@/lib/ttl-cache";
 
 const ALLOWED = new Set(["draft", "scheduled", "published", "archived"]);
 
@@ -44,5 +45,6 @@ export async function PATCH(
     },
   });
 
+  forgetAdminLists();
   return NextResponse.json({ ok: true, status: product.status });
 }

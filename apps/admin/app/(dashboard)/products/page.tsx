@@ -41,7 +41,7 @@ export default async function ProductsPage({
           : {}),
       },
       orderBy: { updatedAt: "desc" },
-      take: 80,
+      take: 500,
       select: {
         id: true,
         name: true,
@@ -49,6 +49,7 @@ export default async function ProductsPage({
         status: true,
         isFeatured: true,
         isNew: true,
+        description: true,
         soldCount: true,
         updatedAt: true,
         ogImageKey: true,
@@ -81,7 +82,7 @@ export default async function ProductsPage({
       <AdminPageHeader
         eyebrow="Catalog"
         title="Products"
-        description="Tap New on a product to put the red badge on its card, the product page, and the suggestions. Save edit still updates the price, stock, and photo."
+        description="Add products here, then edit name, photo, stock, price, and description. Stock is what customers see on the product page. Save edit to apply."
       />
 
       <ul className="mt-6 grid gap-3 sm:grid-cols-4">
@@ -148,7 +149,7 @@ export default async function ProductsPage({
               <ul className="grid gap-3 lg:grid-cols-2">
                 {group.items.map((item) => (
                   <li key={item.id}>
-                    <ProductShelfCard product={item} />
+                    <ProductShelfCard product={item} categories={categories} />
                   </li>
                 ))}
               </ul>
@@ -168,8 +169,9 @@ function groupByCategory(
     status: string;
     isFeatured: boolean;
     isNew: boolean;
+    description: string;
     ogImageKey: string | null;
-    primaryCategory: { name: string; sortOrder: number };
+    primaryCategory: { id: string; name: string; sortOrder: number };
     variants: Array<{ sku: string; price: bigint; salePrice: bigint | null; stockOnHand: number }>;
   }>,
   origin: string,
@@ -185,7 +187,9 @@ function groupByCategory(
       status: product.status,
       isFeatured: product.isFeatured,
       isNew: product.isNew,
+      categoryId: product.primaryCategory.id,
       categoryName: key,
+      description: product.description,
       image: adminMediaSrc(product.ogImageKey, origin),
       sku: variant?.sku ?? null,
       priceTaka: variant ? String(Number(variant.price) / 100) : "",

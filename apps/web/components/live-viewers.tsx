@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye } from "lucide-react";
+import { Eye, Users } from "lucide-react";
 import {
   createContext,
   useCallback,
@@ -55,7 +55,7 @@ export function LiveViewersProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const interval = window.setInterval(() => {
       void flush();
-    }, 10000);
+    }, 4000);
     const onHide = () => {
       hidden.current = document.visibilityState === "hidden";
       void flush();
@@ -95,16 +95,19 @@ export function LiveViewersProvider({ children }: { children: ReactNode }) {
 export function LiveViewers({
   slug,
   pinned = false,
+  tone = "chip",
   className = "",
 }: {
   slug: string;
   pinned?: boolean;
+  tone?: "chip" | "line";
   className?: string;
 }) {
   const registry = useContext(RegistryContext);
   const counts = useContext(CountsContext);
   const ref = useRef<HTMLSpanElement>(null);
-  const count = counts[slug] ?? 0;
+  const raw = counts[slug];
+  const count = pinned ? Math.max(1, raw ?? 1) : (raw ?? 0);
 
   useEffect(() => {
     if (!registry) return;
@@ -139,7 +142,42 @@ export function LiveViewers({
     };
   }, [pinned, registry, slug]);
 
-  const label = `${count} ${count === 1 ? "person" : "people"} viewing now`;
+  const label = `${count} ${count === 1 ? "person" : "people"} viewing this right now`;
+
+  if (tone === "line") {
+    return (
+      <span
+        ref={ref}
+        role="status"
+        aria-label={label}
+        className={`flex w-full items-center gap-3 bg-[#2c1614] px-3.5 py-3 ring-1 ring-[#e10600]/40 ${className}`}
+      >
+        <span className="relative grid size-11 shrink-0 place-items-center bg-[#e10600] text-white">
+          <Users className="size-5" strokeWidth={1.75} aria-hidden />
+          <span className="absolute -top-0.5 -right-0.5 flex size-2.5">
+            <span className="absolute inset-0 animate-ping rounded-full bg-[#7dff9a]" />
+            <span className="relative m-auto size-2 rounded-full bg-[#7dff9a]" />
+          </span>
+        </span>
+        <span className="min-w-0">
+          <span className="flex items-baseline gap-2">
+            <span
+              key={count}
+              className="font-display text-[1.65rem] leading-none tracking-tight text-white tabular-nums"
+            >
+              {count}
+            </span>
+            <span className="text-[15px] font-medium leading-none text-[#f6efe4]">
+              {count === 1 ? "person viewing now" : "people viewing now"}
+            </span>
+          </span>
+          <span className="mt-1.5 block text-[12px] leading-none text-[#d7b07a]">
+            {count === 1 ? "Someone is on this page right now" : "People are on this page right now"}
+          </span>
+        </span>
+      </span>
+    );
+  }
 
   return (
     <span

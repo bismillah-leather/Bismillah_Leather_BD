@@ -67,7 +67,8 @@ function mapRow(row: DbProductRow): ShowcaseProduct {
     colors: fallback?.colors ?? ["Black"],
     tone: inferTone(row.name, fallback?.tone),
     kind: fallback?.kind ?? inferKind(categorySlug),
-    inStock: available > 0 || (fallback?.inStock ?? false),
+    inStock: variant ? available > 0 : Boolean(fallback?.inStock),
+    stockQty: variant ? available : fallback?.stockQty ?? (fallback?.inStock ? 8 : 0),
     isNew: row.isNew,
     blurb: row.description?.trim() || fallback?.blurb || "",
     highlights: fallback?.highlights,
@@ -102,7 +103,7 @@ const productSelect = {
 } as const;
 
 export const listPublishedProducts = cache(async (): Promise<ShowcaseProduct[]> => {
-  return remember("published-products", 20_000, async () => {
+  return remember("published-products", 2_000, async () => {
     try {
       const prisma = getPrisma();
       const rows = await prisma.product.findMany({

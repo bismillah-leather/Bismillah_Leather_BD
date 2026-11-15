@@ -20,9 +20,8 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { LiveViewers } from "./live-viewers";
-import { NewBadge } from "./new-badge";
 import { ProductCardActions } from "./product-card-actions";
+import { ProductShotBadges } from "./product-shot-badges";
 
 const AUTO_MS = 4800;
 
@@ -447,8 +446,7 @@ export function FlashSaleSection({
                       />
                     )}
 
-                    <LiveViewers slug={product.slug} className="absolute top-3 right-3 z-20" />
-                    {product.isNew ? <NewBadge className="absolute top-3 left-3 z-20" /> : null}
+                    <ProductShotBadges slug={product.slug} isNew={product.isNew} className="top-3 right-3 z-20" />
                     <Image
                       src={product.image}
                       alt=""

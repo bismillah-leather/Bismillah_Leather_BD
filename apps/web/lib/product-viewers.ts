@@ -50,7 +50,7 @@ export async function syncProductViewers(
   try {
     await ensureTable();
     const prisma = getPrisma();
-    await prisma.$executeRaw`DELETE FROM product_presence WHERE seen_at < now() - interval '40 seconds'`;
+    await prisma.$executeRaw`DELETE FROM product_presence WHERE seen_at < now() - interval '20 seconds'`;
 
     if (cleaned.slugs.length === 0) {
       await prisma.$executeRaw`DELETE FROM product_presence WHERE visitor_id = ${cleaned.visitorId}`;
@@ -73,7 +73,7 @@ export async function syncProductViewers(
     const rows = await prisma.$queryRaw<Array<{ slug: string; viewers: number }>>`
       SELECT slug, count(*)::int AS viewers
       FROM product_presence
-      WHERE seen_at >= now() - interval '40 seconds'
+      WHERE seen_at >= now() - interval '20 seconds'
         AND slug IN (${Prisma.join(cleaned.slugs)})
       GROUP BY slug
     `;
