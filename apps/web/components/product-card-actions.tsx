@@ -2,9 +2,10 @@
 
 import { ShoppingBag } from "lucide-react";
 import { useState } from "react";
-import { addToCart, buyNow } from "@/lib/cart";
+import { addToCart, buyNow, snapshotFromOffer, type CartOffer } from "@/lib/cart";
 
 export function ProductCardActions({
+  product,
   slug,
   color,
   inStock = true,
@@ -12,7 +13,8 @@ export function ProductCardActions({
   tone = "light",
   flush = false,
 }: {
-  slug: string;
+  product?: CartOffer;
+  slug?: string;
   color: string;
   inStock?: boolean;
   compact?: boolean;
@@ -22,8 +24,13 @@ export function ProductCardActions({
   const [added, setAdded] = useState(false);
   const [busy, setBusy] = useState(false);
   const dark = tone === "dark";
+  const liveSlug = product?.slug || slug || "";
+  const stocked = product?.inStock ?? inStock;
+  const opts = product
+    ? { inStock: stocked, snapshot: snapshotFromOffer(product), offer: product }
+    : { inStock: stocked };
 
-  if (!inStock) {
+  if (!stocked) {
     return (
       <p className={`${flush ? "" : "mt-3"} text-xs text-muted-foreground uppercase`}>Sold out</p>
     );
@@ -33,10 +40,10 @@ export function ProductCardActions({
     <div className={`${flush ? "" : "mt-3"} flex items-stretch gap-2`}>
       <button
         type="button"
-        disabled={busy}
+        disabled={busy || !liveSlug}
         onClick={() => {
           setBusy(true);
-          const ok = buyNow(slug, color, 1);
+          const ok = buyNow(liveSlug, color, 1, opts);
           if (!ok) setBusy(false);
         }}
         className={`inline-flex flex-1 items-center justify-center font-medium transition hover:opacity-90 disabled:opacity-60 ${
@@ -49,7 +56,7 @@ export function ProductCardActions({
         type="button"
         aria-label="Add to cart"
         onClick={() => {
-          if (!addToCart(slug, color, 1)) return;
+          if (!addToCart(liveSlug, color, 1, opts)) return;
           setAdded(true);
           window.setTimeout(() => setAdded(false), 1200);
         }}

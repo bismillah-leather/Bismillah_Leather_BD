@@ -5,7 +5,7 @@ import { Package, RefreshCcw, ShieldCheck, Truck } from "lucide-react";
 const ICONS = [Truck, Package, RefreshCcw, ShieldCheck] as const;
 
 const FALLBACK = [
-  { title: "Cash on delivery", text: "Pay when the parcel arrives" },
+  { title: "COD or EPS", text: "Pay on delivery or pay now" },
   { title: "Dhaka ৳80", text: "Outside Dhaka ৳130" },
   { title: "Easy returns", text: "Call us if something is wrong" },
   { title: "Secure checkout", text: "We confirm before dispatch" },

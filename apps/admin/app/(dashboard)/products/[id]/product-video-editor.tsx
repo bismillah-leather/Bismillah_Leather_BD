@@ -21,7 +21,7 @@ export function ProductVideoEditor({
   const [ok, setOk] = useState<string | null>(null);
 
   const preview = useMemo(() => {
-    const candidate = (liveUrl || url).trim();
+    const candidate = (url.trim() || liveUrl || "").trim();
     if (!candidate) return null;
     return parseVideoEmbed(candidate);
   }, [liveUrl, url]);
@@ -32,11 +32,11 @@ export function ProductVideoEditor({
     setOk(null);
     const trimmed = url.trim();
     if (!trimmed) {
-      setError("Paste a YouTube or Facebook video link.");
+      setError("Paste a Facebook or YouTube video link.");
       return;
     }
     if (!isSupportedVideoUrl(trimmed)) {
-      setError("Unsupported link. Use YouTube or Facebook video / live / reel.");
+      setError("That Facebook / YouTube link was not recognised. Copy the video share URL.");
       return;
     }
     try {
@@ -87,7 +87,7 @@ export function ProductVideoEditor({
           <p className="text-[11px] tracking-[0.2em] text-primary uppercase">Film</p>
           <h2 className="font-display mt-1 text-2xl tracking-tight">Product video</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            YouTube or Facebook video / live / reel. Customers see it on the product details page.
+            Paste a Facebook video, reel, or share link (or YouTube). It plays on the product page.
           </p>
         </div>
         {liveUrl ? (
@@ -108,7 +108,7 @@ export function ProductVideoEditor({
               title={preview.label}
               src={preview.embedUrl}
               className="size-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
             />
           </div>
@@ -124,7 +124,7 @@ export function ProductVideoEditor({
           <input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://youtube.com/watch?v=… or facebook.com/…/videos/…"
+            placeholder="https://www.facebook.com/share/v/… or youtube.com/watch?v=…"
             className="admin-field"
           />
         </label>

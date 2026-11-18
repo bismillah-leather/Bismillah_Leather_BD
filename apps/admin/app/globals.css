@@ -524,4 +524,26 @@ body {
     box-shadow: none !important;
     border-radius: 0 !important;
   }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .label-sheet {
+    break-after: page;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  .label-sheet svg {
+    width: 100% !important;
+    max-width: none !important;
+    height: 78px !important;
+    background: #fff !important;
+  }
+
+  .label-sheet canvas {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
 }

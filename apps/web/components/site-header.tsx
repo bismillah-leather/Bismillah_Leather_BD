@@ -163,18 +163,7 @@ export function SiteHeader({ brand: brandProp }: { brand?: StoreBrand }) {
           </div>
         ) : (
           <>
-            <div className="bg-black text-white pt-[max(0px,env(safe-area-inset-top,0px))]">
-              <p className="truncate px-3 py-2 text-center text-[10px] leading-4 tracking-wide sm:px-4 sm:text-[11px] md:text-xs">
-                <span className="sm:hidden">
-                  COD · Dhaka ৳80 · Outside ৳130 · {brand.phoneDisplay}
-                </span>
-                <span className="hidden sm:inline">
-                  COD · Dhaka ৳80 · Outside ৳130 · {brand.addressShort} · {brand.phoneDisplay}
-                </span>
-              </p>
-            </div>
-
-            <div className="relative mx-auto grid h-14 max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-2 px-2 sm:h-16 sm:gap-3 sm:px-6">
+            <div className="relative mx-auto grid h-14 max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-2 px-2 pt-[max(0px,env(safe-area-inset-top,0px))] sm:h-16 sm:gap-3 sm:px-6">
               <div className="flex min-w-0 items-center gap-1">
                 <button
                   type="button"

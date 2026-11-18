@@ -1,5 +1,5 @@
-import { getPrisma } from "@bismillah/db";
-import { isSupportedVideoUrl } from "@bismillah/shared";
+import { getPrisma, mergeProductVideoSlug } from "@bismillah/db";
+import { parseVideoEmbed } from "@bismillah/shared";
 import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
 
@@ -56,16 +56,18 @@ export async function PUT(
     return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
   }
 
-  const url = typeof body.url === "string" ? body.url.trim() : "";
-  if (!url) {
+  const raw = typeof body.url === "string" ? body.url.trim() : "";
+  if (!raw) {
     return NextResponse.json({ error: "Video URL required." }, { status: 400 });
   }
-  if (!isSupportedVideoUrl(url)) {
+  const embed = parseVideoEmbed(raw);
+  if (!embed) {
     return NextResponse.json(
-      { error: "Use a YouTube or Facebook video / live / reel link." },
+      { error: "Use a Facebook video / reel / share link, or a YouTube link." },
       { status: 400 },
     );
   }
+  const url = embed.watchUrl;
 
   const prisma = getPrisma();
   const product = await loadProduct(id);
@@ -95,6 +97,8 @@ export async function PUT(
     mediaId = created.id;
   }
 
+  await mergeProductVideoSlug(product.slug, url);
+
   await prisma.auditLog.create({
     data: {
       actorId: admin.sub,
@@ -123,6 +127,8 @@ export async function DELETE(
   const deleted = await prisma.productMedia.deleteMany({
     where: { productId: product.id, type: "video" },
   });
+
+  await mergeProductVideoSlug(product.slug, null);
 
   await prisma.auditLog.create({
     data: {

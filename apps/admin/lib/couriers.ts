@@ -32,6 +32,7 @@ export function courierSetup() {
     pathao,
     preferred,
     pathaoMode: process.env.PATHAO_MODE === "sandbox" ? "sandbox" : "live",
+    steadfastMerchantId: (process.env.STEADFAST_MERCHANT_ID ?? "").trim(),
   };
 }
 

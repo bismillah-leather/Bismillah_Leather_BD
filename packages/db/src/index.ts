@@ -8,6 +8,17 @@ export {
   writeStoredFlashSale,
 } from "./flash-sale-record";
 export type { FlashSalePutBody } from "./flash-sale-record";
-export { readStoredProductVideos, writeStoredProductVideos } from "./product-videos-record";
+export {
+  mergeProductVideoSlug,
+  readStoredProductVideos,
+  writeStoredProductVideos,
+} from "./product-videos-record";
 export type { ProductVideoMap } from "./product-videos-record";
 export { readLandingPages, readPublishedLanding, writeLandingPages } from "./landing-pages-record";
+export {
+  epsConfigReady,
+  publicEpsConfig,
+  readEpsConfig,
+  writeEpsConfig,
+} from "./eps-config";
+export type { EpsConfig, EpsMode } from "./eps-config";

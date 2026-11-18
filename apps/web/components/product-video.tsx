@@ -15,7 +15,7 @@ export function ProductVideo({
   variant?: "panel" | "inline";
 }) {
   const embed = videoUrl ? parseVideoEmbed(videoUrl) : null;
-  const [playing, setPlaying] = useState(false);
+  const [playing, setPlaying] = useState(embed?.provider === "facebook");
 
   if (!embed) return null;
 
@@ -44,12 +44,15 @@ export function ProductVideo({
       ) : (
         <iframe
           title={`${productName} — ${embed.label}`}
-          src={`${embed.embedUrl}${embed.provider === "youtube" ? "&autoplay=1" : ""}`}
+          src={
+            embed.provider === "youtube"
+              ? `${embed.embedUrl}&autoplay=1`
+              : embed.embedUrl
+          }
           className="absolute inset-0 size-full border-0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
-          loading="lazy"
-          referrerPolicy="strict-origin-when-cross-origin"
+          loading="eager"
         />
       )}
     </div>

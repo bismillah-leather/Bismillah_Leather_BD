@@ -12,6 +12,7 @@ import { AdminSearch } from "@/components/admin-search";
 import { StatusSelect } from "@/components/status-select";
 import { requireAdmin } from "@/lib/admin-auth";
 import { courierSetup } from "@/lib/couriers";
+import { parcelBarcodeValue, parcelShortId } from "@/lib/parcel-code";
 import { adminMediaSrc, requestStoreOrigin } from "@/lib/media-url";
 import { remember } from "@/lib/ttl-cache";
 import { CourierActions } from "./courier-actions";
@@ -118,6 +119,11 @@ export default async function OrdersPage({
             const customerName = typeof snap.name === "string" && snap.name.trim() ? snap.name : "Customer";
             const landing =
               o.landingPage && o.landingPage.startsWith("/l/") ? o.landingPage : "";
+            const ship = o.shipments[0];
+            const parcelCode = ship
+              ? parcelBarcodeValue(ship.consignmentId, ship.trackingCode)
+              : "";
+            const shortId = ship ? parcelShortId(ship.consignmentId, ship.trackingCode) : "";
             return (
             <li key={o.id} className="grid gap-4 bg-white px-4 py-4 text-black lg:grid-cols-[1fr_auto]">
               <div className="min-w-0">
@@ -222,19 +228,16 @@ export default async function OrdersPage({
                       pathao={couriers.pathao}
                       preferred={couriers.preferred}
                       shipment={
-                        o.shipments[0]
+                        ship
                           ? {
-                              id: o.shipments[0].id,
-                              courier: o.shipments[0].courier,
-                              code: o.shipments[0].trackingCode || o.shipments[0].consignmentId || "",
-                              status: o.shipments[0].status,
+                              id: ship.id,
+                              courier: ship.courier,
+                              code: shortId || parcelCode,
+                              barcode: parcelCode,
+                              status: ship.status,
                               trackingUrl:
-                                o.shipments[0].courier === "steadfast" || o.shipments[0].courier === "pathao"
-                                  ? courierTrackingUrl(
-                                      o.shipments[0].courier,
-                                      o.shipments[0].trackingCode || o.shipments[0].consignmentId || "",
-                                      o.customerPhone,
-                                    )
+                                ship.courier === "steadfast" || ship.courier === "pathao"
+                                  ? courierTrackingUrl(ship.courier, parcelCode || shortId, o.customerPhone)
                                   : "",
                             }
                           : null

@@ -32,6 +32,7 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
   const [isFeatured, setIsFeatured] = useState(false);
   const [isNew, setIsNew] = useState(false);
   const [photo, setPhoto] = useState<File | null>(null);
+  const [videoUrl, setVideoUrl] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
@@ -82,6 +83,21 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
         return;
       }
       const createdId = data.product?.id;
+      const trimmedVideo = videoUrl.trim();
+      if (trimmedVideo && createdId) {
+        const videoRes = await fetch(`/admin/api/products/${createdId}/video`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: trimmedVideo }),
+        });
+        if (!videoRes.ok) {
+          const videoData = (await videoRes.json().catch(() => ({}))) as { error?: string };
+          setOk(`Added “${data.product?.name ?? name}”, but the video link was not saved.`);
+          setError(videoData.error ?? "Video link failed.");
+          router.refresh();
+          return;
+        }
+      }
       if (photo && createdId) {
         try {
           await postAdminImage(`/admin/api/products/${createdId}/image`, photo);
@@ -107,6 +123,7 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
       setIsNew(false);
       setNewCategory("");
       setPhoto(null);
+      setVideoUrl("");
       router.refresh();
     } catch {
       setError("Network error.");
@@ -277,6 +294,18 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
               NEW badge
             </label>
           </div>
+
+          <label className="grid gap-2 text-sm">
+            <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
+              Facebook / YouTube video (optional)
+            </span>
+            <input
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="https://www.facebook.com/share/v/… or youtube.com/watch?v=…"
+              className="admin-field"
+            />
+          </label>
 
           <label className="grid gap-2 text-sm">
             <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">

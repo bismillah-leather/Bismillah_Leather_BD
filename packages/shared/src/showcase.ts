@@ -394,7 +394,7 @@ export function toProductView(
     tone: product.tone,
     kind: product.kind,
     inStock: product.inStock,
-    stockQty: Math.max(0, product.stockQty ?? (product.inStock ? 8 : 0)),
+    stockQty: Math.max(0, product.stockQty ?? 0),
     image: product.image,
     pricePaisa: (product.salePaisa ?? product.pricePaisa).toString(),
     comparePaisa: product.salePaisa ? product.pricePaisa.toString() : null,

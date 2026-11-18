@@ -104,7 +104,7 @@ export function ProductCard({ product }: { product: ShowcaseProduct }) {
           ) : null}
         </p>
         <div className="mt-auto pt-2.5">
-          <ProductCardActions slug={product.slug} color={color} inStock={product.inStock} compact />
+          <ProductCardActions product={product} color={color} compact />
         </div>
       </div>
     </article>

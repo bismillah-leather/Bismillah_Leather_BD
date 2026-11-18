@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LandingView } from "@/components/landing-view";
 import { listPublishedProducts } from "@/lib/catalog";
-import { sslcommerzReady } from "@/lib/sslcommerz";
+import { epsReady } from "@/lib/eps";
 import { getStoreBrand } from "@/lib/store-brand";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +30,11 @@ export default async function PublicLandingPage({
   const { slug } = await params;
   const page = await readPublishedLanding(slug);
   if (!page) notFound();
-  const [catalog, brand] = await Promise.all([listPublishedProducts(), getStoreBrand()]);
+  const [catalog, brand, epsPay] = await Promise.all([
+    listPublishedProducts(),
+    getStoreBrand(),
+    epsReady(),
+  ]);
   const picked = page.productSlugs
     .map((item) => catalog.find((product) => product.slug === item))
     .filter((product) => product != null);
@@ -51,7 +55,8 @@ export default async function PublicLandingPage({
       page={page}
       products={products}
       whatsappUrl={brand.whatsappUrl}
-      onlinePay={sslcommerzReady()}
+      onlinePay={epsPay}
+      epsPay={epsPay}
     />
   );
 }

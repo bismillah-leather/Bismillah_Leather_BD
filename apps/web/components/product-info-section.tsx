@@ -218,7 +218,7 @@ function TabBody({ tab, product }: { tab: TabId; product: ProductView }) {
 
   return (
     <ul className="grid gap-2.5 text-sm leading-7 text-muted-foreground">
-      <li>Cash on delivery across Bangladesh.</li>
+      <li>Cash on delivery, or pay now with EPS (bKash, Nagad, card).</li>
       <li>Confirm on the call — we pack after you say yes.</li>
       <li>
         Issues after delivery? Call us with your order number — we sort it from Mirpur-10.

@@ -32,6 +32,8 @@ export function LandingOrderForm({
   button,
   products,
   onlinePay = false,
+  epsPay = false,
+  sslPay = false,
 }: {
   landingPath: string;
   title: string;
@@ -39,6 +41,8 @@ export function LandingOrderForm({
   button: string;
   products: LandingProductPick[];
   onlinePay?: boolean;
+  epsPay?: boolean;
+  sslPay?: boolean;
 }) {
   const first = products[0];
   const [lines, setLines] = useState<OrderLine[]>(
@@ -49,7 +53,7 @@ export function LandingOrderForm({
   const [color, setColor] = useState(product?.colors[0] ?? "Black");
   const [city, setCity] = useState("Dhaka");
   const [shipping, setShipping] = useState<"inside" | "outside">("inside");
-  const [payment, setPayment] = useState<"cod" | "ssl">("cod");
+  const [payment, setPayment] = useState<"cod" | "eps" | "ssl">("cod");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
@@ -134,7 +138,7 @@ export function LandingOrderForm({
       landingPage: landingPath,
       company: String(form.get("company") ?? ""),
       startedAt: startedAt.current,
-      payment: payment === "ssl" ? "sslcommerz" : "cod",
+      payment: payment === "eps" ? "eps" : payment === "ssl" ? "sslcommerz" : "cod",
       items: lines.map((line) => ({ slug: line.slug, color: line.color, qty: line.qty })),
     });
     setPending(false);
@@ -332,14 +336,17 @@ export function LandingOrderForm({
             </button>
             <button
               type="button"
-              disabled={!onlinePay}
-              onClick={() => setPayment("ssl")}
+              disabled={!epsPay}
+              onClick={() => setPayment("eps")}
               className={`flex w-full items-center justify-between border-t border-black/10 px-3 py-3 text-left text-sm ${
-                payment === "ssl" ? "bg-black text-white" : onlinePay ? "bg-white" : "text-neutral-400"
+                payment === "eps" ? "bg-black text-white" : epsPay ? "bg-white" : "text-neutral-400"
               }`}
             >
-              <span>SSLCommerz · bKash, Nagad, card</span>
-              <span className="text-xs">{onlinePay ? (payment === "ssl" ? "Selected" : "Pay now") : "Not set up"}</span>
+              <span>
+                Pay with EPS
+                <span className="mt-0.5 block text-[11px] opacity-80">bKash, Nagad, cards</span>
+              </span>
+              <span className="text-xs">{epsPay ? (payment === "eps" ? "Selected" : "Pay now") : "Pay now"}</span>
             </button>
           </div>
 
@@ -366,15 +373,17 @@ export function LandingOrderForm({
             className="mt-5 inline-flex h-14 w-full items-center justify-center bg-black text-sm font-medium text-white disabled:opacity-60"
           >
             {pending
-              ? payment === "ssl"
-                ? "Opening SSLCommerz…"
+              ? payment === "eps"
+                ? "Opening EPS…"
                 : "Placing order…"
-              : payment === "ssl"
+              : payment === "eps"
                 ? `Pay ${formatPaisa(total)}`
                 : `${button} · ${formatPaisa(total)}`}
           </button>
           <p className="mt-3 text-center text-xs text-neutral-500">
-            {payment === "ssl" ? "You will pay on the SSLCommerz page." : "Cash on delivery. We call before packing."}
+            {payment === "eps"
+              ? "You will pay on the EPS page (bKash, Nagad, card)."
+              : "Cash on delivery. We call before packing."}
           </p>
         </form>
       </div>

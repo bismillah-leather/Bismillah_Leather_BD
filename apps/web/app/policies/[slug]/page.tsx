@@ -7,7 +7,7 @@ const POLICIES = {
   shipping: {
     title: "Shipping",
     body: [
-      "Cash on delivery is available inside and outside Dhaka. The delivery charge is calculated on our server from the district you enter at checkout.",
+      "Cash on delivery is available inside and outside Dhaka. You can also pay online at checkout with EPS (bKash, Nagad, cards). Delivery charge is calculated from the district you enter.",
       "A courier booking is created after the order is confirmed. You receive a tracking update when the parcel is handed over.",
     ],
   },

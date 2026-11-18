@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { CourierBarcode } from "@/components/courier-barcode";
 
 export function CourierActions({
   orderId,
@@ -9,6 +10,7 @@ export function CourierActions({
   pathao,
   preferred = null,
   shipment,
+  hideBarcode = false,
 }: {
   orderId: string;
   steadfast: boolean;
@@ -18,9 +20,11 @@ export function CourierActions({
     id: string;
     courier: string;
     code: string;
+    barcode?: string;
     status: string;
     trackingUrl: string;
   } | null;
+  hideBarcode?: boolean;
 }) {
   const router = useRouter();
   const [pending, setPending] = useState("");
@@ -68,12 +72,18 @@ export function CourierActions({
   }
 
   if (shipment) {
+    const barcode = shipment.barcode || shipment.code;
     return (
       <div className="mt-3 grid gap-2">
-        <p className="text-xs text-neutral-600">
-          {shipment.courier} · {shipment.code} · {shipment.status}
+        {!hideBarcode && barcode ? <CourierBarcode value={barcode} height={48} compact /> : null}
+        <p className="text-center text-[11px] text-neutral-600">
+          {shipment.courier}
+          {hideBarcode && barcode ? ` · ${barcode}` : ""} · {shipment.status}
         </p>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap justify-center gap-2">
+          <a href={`/admin/couriers/labels?ids=${shipment.id}`} className="admin-btn-ghost h-9 px-3 text-[11px]">
+            Print label
+          </a>
           {shipment.trackingUrl ? (
             <a href={shipment.trackingUrl} target="_blank" rel="noreferrer" className="admin-btn-ghost h-9 px-3 text-[11px]">
               Track

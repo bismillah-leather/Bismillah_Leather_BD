@@ -52,6 +52,20 @@ export {
   serializeFlashSale,
 } from "./flash-sale";
 export type { FlashSaleConfig, FlashSaleCountdown, FlashSaleItem } from "./flash-sale";
+export {
+  couponValueLabel,
+  eligibleLinePaisa,
+  normalizeCouponCode,
+  quoteCoupon,
+} from "./coupon";
+export type {
+  CouponCartLine,
+  CouponLineDiscount,
+  CouponMath,
+  CouponQuote,
+  CouponScopeKind,
+  CouponTypeKind,
+} from "./coupon";
 export { isSupportedVideoUrl, parseVideoEmbed } from "./video-embed";
 export type { VideoEmbed, VideoProvider } from "./video-embed";
 export {

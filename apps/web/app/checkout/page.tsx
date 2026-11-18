@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { CheckoutForm } from "@/components/checkout-form";
-import { sslcommerzReady } from "@/lib/sslcommerz";
+import { epsReady } from "@/lib/eps";
 
 export const metadata: Metadata = {
   title: "Checkout",
   robots: { index: false, follow: false },
 };
 
-export default function CheckoutPage() {
+export default async function CheckoutPage() {
+  const epsPay = await epsReady();
   return (
     <div className="min-h-[70vh] bg-secondary/20 py-6 sm:py-10">
       <Suspense
@@ -19,7 +20,7 @@ export default function CheckoutPage() {
         }
       >
         <div className="px-4 sm:px-6">
-          <CheckoutForm onlinePay={sslcommerzReady()} />
+          <CheckoutForm epsPay={epsPay} />
         </div>
       </Suspense>
     </div>

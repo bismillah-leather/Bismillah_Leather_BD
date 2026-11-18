@@ -109,8 +109,26 @@ export function SiteFooter({ brand }: { brand: StoreBrand }) {
           </a>
         </div>
       </div>
-      <div className="border-t border-border px-4 py-4 text-center text-xs text-muted-foreground">
-        © 2026 {brand.name} · {brand.addressShort} · COD · bKash · Nagad · Card
+      <div className="border-t border-border bg-[#fafafa]">
+        <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6">
+          <div className="overflow-x-auto">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/payments/eps-footer-desktop.png"
+              alt="Pay with Visa, Mastercard, bKash, Nagad and EPS"
+              className="mx-auto hidden h-11 w-auto max-w-full object-contain object-center sm:block lg:h-12"
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/payments/eps-footer-mobile.png"
+              alt="Pay with EPS"
+              className="mx-auto h-10 w-auto max-w-full object-contain sm:hidden"
+            />
+          </div>
+          <p className="mt-4 text-center text-[11px] leading-5 text-muted-foreground">
+            © 2026 {brand.name} · {brand.addressShort} · Cash on delivery or Pay with EPS
+          </p>
+        </div>
       </div>
     </footer>
   );

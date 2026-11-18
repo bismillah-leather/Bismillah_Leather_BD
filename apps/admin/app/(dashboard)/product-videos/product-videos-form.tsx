@@ -51,7 +51,7 @@ export function ProductVideosPage({
       if (!trimmed) continue;
       if (!isSupportedVideoUrl(trimmed)) {
         setStatus("error");
-        setError(`Invalid link for ${slug}. Use YouTube or Facebook video / live / reel.`);
+        setError(`Invalid link for ${slug}. Use a Facebook video / reel / share URL, or YouTube.`);
         return;
       }
       cleaned[slug] = trimmed;
@@ -83,7 +83,7 @@ export function ProductVideosPage({
       <AdminPageHeader
         eyebrow="Content"
         title="Product videos"
-        description="Paste a YouTube or Facebook video / live / reel URL. Linked products show a film block on PDP."
+        description="Paste a Facebook video, reel, or share link (or YouTube). It shows on that product’s page."
         action={
           <button
             type="button"
@@ -144,7 +144,7 @@ export function ProductVideosPage({
                       [product.slug]: e.target.value,
                     }))
                   }
-                  placeholder="https://youtube.com/… or facebook.com/…/videos/…"
+                  placeholder="https://www.facebook.com/share/v/… or youtube.com/watch?v=…"
                   className="admin-field min-w-0 flex-1"
                 />
                 <button

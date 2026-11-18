@@ -1,5 +1,5 @@
 import { readStoredProductVideos, writeStoredProductVideos, type ProductVideoMap } from "@bismillah/db";
-import { isSupportedVideoUrl } from "@bismillah/shared";
+import { parseVideoEmbed } from "@bismillah/shared";
 import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
 import { forgetAdminLists } from "@/lib/ttl-cache";
@@ -31,13 +31,14 @@ export async function PUT(request: Request) {
     if (typeof value !== "string") continue;
     const trimmed = value.trim();
     if (!trimmed) continue;
-    if (!isSupportedVideoUrl(trimmed)) {
+    const embed = parseVideoEmbed(trimmed);
+    if (!embed) {
       return NextResponse.json(
-        { error: `Unsupported video URL for ${slug}. Use YouTube or Facebook video / live / reel links.` },
+        { error: `Unsupported video URL for ${slug}. Use a Facebook video / reel / share link, or YouTube.` },
         { status: 400 },
       );
     }
-    next[slug] = trimmed;
+    next[slug] = embed.watchUrl;
   }
 
   try {

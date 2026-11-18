@@ -4,6 +4,7 @@ import { normalizeBdPhone } from "@bismillah/shared";
 import { headers } from "next/headers";
 import { pushCheckoutAlert } from "@/lib/checkout-alert";
 import { placeOrder, type PlaceOrderInput, type PlaceOrderResult } from "@/lib/place-order";
+import { quoteCheckoutCoupon, type CouponQuoteInput, type CouponQuoteView } from "@/lib/quote-coupon";
 import { clientIp, hitRateLimit } from "@/lib/rate-limit";
 
 export async function placeOrderAction(input: PlaceOrderInput): Promise<PlaceOrderResult> {
@@ -42,4 +43,13 @@ export async function placeOrderAction(input: PlaceOrderInput): Promise<PlaceOrd
     await pushCheckoutAlert("fake_order", ip, result.error);
   }
   return result;
+}
+
+export async function quoteCouponAction(input: CouponQuoteInput): Promise<CouponQuoteView> {
+  const ip = clientIp(await headers());
+  const limited = hitRateLimit(`coupon:${ip}`, 20, 10 * 60 * 1000);
+  if (!limited.ok) {
+    return { ok: false, error: "Too many coupon tries. Wait a few minutes." };
+  }
+  return quoteCheckoutCoupon(input);
 }

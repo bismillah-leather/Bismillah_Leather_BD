@@ -3,7 +3,7 @@
 import { formatPaisa, type ProductView } from "@bismillah/shared";
 import { Heart, ShoppingBag, Zap } from "lucide-react";
 import { useState } from "react";
-import { addToCart, buyNow } from "@/lib/cart";
+import { addToCart, buyNow, type CartSnapshot } from "@/lib/cart";
 import { PaymentStrip } from "./payment-strip";
 import { StockUrgency } from "./stock-urgency";
 
@@ -23,16 +23,27 @@ export function ProductBuy({
   const price = BigInt(product.pricePaisa);
   const compare = product.comparePaisa ? BigInt(product.comparePaisa) : null;
 
+  const cartOpts = {
+    inStock: product.inStock,
+    snapshot: {
+      name: product.name,
+      image: product.image,
+      sku: product.sku,
+      unitPaisa: product.pricePaisa,
+      comparePaisa: product.comparePaisa,
+    } satisfies CartSnapshot,
+  };
+
   const handleBuyNow = () => {
     if (!product.inStock || busy) return;
     setBusy(true);
-    const ok = buyNow(product.slug, color, qty);
+    const ok = buyNow(product.slug, color, qty, cartOpts);
     if (!ok) setBusy(false);
   };
 
   const handleAdd = () => {
     if (!product.inStock) return;
-    if (!addToCart(product.slug, color, qty)) return;
+    if (!addToCart(product.slug, color, qty, cartOpts)) return;
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1400);
   };

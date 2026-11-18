@@ -202,7 +202,7 @@ export default function CartPage() {
                   Checkout
                 </Link>
                 <p className="mt-3 text-center text-xs leading-5 text-muted-foreground">
-                  Cash on delivery · we call before Pathao / Steadfast booking
+                  COD or Pay with EPS · we call before Pathao / Steadfast booking
                 </p>
               </div>
             </aside>
@@ -240,7 +240,12 @@ export default function CartPage() {
                       <span className="text-sm tabular-nums">{formatPaisa(price)}</span>
                       <button
                         type="button"
-                        onClick={() => addToCart(product.slug, product.colors[0] ?? "Black", 1)}
+                        onClick={() =>
+                          addToCart(product.slug, product.colors[0] ?? "Black", 1, {
+                            inStock: product.inStock,
+                            offer: product,
+                          })
+                        }
                         className="inline-flex h-9 items-center border border-foreground px-3 text-[11px] font-medium tracking-wide uppercase transition hover:bg-foreground hover:text-background"
                       >
                         + Add

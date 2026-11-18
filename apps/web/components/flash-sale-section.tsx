@@ -497,9 +497,8 @@ export function FlashSaleSection({
                         </div>
                         <div className="relative z-20 mt-4 max-w-sm">
                           <ProductCardActions
-                            slug={product.slug}
+                            product={product}
                             color={product.colors[0] ?? "Black"}
-                            inStock={product.inStock}
                             tone="dark"
                           />
                         </div>

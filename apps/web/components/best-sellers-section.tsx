@@ -141,9 +141,8 @@ export function BestSellersSection({ products }: { products: ShowcaseProduct[] }
               </p>
               <div className="mt-4 max-w-sm">
                 <ProductCardActions
-                  slug={featured.slug}
+                  product={featured}
                   color={featured.colors[0] ?? "Black"}
-                  inStock={featured.inStock}
                   tone="dark"
                 />
               </div>
@@ -238,13 +237,7 @@ function BestGridCard({ product, rank }: { product: ShowcaseProduct; rank: numbe
           ) : null}
         </p>
         <div className="mt-auto">
-          <ProductCardActions
-            slug={product.slug}
-            color={color}
-            inStock={product.inStock}
-            compact
-            tone="dark"
-          />
+          <ProductCardActions product={product} color={color} compact tone="dark" />
         </div>
       </div>
     </article>

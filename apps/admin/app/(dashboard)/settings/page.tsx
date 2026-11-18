@@ -1,8 +1,9 @@
 import { BRAND } from "@bismillah/shared";
-import { getPrisma } from "@bismillah/db";
+import { getPrisma, publicEpsConfig, readEpsConfig } from "@bismillah/db";
 import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin-page-header";
 import { requireAdmin } from "@/lib/admin-auth";
+import { EpsSettingsForm } from "./eps-settings-form";
 import { SettingsForm } from "./settings-form";
 
 function asString(value: unknown, fallback = "") {
@@ -13,7 +14,7 @@ function asString(value: unknown, fallback = "") {
 
 export default async function SettingsPage() {
   const prisma = getPrisma();
-  const [, rows] = await Promise.all([
+  const [, rows, eps] = await Promise.all([
     requireAdmin(),
     prisma.setting.findMany({
     where: {
@@ -33,6 +34,7 @@ export default async function SettingsPage() {
       },
     },
     }),
+    readEpsConfig(),
   ]);
   const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
 
@@ -41,7 +43,7 @@ export default async function SettingsPage() {
       <AdminPageHeader
         eyebrow="Store"
         title="Settings"
-        description="Phone, WhatsApp, email, Facebook, address — these drive the storefront FAB, footer, and product contact buttons."
+        description="Phone, WhatsApp, address, and EPS online pay. Customers can still choose cash on delivery."
       />
       <p className="mt-4 text-sm text-muted-foreground">
         <Link href="/products" className="text-primary hover:underline">
@@ -76,6 +78,7 @@ export default async function SettingsPage() {
           addressShort: asString(map["store.addressShort"], BRAND.addressShort),
         }}
       />
+      <EpsSettingsForm initial={publicEpsConfig(eps)} />
     </div>
   );
 }

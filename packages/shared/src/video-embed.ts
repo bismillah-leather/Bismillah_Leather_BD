@@ -10,8 +10,18 @@ export type VideoEmbed = {
   label: string;
 };
 
+function withHttps(raw: string): string {
+  const trimmed = raw.trim().replace(/^<|>$/g, "");
+  if (!trimmed) return "";
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (/^(www\.)?(facebook\.com|fb\.watch|m\.facebook\.com|web\.facebook\.com|youtube\.com|youtu\.be|m\.youtube\.com)/i.test(trimmed)) {
+    return `https://${trimmed}`;
+  }
+  return trimmed;
+}
+
 function cleanUrl(raw: string): string | null {
-  const trimmed = raw.trim();
+  const trimmed = withHttps(raw);
   if (!trimmed) return null;
   try {
     const url = new URL(trimmed);
@@ -40,41 +50,90 @@ function youtubeId(url: URL): string | null {
   return null;
 }
 
-function isFacebookVideo(url: URL): boolean {
-  const host = url.hostname.replace(/^www\./, "");
-  if (!host.endsWith("facebook.com") && host !== "fb.watch") return false;
-  if (host === "fb.watch") return true;
-  const path = url.pathname;
-  return (
-    path.includes("/videos/") ||
-    path.includes("/reel/") ||
-    path.includes("/watch") ||
-    url.searchParams.has("v")
-  );
+function facebookHost(hostname: string): boolean {
+  const host = hostname.replace(/^www\./, "").toLowerCase();
+  return host === "facebook.com" || host.endsWith(".facebook.com") || host === "fb.watch" || host === "fb.com";
 }
 
-/** Turn a YouTube or Facebook video / live / reel URL into an embeddable player. */
+function unwrapFacebook(url: URL): URL {
+  const host = url.hostname.replace(/^www\./, "").toLowerCase();
+  if (host === "l.facebook.com" || host === "lm.facebook.com") {
+    const target = url.searchParams.get("u");
+    if (target) {
+      try {
+        return new URL(target);
+      } catch {
+        return url;
+      }
+    }
+  }
+  if (url.pathname.includes("/plugins/video.php")) {
+    const href = url.searchParams.get("href");
+    if (href) {
+      try {
+        return new URL(href);
+      } catch {
+        return url;
+      }
+    }
+  }
+  return url;
+}
+
+function isFacebookVideo(url: URL): boolean {
+  if (!facebookHost(url.hostname)) return false;
+  const host = url.hostname.replace(/^www\./, "").toLowerCase();
+  if (host === "fb.watch" || host === "fb.com") return true;
+  const path = url.pathname.toLowerCase();
+  if (
+    path.includes("/videos/") ||
+    path.includes("/video.php") ||
+    path.includes("/reel") ||
+    path.includes("/watch") ||
+    path.includes("/plugins/video") ||
+    path.includes("/share/v") ||
+    path.includes("/share/r") ||
+    path.includes("/share/video") ||
+    /^\/share\/[^/]+/.test(path)
+  ) {
+    return true;
+  }
+  return url.searchParams.has("v") || url.searchParams.has("story_fbid") || url.searchParams.has("video_id");
+}
+
+function facebookPermalink(url: URL): string {
+  const canonical = new URL(url.toString());
+  const host = canonical.hostname.replace(/^www\./, "").toLowerCase();
+  if (host !== "fb.watch" && host !== "fb.com") {
+    canonical.hostname = "www.facebook.com";
+  }
+  canonical.hash = "";
+  return canonical.toString();
+}
+
+/** Turn a YouTube or Facebook video / live / reel / share URL into an embeddable player. */
 export function parseVideoEmbed(raw: string): VideoEmbed | null {
   const watchUrl = cleanUrl(raw);
   if (!watchUrl) return null;
-  const url = new URL(watchUrl);
+  const url = unwrapFacebook(new URL(watchUrl));
 
   const yt = youtubeId(url);
   if (yt) {
     return {
       provider: "youtube",
       embedUrl: `https://www.youtube-nocookie.com/embed/${yt}?rel=0&modestbranding=1`,
-      watchUrl,
+      watchUrl: url.toString(),
       label: "YouTube video",
     };
   }
 
   if (isFacebookVideo(url)) {
-    const href = encodeURIComponent(watchUrl);
+    const permalink = facebookPermalink(url);
+    const href = encodeURIComponent(permalink);
     return {
       provider: "facebook",
-      embedUrl: `https://www.facebook.com/plugins/video.php?href=${href}&show_text=false&width=1280`,
-      watchUrl,
+      embedUrl: `https://www.facebook.com/plugins/video.php?href=${href}&show_text=false&width=1280&height=720`,
+      watchUrl: permalink,
       label: "Facebook video",
     };
   }

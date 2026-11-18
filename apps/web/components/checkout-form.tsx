@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { placeOrderAction } from "@/app/checkout/actions";
+import { CheckoutCoupon, type AppliedCoupon } from "@/components/checkout-coupon";
 import { useCart } from "@/hooks/use-cart";
 import { addToCart, clearCart, type CartItemView } from "@/lib/cart";
 
@@ -16,13 +17,19 @@ const SHIPPING = {
   outside: { label: "Outside Dhaka", paisa: 13_000n },
 } as const;
 
-export function CheckoutForm({ onlinePay = false }: { onlinePay?: boolean }) {
+export function CheckoutForm({
+  epsPay = false,
+}: {
+  epsPay?: boolean;
+  sslPay?: boolean;
+  onlinePay?: boolean;
+}) {
   const { hydrated, items, count, setQty, remove } = useCart();
   const [bootstrapped, setBootstrapped] = useState(false);
   const [shipping, setShipping] = useState<ShippingZone>("inside");
   const [city, setCity] = useState("Dhaka");
   const startedAt = useRef(0);
-  const [payment, setPayment] = useState<"cod" | "ssl">("cod");
+  const [payment, setPayment] = useState<"cod" | "eps" | "ssl">("cod");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [orderNumber, setOrderNumber] = useState("");
@@ -31,6 +38,8 @@ export function CheckoutForm({ onlinePay = false }: { onlinePay?: boolean }) {
   const [orderItems, setOrderItems] = useState<CartItemView[]>([]);
   const [doneTotal, setDoneTotal] = useState(0n);
   const [doneShipping, setDoneShipping] = useState<ShippingZone>("inside");
+  const [donePay, setDonePay] = useState<"cod" | "eps" | "ssl">("cod");
+  const [coupon, setCoupon] = useState<AppliedCoupon | null>(null);
 
   useEffect(() => {
     startedAt.current = Date.now();
@@ -56,7 +65,9 @@ export function CheckoutForm({ onlinePay = false }: { onlinePay?: boolean }) {
     [lines],
   );
   const shipFee = SHIPPING[shipping].paisa;
-  const total = subtotal + shipFee;
+  const discount = coupon?.discountPaisa ?? 0n;
+  const merchandise = subtotal > discount ? subtotal - discount : 0n;
+  const total = merchandise + shipFee;
 
   if (done) {
     return (
@@ -66,7 +77,8 @@ export function CheckoutForm({ onlinePay = false }: { onlinePay?: boolean }) {
           <h2 className="font-display mt-3 text-4xl tracking-tight">Order {orderNumber}</h2>
           <p className="mt-4 text-sm leading-6 text-white/65">
             Saved. We will call to confirm {orderItems.length} item
-            {orderItems.length === 1 ? "" : "s"} · {SHIPPING[doneShipping].label} · cash on delivery.
+            {orderItems.length === 1 ? "" : "s"} · {SHIPPING[doneShipping].label} ·{" "}
+            {donePay === "eps" || donePay === "ssl" ? "paid online" : "cash on delivery"}.
           </p>
           <p className="mt-4 text-lg font-medium tabular-nums">{formatPaisa(doneTotal)}</p>
         </div>
@@ -143,8 +155,9 @@ export function CheckoutForm({ onlinePay = false }: { onlinePay?: boolean }) {
             customerNote: String(data.get("note") ?? ""),
             company: String(data.get("company") ?? ""),
             startedAt: startedAt.current,
-            payment: payment === "ssl" ? "sslcommerz" : "cod",
+            payment: payment === "eps" ? "eps" : payment === "ssl" ? "sslcommerz" : "cod",
             items: lines.map((item) => ({ slug: item.slug, color: item.color, qty: item.qty })),
+            couponCode: coupon?.code,
           });
           if (!result.ok) {
             setError(result.error);
@@ -156,8 +169,9 @@ export function CheckoutForm({ onlinePay = false }: { onlinePay?: boolean }) {
             return;
           }
           setOrderItems(lines);
-          setDoneTotal(total);
+          setDoneTotal(BigInt(result.totalPaisa));
           setDoneShipping(shipping);
+          setDonePay(payment);
           setOrderNumber(result.number);
           clearCart();
           setDone(true);
@@ -334,22 +348,25 @@ export function CheckoutForm({ onlinePay = false }: { onlinePay?: boolean }) {
           <section>
             <h2 className="text-lg font-medium">Payment</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              All transactions are secure. COD is confirmed by phone.
+              Pay when the parcel arrives, or pay now with EPS (bKash, Nagad, cards).
             </p>
-            <div className="mt-3 overflow-hidden rounded-md border border-input">
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <label
-                className={`flex cursor-pointer items-center gap-3 px-4 py-3.5 ${
-                  payment === "cod" ? "bg-secondary/50" : "bg-white"
+                className={`flex cursor-pointer flex-col gap-2 rounded-xl border px-4 py-4 transition ${
+                  payment === "cod" ? "border-foreground bg-secondary/40 shadow-sm" : "border-input bg-white hover:border-foreground/40"
                 }`}
               >
-                <span
-                  className={`flex size-4 items-center justify-center rounded-full border ${
-                    payment === "cod" ? "border-foreground" : "border-input"
-                  }`}
-                >
-                  {payment === "cod" ? <span className="size-2 rounded-full bg-foreground" /> : null}
+                <span className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-medium">Cash on delivery</span>
+                  <span
+                    className={`flex size-4 items-center justify-center rounded-full border ${
+                      payment === "cod" ? "border-foreground" : "border-input"
+                    }`}
+                  >
+                    {payment === "cod" ? <span className="size-2 rounded-full bg-foreground" /> : null}
+                  </span>
                 </span>
-                <span className="text-sm font-medium">Cash on Delivery (COD)</span>
+                <span className="text-xs leading-5 text-muted-foreground">Pay when the parcel arrives. We call first.</span>
                 <input
                   type="radio"
                   name="payment"
@@ -360,30 +377,32 @@ export function CheckoutForm({ onlinePay = false }: { onlinePay?: boolean }) {
                 />
               </label>
               <label
-                className={`flex items-center gap-3 border-t border-input px-4 py-3.5 ${
-                  onlinePay ? "cursor-pointer" : "cursor-not-allowed opacity-55"
-                } ${payment === "ssl" ? "bg-secondary/50" : "bg-white"}`}
+                className={`flex flex-col gap-2 rounded-xl border px-4 py-4 transition ${
+                  epsPay ? "cursor-pointer" : "cursor-not-allowed opacity-55"
+                } ${payment === "eps" ? "border-foreground bg-secondary/40 shadow-sm" : "border-input bg-white hover:border-foreground/40"}`}
               >
-                <span
-                  className={`flex size-4 items-center justify-center rounded-full border ${
-                    payment === "ssl" ? "border-foreground" : "border-input"
-                  }`}
-                >
-                  {payment === "ssl" ? <span className="size-2 rounded-full bg-foreground" /> : null}
-                </span>
-                <span className="text-sm">
-                  <span className="font-medium">SSLCommerz</span>
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    {onlinePay ? "bKash, Nagad, card" : "Add the store keys to turn this on"}
+                <span className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-medium">Pay now · EPS</span>
+                  <span
+                    className={`flex size-4 items-center justify-center rounded-full border ${
+                      payment === "eps" ? "border-foreground" : "border-input"
+                    }`}
+                  >
+                    {payment === "eps" ? <span className="size-2 rounded-full bg-foreground" /> : null}
                   </span>
                 </span>
+                <span className="text-xs leading-5 text-muted-foreground">
+                  bKash, Nagad, Rocket, Visa, Mastercard
+                </span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/payments/eps-pay.png" alt="" className="mt-1 h-6 w-auto max-w-full object-contain object-left" />
                 <input
                   type="radio"
                   name="payment"
-                  value="ssl"
-                  checked={payment === "ssl"}
-                  disabled={!onlinePay}
-                  onChange={() => setPayment("ssl")}
+                  value="eps"
+                  checked={payment === "eps"}
+                  disabled={!epsPay}
+                  onChange={() => setPayment("eps")}
                   className="sr-only"
                 />
               </label>
@@ -398,10 +417,10 @@ export function CheckoutForm({ onlinePay = false }: { onlinePay?: boolean }) {
             className="inline-flex h-12 w-full items-center justify-center rounded-md bg-foreground text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-60 lg:hidden"
           >
             {pending
-              ? payment === "ssl"
-                ? "Opening SSLCommerz…"
+              ? payment === "eps"
+                ? "Opening EPS…"
                 : "Placing order…"
-              : payment === "ssl"
+              : payment === "eps"
                 ? `Pay ${formatPaisa(total)}`
                 : `Place order · ${formatPaisa(total)}`}
           </button>
@@ -419,9 +438,11 @@ export function CheckoutForm({ onlinePay = false }: { onlinePay?: boolean }) {
           </p>
         </div>
         <ul className="grid gap-5 px-5 py-5 lg:px-6">
-          {lines.map((item) => {
+          {lines.map((item, index) => {
             const unit = BigInt(item.unitPaisa);
             const compare = item.comparePaisa ? BigInt(item.comparePaisa) : null;
+            const firstOfSlug = lines.findIndex((row) => row.slug === item.slug) === index;
+            const lineOff = firstOfSlug ? (coupon?.lineDiscounts[item.slug] ?? 0n) : 0n;
             return (
               <li key={`${item.slug}-${item.color}`} className="grid gap-3">
                 <div className="flex gap-3">
@@ -461,6 +482,11 @@ export function CheckoutForm({ onlinePay = false }: { onlinePay?: boolean }) {
                         <span className="ml-1.5 text-foreground">Sale</span>
                       ) : null}
                     </p>
+                    {lineOff > 0n ? (
+                      <p className="mt-1 text-xs font-medium text-emerald-800">
+                        Coupon −{formatPaisa(lineOff)}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
 
@@ -499,11 +525,24 @@ export function CheckoutForm({ onlinePay = false }: { onlinePay?: boolean }) {
             );
           })}
         </ul>
+        <div className="grid gap-3 border-t border-border px-5 py-5 lg:px-6">
+          <CheckoutCoupon
+            items={lines.map((item) => ({ slug: item.slug, qty: item.qty }))}
+            applied={coupon}
+            onChange={(next) => setCoupon(next)}
+          />
+        </div>
         <div className="grid gap-2.5 border-t border-border px-5 py-5 text-sm lg:px-6">
           <div className="flex justify-between gap-4">
             <span className="text-muted-foreground">Subtotal · {count} item{count === 1 ? "" : "s"}</span>
             <span className="tabular-nums">{formatPaisa(subtotal)}</span>
           </div>
+          {discount > 0n ? (
+            <div className="flex justify-between gap-4 text-emerald-800">
+              <span>Discount{coupon ? ` · ${coupon.code}` : ""}</span>
+              <span className="tabular-nums">−{formatPaisa(discount)}</span>
+            </div>
+          ) : null}
           <div className="flex justify-between gap-4">
             <span className="text-muted-foreground">Shipping · {SHIPPING[shipping].label}</span>
             <span className="tabular-nums">{formatPaisa(shipFee)}</span>
@@ -523,10 +562,10 @@ export function CheckoutForm({ onlinePay = false }: { onlinePay?: boolean }) {
             className="inline-flex h-12 w-full items-center justify-center rounded-md bg-foreground text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-60"
           >
             {pending
-              ? payment === "ssl"
-                ? "Opening SSLCommerz…"
+              ? payment === "eps"
+                ? "Opening EPS…"
                 : "Placing order…"
-              : payment === "ssl"
+              : payment === "eps"
                 ? `Pay ${formatPaisa(total)}`
                 : `Place order · ${formatPaisa(total)}`}
           </button>

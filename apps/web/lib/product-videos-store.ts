@@ -1,4 +1,5 @@
 import { readStoredProductVideos, writeStoredProductVideos, type ProductVideoMap } from "@bismillah/db";
+import { isSupportedVideoUrl } from "@bismillah/shared";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
@@ -43,8 +44,9 @@ export async function readProductVideos(): Promise<ProductVideoMap> {
 
 export async function videoUrlForSlug(slug: string, fallback?: string | null): Promise<string | null> {
   const map = await readProductVideos();
-  if (Object.prototype.hasOwnProperty.call(map, slug)) {
-    return map[slug] || null;
-  }
-  return fallback ?? null;
+  const mapped = map[slug]?.trim() || null;
+  const fromProduct = fallback?.trim() || null;
+  if (mapped && isSupportedVideoUrl(mapped)) return mapped;
+  if (fromProduct && isSupportedVideoUrl(fromProduct)) return fromProduct;
+  return mapped || fromProduct;
 }

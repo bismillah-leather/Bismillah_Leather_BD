@@ -23,3 +23,10 @@ export async function writeStoredProductVideos(map: ProductVideoMap): Promise<Pr
   await writeJsonSetting(KEY, map);
   return map;
 }
+
+export async function mergeProductVideoSlug(slug: string, url: string | null): Promise<ProductVideoMap> {
+  const current = (await readStoredProductVideos()) ?? {};
+  if (url?.trim()) current[slug] = url.trim();
+  else delete current[slug];
+  return writeStoredProductVideos(current);
+}

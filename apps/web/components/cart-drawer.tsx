@@ -279,7 +279,10 @@ export function CartDrawer() {
               <button
                 type="button"
                 onClick={() => {
-                  addToCart(current.slug, current.colors[0] ?? "Black", 1);
+                  addToCart(current.slug, current.colors[0] ?? "Black", 1, {
+                    inStock: current.inStock,
+                    offer: current,
+                  });
                 }}
                 className="inline-flex h-9 shrink-0 items-center border border-foreground px-3 text-xs font-medium tracking-wide uppercase transition hover:bg-foreground hover:text-background"
               >

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 const methods = [
   { label: "COD", hint: "Cash on delivery" },
+  { label: "EPS", hint: "Pay with EPS" },
   { label: "bKash", hint: "Mobile wallet" },
   { label: "Nagad", hint: "Mobile wallet" },
   { label: "Card", hint: "Visa / Mastercard" },

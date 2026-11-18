@@ -12,9 +12,13 @@ export function LandingView({
   products,
   whatsappUrl,
   onlinePay = false,
+  epsPay = false,
+  sslPay = false,
 }: {
   page: LandingPage;
   onlinePay?: boolean;
+  epsPay?: boolean;
+  sslPay?: boolean;
   products: LandingProductPick[];
   whatsappUrl: string;
 }) {
@@ -129,6 +133,8 @@ export function LandingView({
         button={page.orderButton}
         products={products}
         onlinePay={onlinePay}
+        epsPay={epsPay}
+        sslPay={sslPay}
       />
 
       {page.faqs.length > 0 ? (

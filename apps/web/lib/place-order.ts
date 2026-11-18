@@ -1,6 +1,8 @@
 import { getPrisma, Prisma } from "@bismillah/db";
-import { divisionForDistrict, normalizeBdPhone } from "@bismillah/shared";
+import { divisionForDistrict, normalizeBdPhone, normalizeCouponCode } from "@bismillah/shared";
 import { forget } from "./remember";
+import { quoteCheckoutCoupon } from "./quote-coupon";
+import { epsReady, startEpsCheckout } from "./eps";
 import { sslcommerzReady, startSslcommerzCheckout } from "./sslcommerz";
 
 const SHIPPING = {
@@ -25,11 +27,12 @@ export type PlaceOrderInput = {
   company?: string;
   /** When the form was opened, ms since epoch. */
   startedAt?: number;
-  payment?: "cod" | "sslcommerz";
+  payment?: "cod" | "sslcommerz" | "eps";
+  couponCode?: string;
 };
 
 export type PlaceOrderResult =
-  | { ok: true; number: string; payUrl?: string }
+  | { ok: true; number: string; payUrl?: string; totalPaisa: string; discountPaisa: string }
   | { ok: false; error: string };
 
 class OrderReject extends Error {}
@@ -139,8 +142,13 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
   const name = [firstName, lastName].filter(Boolean).join(" ");
   const email = emailFrom(input.contact);
   const deliveryFee = SHIPPING[shipping];
-  const payOnline = input.payment === "sslcommerz";
-  if (payOnline && !sslcommerzReady()) {
+  const payMethod =
+    input.payment === "eps" ? "eps" : input.payment === "sslcommerz" ? "sslcommerz" : "cod";
+  const payOnline = payMethod !== "cod";
+  if (payMethod === "eps" && !(await epsReady())) {
+    return { ok: false, error: "Online pay is not set up yet. Choose cash on delivery." };
+  }
+  if (payMethod === "sslcommerz" && !sslcommerzReady()) {
     return { ok: false, error: "Online pay is not set up yet. Choose cash on delivery." };
   }
 
@@ -148,12 +156,23 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
     const prisma = getPrisma();
     const existing = await prisma.order.findUnique({
       where: { idempotencyKey: key },
-      select: { number: true, paymentStatus: true },
+      select: { number: true, paymentStatus: true, total: true, discountTotal: true },
     });
     if (existing) {
-      if (existing.paymentStatus === "paid") return { ok: true, number: existing.number };
-      if (payOnline || existing.paymentStatus === "pending") return startSslcommerzCheckout(existing.number);
-      return { ok: true, number: existing.number };
+      const totals = {
+        totalPaisa: existing.total.toString(),
+        discountPaisa: existing.discountTotal.toString(),
+      };
+      if (existing.paymentStatus === "paid") return { ok: true, number: existing.number, ...totals };
+      if (payOnline || existing.paymentStatus === "pending" || existing.paymentStatus === "failed") {
+        const pay =
+          payMethod === "eps"
+            ? await startEpsCheckout(existing.number)
+            : await startSslcommerzCheckout(existing.number);
+        if (!pay.ok) return pay;
+        return { ...pay, ...totals };
+      }
+      return { ok: true, number: existing.number, ...totals };
     }
 
     const guard = await reviewOrder(prisma, { phone, name, address });
@@ -212,7 +231,20 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
     });
 
     const subtotal = priced.reduce((sum, line) => sum + line.lineTotal, 0n);
-    const total = subtotal + deliveryFee;
+    const couponCode = normalizeCouponCode(input.couponCode ?? "");
+    let couponId: string | null = null;
+    let discountTotal = 0n;
+    if (couponCode) {
+      const quoted = await quoteCheckoutCoupon({
+        code: couponCode,
+        items: priced.map((line) => ({ slug: line.slug, qty: line.qty })),
+        phone,
+      });
+      if (!quoted.ok) return quoted;
+      couponId = quoted.couponId;
+      discountTotal = BigInt(quoted.discountPaisa);
+    }
+    const total = subtotal - discountTotal + deliveryFee;
     if (payOnline && total < 1_000n) {
       return { ok: false, error: "Online pay starts at ৳10. Choose cash on delivery for this order." };
     }
@@ -260,6 +292,24 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
         });
         if (customer.isBlocked) throw new OrderReject("This number cannot place an order. Call the shop.");
 
+        if (couponId) {
+          const coupon = await tx.coupon.findUnique({
+            where: { id: couponId },
+            select: { isActive: true, usageLimit: true, perCustomerLimit: true },
+          });
+          if (!coupon?.isActive) throw new OrderReject("This coupon is not valid.");
+          if (coupon.usageLimit != null) {
+            const used = await tx.couponRedemption.count({ where: { couponId } });
+            if (used >= coupon.usageLimit) throw new OrderReject("This coupon has already been fully used.");
+          }
+          if (coupon.perCustomerLimit != null && coupon.perCustomerLimit > 0) {
+            const used = await tx.couponRedemption.count({
+              where: { couponId, customerId: customer.id },
+            });
+            if (used >= coupon.perCustomerLimit) throw new OrderReject("You have already used this coupon.");
+          }
+        }
+
         await tx.address.create({
           data: {
             customerId: customer.id,
@@ -297,9 +347,10 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
             paymentStatus: payOnline ? "pending" : "unpaid",
             fulfillmentStatus: "unfulfilled",
             subtotal,
-            discountTotal: 0n,
+            discountTotal,
             deliveryFee,
             total,
+            ...(couponId ? { couponId } : {}),
             customerNote: customerNote || null,
             landingPage: landingPage || null,
             tags: guard.tags,
@@ -342,6 +393,17 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
                 expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
               })),
             },
+            ...(couponId
+              ? {
+                  redemption: {
+                    create: {
+                      couponId,
+                      customerId: customer.id,
+                      discount: discountTotal,
+                    },
+                  },
+                }
+              : {}),
           },
           select: { number: true },
         });
@@ -351,18 +413,28 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
     );
 
     forget("published-products");
-    if (payOnline) return startSslcommerzCheckout(number);
-    return { ok: true, number };
+    const totals = { totalPaisa: total.toString(), discountPaisa: discountTotal.toString() };
+    if (payOnline) {
+      const pay = payMethod === "eps" ? await startEpsCheckout(number) : await startSslcommerzCheckout(number);
+      if (!pay.ok) return pay;
+      return { ...pay, ...totals };
+    }
+    return { ok: true, number, ...totals };
   } catch (error) {
     if (error instanceof OrderReject) return { ok: false, error: error.message };
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       const row = await getPrisma().order.findUnique({
         where: { idempotencyKey: key },
-        select: { number: true },
+        select: { number: true, total: true, discountTotal: true },
       });
       if (row) {
-        if (payOnline) return startSslcommerzCheckout(row.number);
-        return { ok: true, number: row.number };
+        const totals = { totalPaisa: row.total.toString(), discountPaisa: row.discountTotal.toString() };
+        if (payOnline) {
+          const pay = payMethod === "eps" ? await startEpsCheckout(row.number) : await startSslcommerzCheckout(row.number);
+          if (!pay.ok) return pay;
+          return { ...pay, ...totals };
+        }
+        return { ok: true, number: row.number, ...totals };
       }
     }
     console.error("[web] place order failed:", error);
