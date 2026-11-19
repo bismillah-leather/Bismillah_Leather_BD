@@ -1,9 +1,16 @@
 import type { Metadata } from "next";
+import { BrandLogo } from "@/components/brand-logo";
 import { getStorefrontContent } from "@/lib/storefront-content";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { about } = await getStorefrontContent();
-  return { title: about.title };
+  return {
+    title: about.title,
+    description:
+      about.body.slice(0, 160) ||
+      "Bismillah Leather is a men's leather goods shop in Shah Ali Plaza, Mirpur-10, Dhaka.",
+    alternates: { canonical: "/about" },
+  };
 }
 
 export default async function AboutPage() {
@@ -21,6 +28,7 @@ export default async function AboutPage() {
         aria-label=""
       />
       <div>
+        <BrandLogo size={64} className="mb-4 h-14 w-14" />
         <p className="text-[11px] tracking-[0.22em] text-muted-foreground uppercase">{about.eyebrow}</p>
         <h1 className="font-display mt-3 text-4xl leading-none tracking-tight sm:text-6xl">{about.title}</h1>
         <div className="mt-6 grid gap-4 text-sm leading-7 text-muted-foreground sm:text-base">

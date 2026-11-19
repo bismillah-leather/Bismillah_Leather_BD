@@ -38,7 +38,12 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const policy = POLICIES[slug as keyof typeof POLICIES];
-  return { title: policy?.title ?? "Policy" };
+  if (!policy) return { title: "Policy" };
+  return {
+    title: `${policy.title} policy`,
+    description: policy.body[0],
+    alternates: { canonical: `/policies/${slug}` },
+  };
 }
 
 export default function PolicyPage({ params }: { params: Promise<{ slug: string }> }) {

@@ -97,12 +97,8 @@ export default async function CourierLabelsPage({
               className="label-sheet mx-auto w-full max-w-[420px] overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 print:mx-0 print:max-w-none print:break-after-page print:border-0 print:shadow-none"
             >
               <div className="flex items-center gap-3">
-                <span className="flex size-11 items-center justify-center rounded-xl bg-[#20c997] text-white">
-                  <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <path d="M21 8.5 12 4 3 8.5v7L12 20l9-4.5v-7Z" />
-                    <path d="M12 12v8M3 8.5l9 3.5 9-3.5" />
-                  </svg>
-                </span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/admin/brand/logo.png" alt="" className="size-11 object-contain" />
                 <div>
                   <p className="text-lg font-semibold leading-tight">Bismillah leather</p>
                   {merchantId && shipment.courier === "steadfast" ? (

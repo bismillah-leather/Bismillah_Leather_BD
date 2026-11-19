@@ -74,7 +74,11 @@ export default async function StatementsPage({
         <article className="statement-sheet mt-6 overflow-hidden rounded-2xl bg-[#f6f1e8] text-[#1c1612] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
           <header className="flex flex-wrap items-end justify-between gap-4 border-b border-[#e4d8c4] px-6 py-6 sm:px-8">
             <div>
-              <p className="text-[11px] tracking-[0.22em] text-[#8a7044] uppercase">Bismillah Leather</p>
+              <p className="flex items-center gap-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/admin/brand/logo.png" alt="" className="size-10 object-contain" />
+                <span className="text-[11px] tracking-[0.22em] text-[#8a7044] uppercase">Bismillah Leather</span>
+              </p>
               <h2 className="font-display mt-2 text-3xl tracking-tight">Account statement</h2>
               <p className="mt-2 text-sm text-[#5c5146]">{range.label} · Asia/Dhaka</p>
             </div>

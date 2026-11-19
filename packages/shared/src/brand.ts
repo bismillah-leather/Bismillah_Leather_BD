@@ -9,9 +9,12 @@ export const BRAND = {
   whatsappUrl: "https://wa.me/8801957876157",
   email: "nabilsun666@gamil.com",
   facebookUrl: "https://www.facebook.com/people/Bismillah-leather/61560749383224/",
+  youtubeUrl: "",
   addressLine: "Shop no. 12, Shah Ali Plaza, Mirpur-10, Dhaka",
   addressShort: "Mirpur-10 · Shah Ali Plaza · Shop 12",
   followersLabel: "30K Facebook followers",
   recommendLabel: "96% recommend",
   categoryLabel: "Leather goods shop",
+  logoSrc: "/brand/logo.png",
+  logoLightSrc: "/brand/logo-light.png",
 } as const;

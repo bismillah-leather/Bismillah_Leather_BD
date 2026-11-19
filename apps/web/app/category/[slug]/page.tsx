@@ -19,7 +19,12 @@ export async function generateMetadata({
   const { slug } = await params;
   const category = categoryBySlug(slug);
   if (!category) return { title: "Category" };
-  return { title: category.name, description: category.blurb };
+  return {
+    title: `${category.name} | leather ${category.group.toLowerCase()} Bangladesh`,
+    description: `${category.blurb} Shop genuine leather at Bismillah Leather, Mirpur-10, Dhaka. Cash on delivery across Bangladesh.`,
+    keywords: [category.name, category.blurb, "leather bangladesh", "mirpur leather shop"],
+    alternates: { canonical: `/category/${slug}` },
+  };
 }
 
 export default function CategoryPage({

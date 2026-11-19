@@ -11,6 +11,7 @@ export function SettingsForm({
     supportWhatsapp: string;
     email: string;
     facebookUrl: string;
+    youtubeUrl: string;
     codNote: string;
     announcement: string;
     shippingNote: string;
@@ -23,6 +24,7 @@ export function SettingsForm({
   const [supportWhatsapp, setSupportWhatsapp] = useState(initial.supportWhatsapp);
   const [email, setEmail] = useState(initial.email);
   const [facebookUrl, setFacebookUrl] = useState(initial.facebookUrl);
+  const [youtubeUrl, setYoutubeUrl] = useState(initial.youtubeUrl);
   const [codNote, setCodNote] = useState(initial.codNote);
   const [announcement, setAnnouncement] = useState(initial.announcement);
   const [shippingNote, setShippingNote] = useState(initial.shippingNote);
@@ -55,6 +57,7 @@ export function SettingsForm({
       await saveOne("store.supportWhatsapp", supportWhatsapp.trim());
       await saveOne("store.email", email.trim());
       await saveOne("store.facebookUrl", facebookUrl.trim());
+      await saveOne("store.youtubeUrl", youtubeUrl.trim());
       await saveOne("store.codNote", codNote.trim());
       await saveOne("store.announcement", announcement.trim());
       await saveOne("store.shippingNote", shippingNote.trim());
@@ -115,6 +118,17 @@ export function SettingsForm({
           value={facebookUrl}
           onChange={(e) => setFacebookUrl(e.target.value)}
           className="admin-field"
+        />
+      </label>
+      <label className="grid gap-2 text-sm">
+        <span className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
+          YouTube channel URL
+        </span>
+        <input
+          value={youtubeUrl}
+          onChange={(e) => setYoutubeUrl(e.target.value)}
+          className="admin-field"
+          placeholder="https://www.youtube.com/@yourchannel"
         />
       </label>
       <label className="grid gap-2 text-sm">

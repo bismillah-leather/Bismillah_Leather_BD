@@ -11,6 +11,7 @@ export type StoreBrand = {
   whatsappUrl: string;
   email: string;
   facebookUrl: string;
+  youtubeUrl: string;
   addressLine: string;
   addressShort: string;
   followersLabel: string;
@@ -60,6 +61,7 @@ export function defaultStoreBrand(): StoreBrand {
     whatsappUrl: BRAND.whatsappUrl,
     email: BRAND.email,
     facebookUrl: BRAND.facebookUrl,
+    youtubeUrl: BRAND.youtubeUrl,
     addressLine: BRAND.addressLine,
     addressShort: BRAND.addressShort,
     followersLabel: BRAND.followersLabel,

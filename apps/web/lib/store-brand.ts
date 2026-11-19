@@ -26,6 +26,7 @@ async function loadStoreBrand(): Promise<StoreBrand> {
             "store.supportWhatsapp",
             "store.email",
             "store.facebookUrl",
+            "store.youtubeUrl",
             "store.address",
             "store.addressShort",
             "store.codNote",
@@ -48,6 +49,7 @@ async function loadStoreBrand(): Promise<StoreBrand> {
       ...phone,
       email: asString(map["store.email"], base.email) || base.email,
       facebookUrl: asString(map["store.facebookUrl"], base.facebookUrl) || base.facebookUrl,
+      youtubeUrl: asString(map["store.youtubeUrl"], base.youtubeUrl),
       addressLine: asString(map["store.address"], base.addressLine) || base.addressLine,
       addressShort:
         asString(map["store.addressShort"], base.addressShort) || base.addressShort,

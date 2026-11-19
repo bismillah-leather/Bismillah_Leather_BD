@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { JsonLd } from "@/components/json-ld";
 import { ProductBuy } from "@/components/product-buy";
 import { ProductGallery } from "@/components/product-gallery";
 import { ProductGrid } from "@/components/product-grid";
@@ -10,6 +11,8 @@ import { ProductInfoSection } from "@/components/product-info-section";
 import { TrustStrip } from "@/components/trust-strip";
 import { getPublishedProduct, listPublishedProducts } from "@/lib/catalog";
 import { videoUrlForSlug } from "@/lib/product-videos-store";
+import { absoluteUrl, publicStoreOrigin } from "@/lib/site-origin";
+import { getStoreBrand } from "@/lib/store-brand";
 
 export function generateStaticParams() {
   return SHOWCASE_PRODUCTS.map((product) => ({ slug: product.slug }));
@@ -21,11 +24,34 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getPublishedProduct(slug);
+  const [product, origin] = await Promise.all([getPublishedProduct(slug), publicStoreOrigin()]);
   if (!product) return { title: "Product" };
+  const price = Number(product.salePaisa ?? product.pricePaisa) / 100;
+  const description =
+    product.blurb ||
+    `${product.name} — genuine leather from Bismillah Leather, Mirpur-10, Dhaka. Cash on delivery across Bangladesh.`;
+  const image = absoluteUrl(origin, product.image);
+  const url = `${origin}/product/${product.slug}`;
   return {
-    title: product.name,
-    description: product.blurb,
+    title: `${product.name} | leather ${product.kind} Bangladesh`,
+    description,
+    keywords: [
+      product.name,
+      `leather ${product.kind}`,
+      "leather wallet bangladesh",
+      "genuine leather dhaka",
+      product.categorySlug.replaceAll("-", " "),
+    ],
+    alternates: { canonical: url },
+    openGraph: {
+      type: "website",
+      url,
+      title: product.name,
+      description,
+      images: [{ url: image, alt: product.name }],
+    },
+    twitter: { card: "summary_large_image", title: product.name, description, images: [image] },
+    other: { "product:price:amount": String(price), "product:price:currency": "BDT" },
   };
 }
 
@@ -39,9 +65,11 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
 async function ProductContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const [product, catalog] = await Promise.all([
+  const [product, catalog, origin, brand] = await Promise.all([
     getPublishedProduct(slug),
     listPublishedProducts(),
+    publicStoreOrigin(),
+    getStoreBrand(),
   ]);
   if (!product) notFound();
 
@@ -54,8 +82,36 @@ async function ProductContent({ params }: { params: Promise<{ slug: string }> })
     .slice(0, 4);
   const categoryLabel = product.categorySlug.replaceAll("-", " ");
 
+  const unit = Number(product.salePaisa ?? product.pricePaisa) / 100;
+  const productLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    image: [absoluteUrl(origin, product.image)],
+    description: product.blurb || view.blurb,
+    sku: product.sku,
+    brand: {
+      "@type": "Brand",
+      name: brand.name,
+      logo: absoluteUrl(origin, "/brand/logo.png"),
+    },
+    category: categoryLabel,
+    offers: {
+      "@type": "Offer",
+      url: `${origin}/product/${product.slug}`,
+      priceCurrency: "BDT",
+      price: unit.toFixed(2),
+      availability: product.inStock
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
+      seller: { "@type": "Organization", name: brand.name },
+    },
+  };
+
   return (
     <div className="pb-28 sm:pb-0">
+      <JsonLd data={productLd} />
       <section className="relative overflow-hidden border-b border-border bg-white">
         <div
           aria-hidden

@@ -1,12 +1,16 @@
 import { INITIAL_CATEGORIES, type StoreBrand } from "@bismillah/shared";
 import Link from "next/link";
+import { BrandLogo } from "./brand-logo";
 
 export function SiteFooter({ brand }: { brand: StoreBrand }) {
   return (
     <footer className="mt-8 border-t border-border bg-white">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-4">
         <div>
-          <p className="font-display text-lg sm:text-xl">{brand.name}</p>
+          <p className="flex items-center gap-3">
+            <BrandLogo size={44} className="h-10 w-10" />
+            <span className="font-display text-lg sm:text-xl">{brand.name}</span>
+          </p>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">{brand.tagline}</p>
           <p className="mt-4 text-sm text-muted-foreground">{brand.addressLine}</p>
           <p className="mt-2 text-sm">
@@ -36,6 +40,16 @@ export function SiteFooter({ brand }: { brand: StoreBrand }) {
             >
               Facebook
             </a>
+            {brand.youtubeUrl ? (
+              <a
+                className="underline underline-offset-4"
+                href={brand.youtubeUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                YouTube
+              </a>
+            ) : null}
           </div>
         </div>
         <div>

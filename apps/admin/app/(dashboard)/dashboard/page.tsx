@@ -1,5 +1,6 @@
 import { formatPaisa } from "@bismillah/shared";
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand-logo";
 import { requireAdmin } from "@/lib/admin-auth";
 import { loadDashboardStats } from "@/lib/dashboard-stats";
 import { listSecurityAlerts } from "@/lib/security-alerts";
@@ -116,6 +117,7 @@ export default async function AdminHomePage() {
       <section className="admin-hero">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="min-w-0">
+            <BrandLogo onDark size={48} className="mb-3 h-11 w-11" />
             <p className="text-[11px] font-medium tracking-[0.22em] text-primary uppercase">
               Atelier overview
             </p>

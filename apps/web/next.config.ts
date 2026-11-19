@@ -35,6 +35,7 @@ const nextConfig: NextConfig = {
     localPatterns: [
       { pathname: "/catalog/**" },
       { pathname: "/uploads/**" },
+      { pathname: "/brand/**" },
       { pathname: "/support-avatar.jpg" },
     ],
     remotePatterns: [

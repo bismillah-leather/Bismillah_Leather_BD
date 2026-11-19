@@ -1,6 +1,7 @@
 "use client";
 
 import { BD_DISTRICTS, BRAND } from "@bismillah/shared";
+import { BrandLogo } from "@/components/brand-logo";
 import { Button, Input } from "@bismillah/ui";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowRight, Check, Lock, ShieldCheck, Sparkles } from "lucide-react";
@@ -89,6 +90,7 @@ export function AccountAuthPanel() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           >
+            <BrandLogo onDark size={52} className="mb-5 h-12 w-12" />
             <p className="text-[11px] tracking-[0.28em] text-white/65 uppercase">
               {BRAND.shortName} account
             </p>
@@ -141,6 +143,10 @@ export function AccountAuthPanel() {
             ← Back to shop
           </Link>
 
+          <div className="mt-6 flex items-center gap-3 lg:hidden">
+            <BrandLogo size={40} className="h-10 w-10" />
+            <span className="font-display text-lg tracking-tight">{BRAND.name}</span>
+          </div>
           <h1 className="font-display mt-6 text-4xl tracking-tight sm:text-5xl">
             {mode === "signin" ? "Welcome back" : "Create account"}
           </h1>

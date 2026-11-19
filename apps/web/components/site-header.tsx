@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/hooks/use-cart";
+import { BrandLogo } from "./brand-logo";
 import { useStoreBrand } from "./brand-provider";
 import { useCartUi } from "./cart-provider";
 
@@ -135,8 +136,11 @@ export function SiteHeader({ brand: brandProp }: { brand?: StoreBrand }) {
       >
         {overHero ? (
           <div className="pt-[max(12px,env(safe-area-inset-top,0px))]">
-            <div className="mx-auto w-full max-w-[90rem] px-3 py-3 sm:px-6 sm:py-4 lg:px-10">
-              <form action="/search" className="w-full">
+            <div className="mx-auto flex w-full max-w-[90rem] items-center gap-3 px-3 py-3 sm:gap-4 sm:px-6 sm:py-4 lg:px-10">
+              <Link href="/" className="hidden shrink-0 sm:inline-flex" aria-label={brand.name}>
+                <BrandLogo onDark size={36} className="size-9 drop-shadow-[0_1px_8px_rgba(0,0,0,0.35)]" />
+              </Link>
+              <form action="/search" className="min-w-0 flex-1">
                 <label className="sr-only" htmlFor="hero-search">
                   Search products
                 </label>
@@ -194,9 +198,12 @@ export function SiteHeader({ brand: brandProp }: { brand?: StoreBrand }) {
 
               <Link
                 href="/"
-                className="font-display max-w-[11rem] truncate text-center text-base tracking-tight sm:max-w-none sm:text-lg md:text-xl"
+                className="inline-flex max-w-[16rem] items-center justify-center gap-2.5 sm:max-w-none"
               >
-                {brand.name}
+                <BrandLogo size={42} className="h-9 w-9 sm:h-10 sm:w-10" />
+                <span className="font-display text-base tracking-tight sm:text-lg md:text-xl">
+                  {brand.name}
+                </span>
               </Link>
 
               <div className="flex items-center justify-end gap-0.5 sm:gap-1">

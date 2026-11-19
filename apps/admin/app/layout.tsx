@@ -18,6 +18,11 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
   title: "Admin · Bismillah Leather",
   robots: { index: false, follow: false },
+  icons: {
+    icon: [{ url: "/icon.png", type: "image/png" }],
+    apple: [{ url: "/apple-icon.png" }],
+    shortcut: "/icon.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

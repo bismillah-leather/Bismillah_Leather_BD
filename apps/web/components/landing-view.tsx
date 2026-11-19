@@ -1,4 +1,5 @@
 import type { LandingPage } from "@bismillah/shared";
+import { BrandLogo } from "./brand-logo";
 import { LandingOrderForm, type LandingProductPick } from "./landing-order-form";
 import { LandingPixels } from "./landing-pixels";
 
@@ -14,10 +15,14 @@ export function LandingView({
   onlinePay = false,
   epsPay = false,
   sslPay = false,
+  siteFacebookPixelId = "",
+  siteTiktokPixelId = "",
 }: {
   page: LandingPage;
   onlinePay?: boolean;
   epsPay?: boolean;
+  siteFacebookPixelId?: string;
+  siteTiktokPixelId?: string;
   sslPay?: boolean;
   products: LandingProductPick[];
   whatsappUrl: string;
@@ -27,11 +32,21 @@ export function LandingView({
 
   return (
     <article className="bg-white pb-24 text-black md:pb-0">
-      <LandingPixels facebookPixelId={page.facebookPixelId} tiktokPixelId={page.tiktokPixelId} />
+      <LandingPixels
+        facebookPixelId={
+          page.facebookPixelId && page.facebookPixelId !== siteFacebookPixelId
+            ? page.facebookPixelId
+            : ""
+        }
+        tiktokPixelId={
+          page.tiktokPixelId && page.tiktokPixelId !== siteTiktokPixelId ? page.tiktokPixelId : ""
+        }
+      />
 
       <section className="bg-black text-white">
         <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:py-20">
           <div>
+            <BrandLogo onDark size={52} className="mb-4 h-12 w-12" />
             <p className="text-[11px] tracking-[0.22em] text-white/60 uppercase">{page.eyebrow}</p>
             <h1 className="font-display mt-4 text-4xl leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
               {page.headline}

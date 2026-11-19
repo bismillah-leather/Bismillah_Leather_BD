@@ -22,3 +22,5 @@ export {
   writeEpsConfig,
 } from "./eps-config";
 export type { EpsConfig, EpsMode } from "./eps-config";
+export { readSeoConfig, writeSeoConfig } from "./seo-config";
+export type { SeoConfig } from "./seo-config";

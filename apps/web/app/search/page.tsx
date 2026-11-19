@@ -7,8 +7,11 @@ import { ProductGrid } from "@/components/product-grid";
 import { listPublishedProducts, searchCatalog } from "@/lib/catalog";
 
 export const metadata: Metadata = {
-  title: "Shop all",
-  robots: { index: false, follow: true },
+  title: "Shop all leather wallets and belts",
+  description:
+    "Browse genuine leather wallets and belts from Bismillah Leather in Mirpur-10, Dhaka. Cash on delivery across Bangladesh.",
+  alternates: { canonical: "/search" },
+  robots: { index: true, follow: true },
 };
 
 export default function SearchPage({

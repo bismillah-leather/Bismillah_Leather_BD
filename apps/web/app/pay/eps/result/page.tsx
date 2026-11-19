@@ -2,6 +2,7 @@ import { getPrisma } from "@bismillah/db";
 import { formatPaisa } from "@bismillah/shared";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand-logo";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,7 @@ export default async function EpsResultPage({
     <div className="min-h-[70vh] bg-secondary/20 px-4 py-10">
       <div className="mx-auto max-w-xl border border-border bg-white">
         <div className="bg-black px-6 py-10 text-white sm:px-8">
+          <BrandLogo onDark size={48} className="mb-4 h-11 w-11" />
           <p className="text-[11px] tracking-[0.22em] text-white/50 uppercase">Pay with EPS</p>
           <h1 className="font-display mt-3 text-4xl tracking-tight">{title}</h1>
           <p className="mt-4 text-sm leading-6 text-white/70">{copy}</p>

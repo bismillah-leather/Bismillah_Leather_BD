@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { BrandLogo } from "./brand-logo";
 
 const POINTS = [
   "Orders & flash sale controls",
@@ -40,11 +41,14 @@ export function AdminAuthShell({
         />
 
         <div className="relative flex h-full flex-col justify-between p-10 xl:p-14">
-          <div className="admin-auth-rise">
-            <p className="font-display text-4xl tracking-tight text-white xl:text-5xl">Bismillah</p>
-            <p className="mt-2 text-[11px] tracking-[0.28em] text-white/55 uppercase">
-              Leather · Staff console
-            </p>
+          <div className="admin-auth-rise flex items-center gap-3">
+            <BrandLogo onDark size={56} className="h-14 w-14 xl:h-16 xl:w-16" />
+            <div>
+              <p className="font-display text-4xl tracking-tight text-white xl:text-5xl">Bismillah</p>
+              <p className="mt-2 text-[11px] tracking-[0.28em] text-white/55 uppercase">
+                Leather · Staff console
+              </p>
+            </div>
           </div>
 
           <div className="admin-auth-rise admin-auth-rise-delay max-w-md">

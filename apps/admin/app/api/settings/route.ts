@@ -9,6 +9,7 @@ const EDITABLE = new Set([
   "store.supportWhatsapp",
   "store.email",
   "store.facebookUrl",
+  "store.youtubeUrl",
   "store.codNote",
   "store.announcement",
   "store.shippingNote",

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { LandingView } from "@/components/landing-view";
 import { listPublishedProducts } from "@/lib/catalog";
 import { epsReady } from "@/lib/eps";
+import { getSeoConfig } from "@/lib/seo";
 import { getStoreBrand } from "@/lib/store-brand";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,11 @@ export async function generateMetadata({
   return {
     title: page.seoTitle || page.headline,
     description: page.seoDescription || page.subhead,
+    alternates: { canonical: `/l/${slug}` },
+    openGraph: {
+      title: page.seoTitle || page.headline,
+      description: page.seoDescription || page.subhead,
+    },
   };
 }
 
@@ -30,10 +36,11 @@ export default async function PublicLandingPage({
   const { slug } = await params;
   const page = await readPublishedLanding(slug);
   if (!page) notFound();
-  const [catalog, brand, epsPay] = await Promise.all([
+  const [catalog, brand, epsPay, seo] = await Promise.all([
     listPublishedProducts(),
     getStoreBrand(),
     epsReady(),
+    getSeoConfig(),
   ]);
   const picked = page.productSlugs
     .map((item) => catalog.find((product) => product.slug === item))
@@ -57,6 +64,8 @@ export default async function PublicLandingPage({
       whatsappUrl={brand.whatsappUrl}
       onlinePay={epsPay}
       epsPay={epsPay}
+      siteFacebookPixelId={seo.facebookPixelId}
+      siteTiktokPixelId={seo.tiktokPixelId}
     />
   );
 }

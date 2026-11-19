@@ -91,6 +91,7 @@ async function seedSettings() {
     { key: "store.supportWhatsapp", value: "8801957876157" },
     { key: "store.email", value: BRAND.email },
     { key: "store.facebookUrl", value: BRAND.facebookUrl },
+    { key: "store.youtubeUrl", value: BRAND.youtubeUrl },
     { key: "store.address", value: BRAND.addressLine },
     { key: "store.addressShort", value: BRAND.addressShort },
     {

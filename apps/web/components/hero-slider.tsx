@@ -3,6 +3,7 @@
 import { DEFAULT_HERO_SLIDES, type HeroSlide } from "@bismillah/shared";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { BrandLogo } from "./brand-logo";
 import { useStoreBrand } from "./brand-provider";
 
 const INTERVAL_MS = 6000;
@@ -70,6 +71,11 @@ export function HeroSlider({ slides }: { slides?: HeroSlide[] }) {
       />
 
       <div className="relative z-10 flex h-full flex-col items-center justify-end px-4 pb-5 text-center sm:pb-6 md:pb-7">
+        <BrandLogo
+          onDark
+          size={64}
+          className="mb-3 h-14 w-14 drop-shadow-[0_2px_18px_rgba(0,0,0,0.45)] sm:h-16 sm:w-16"
+        />
         <h1 className="font-display max-w-3xl text-2xl leading-[0.95] tracking-tight drop-shadow-[0_2px_18px_rgba(0,0,0,0.45)] sm:text-3xl md:text-4xl lg:text-5xl">
           {brand.name}
         </h1>

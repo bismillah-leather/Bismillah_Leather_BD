@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { placeOrderAction } from "@/app/checkout/actions";
+import { BrandLogo } from "@/components/brand-logo";
 import { CheckoutCoupon, type AppliedCoupon } from "@/components/checkout-coupon";
 import { useCart } from "@/hooks/use-cart";
 import { addToCart, clearCart, type CartItemView } from "@/lib/cart";
@@ -191,8 +192,9 @@ export function CheckoutForm({
           className="pointer-events-none absolute h-0 w-0 opacity-0"
         />
         <div className="border-b border-border px-5 py-5 sm:px-8">
-          <Link href="/" className="font-display text-2xl tracking-tight">
-            Bismillah Leather
+          <Link href="/" className="inline-flex items-center gap-2.5">
+            <BrandLogo size={44} className="h-10 w-10" />
+            <span className="font-display text-2xl tracking-tight">Bismillah Leather</span>
           </Link>
           <p className="mt-1 text-xs tracking-[0.16em] text-muted-foreground uppercase">
             Cart · Information · Shipping · Payment

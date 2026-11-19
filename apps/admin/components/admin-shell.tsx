@@ -26,6 +26,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { AdminPrefetch } from "./admin-prefetch";
+import { BrandLogo } from "./brand-logo";
 import { LogoutButton } from "./logout-button";
 
 const NAV_GROUPS: {
@@ -119,7 +120,9 @@ export function AdminShell({
         <div className="flex items-start gap-2 px-4 pt-5 pb-4">
           <Link href="/dashboard" className="admin-brand min-w-0 flex-1">
 
-            <span className="admin-brand-mark">BL</span>
+            <span className="admin-brand-mark overflow-hidden p-1">
+              <BrandLogo size={42} className="size-full object-contain" />
+            </span>
             <span className="min-w-0">
               <span className="font-display block truncate text-lg leading-none tracking-tight">
                 Bismillah
