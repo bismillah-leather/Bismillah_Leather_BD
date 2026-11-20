@@ -1,3 +1,4 @@
+import { getPrisma, listApprovedReviewsForProduct } from "@bismillah/db";
 import { galleryFor, SHOWCASE_PRODUCTS, toProductView } from "@bismillah/shared";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -8,8 +9,10 @@ import { ProductBuy } from "@/components/product-buy";
 import { ProductGallery } from "@/components/product-gallery";
 import { ProductGrid } from "@/components/product-grid";
 import { ProductInfoSection } from "@/components/product-info-section";
+import { ProductReviews } from "@/components/product-reviews";
 import { TrustStrip } from "@/components/trust-strip";
 import { getPublishedProduct, listPublishedProducts } from "@/lib/catalog";
+import { getCustomerSession } from "@/lib/customer-session";
 import { videoUrlForSlug } from "@/lib/product-videos-store";
 import { absoluteUrl, publicStoreOrigin } from "@/lib/site-origin";
 import { getStoreBrand } from "@/lib/store-brand";
@@ -65,13 +68,17 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
 async function ProductContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const [product, catalog, origin, brand] = await Promise.all([
+  const [product, catalog, origin, brand, session] = await Promise.all([
     getPublishedProduct(slug),
     listPublishedProducts(),
     publicStoreOrigin(),
     getStoreBrand(),
+    getCustomerSession(),
   ]);
   if (!product) notFound();
+  const reviews = product.id
+    ? await listApprovedReviewsForProduct(getPrisma(), product.id).catch(() => [])
+    : [];
 
   const videoUrl = await videoUrlForSlug(slug, product.videoUrl);
   const view = toProductView(product, { videoUrl });
@@ -96,6 +103,24 @@ async function ProductContent({ params }: { params: Promise<{ slug: string }> })
       logo: absoluteUrl(origin, "/brand/logo.png"),
     },
     category: categoryLabel,
+    ...(reviews.length
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: (
+              reviews.reduce((sum, row) => sum + row.rating, 0) / reviews.length
+            ).toFixed(1),
+            reviewCount: reviews.length,
+          },
+          review: reviews.slice(0, 8).map((row) => ({
+            "@type": "Review",
+            reviewBody: row.body,
+            name: row.title || undefined,
+            reviewRating: { "@type": "Rating", ratingValue: row.rating, bestRating: 5 },
+            author: { "@type": "Person", name: row.authorName },
+          })),
+        }
+      : {}),
     offers: {
       "@type": "Offer",
       url: `${origin}/product/${product.slug}`,
@@ -162,6 +187,15 @@ async function ProductContent({ params }: { params: Promise<{ slug: string }> })
           <ProductInfoSection product={view} />
         </div>
       </section>
+
+      {product.id ? (
+        <ProductReviews
+          productId={product.id}
+          reviews={reviews}
+          highlights={view.highlights}
+          customerName={session?.name}
+        />
+      ) : null}
 
       <section className="border-b border-border bg-secondary py-8 sm:py-10">
         <div className="mx-auto max-w-7xl px-3 sm:px-6">

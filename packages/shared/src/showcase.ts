@@ -2,6 +2,7 @@ export type LeatherTone = "black" | "brown" | "tan" | "cognac";
 export type ProductKind = "wallet" | "belt";
 
 export type ShowcaseProduct = {
+  id?: string;
   slug: string;
   image: string;
   name: string;
@@ -22,6 +23,8 @@ export type ShowcaseProduct = {
   highlights?: readonly string[];
   /** YouTube / Facebook watch or live URL (optional). Admin can override via store. */
   videoUrl?: string | null;
+  ratingAvg?: number;
+  ratingCount?: number;
 };
 
 export const SHOWCASE_PRODUCTS: readonly ShowcaseProduct[] = [
@@ -357,6 +360,8 @@ export type ProductView = {
   pricePaisa: string;
   comparePaisa: string | null;
   videoUrl: string | null;
+  ratingAvg: number;
+  ratingCount: number;
 };
 
 const DEFAULT_HIGHLIGHTS = [
@@ -399,6 +404,8 @@ export function toProductView(
     pricePaisa: (product.salePaisa ?? product.pricePaisa).toString(),
     comparePaisa: product.salePaisa ? product.pricePaisa.toString() : null,
     videoUrl,
+    ratingAvg: product.ratingAvg ?? 0,
+    ratingCount: product.ratingCount ?? 0,
   };
 }
 

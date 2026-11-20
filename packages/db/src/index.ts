@@ -24,3 +24,11 @@ export {
 export type { EpsConfig, EpsMode } from "./eps-config";
 export { readSeoConfig, writeSeoConfig } from "./seo-config";
 export type { SeoConfig } from "./seo-config";
+export {
+  customerBoughtProduct,
+  listApprovedHomeReviews,
+  listApprovedReviewsForProduct,
+  parseReviewInput,
+  syncProductRating,
+} from "./reviews";
+export type { PublicReview } from "./reviews";

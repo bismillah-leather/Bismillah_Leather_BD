@@ -48,6 +48,11 @@ model Review {
   rating             Int
   title              String?
   body               String       @db.Text
+  authorName         String       @default("") @map("author_name")
+  authorCity         String       @default("") @map("author_city")
+  authorEmail        String       @default("") @map("author_email")
+  authorAddress      String       @default("") @map("author_address")
+  photoUrls          Json         @default("[]") @map("photo_urls")
   status             ReviewStatus @default(pending)
   isVerifiedPurchase Boolean      @default(false) @map("is_verified_purchase")
   createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)

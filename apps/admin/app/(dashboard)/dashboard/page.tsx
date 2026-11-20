@@ -39,6 +39,7 @@ const SHORTCUTS = [
   { href: "/customers", label: "Customers" },
   { href: "/flash-sale", label: "Flash sale" },
   { href: "/coupons", label: "Coupons" },
+  { href: "/reviews", label: "Reviews" },
   { href: "/content", label: "Content" },
   { href: "/security", label: "Security" },
 ] as const;

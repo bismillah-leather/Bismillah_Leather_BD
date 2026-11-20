@@ -5,6 +5,7 @@ import { Heart, ShoppingBag, Zap } from "lucide-react";
 import { useState } from "react";
 import { addToCart, buyNow, type CartSnapshot } from "@/lib/cart";
 import { PaymentStrip } from "./payment-strip";
+import { StarRating } from "./star-rating";
 import { StockUrgency } from "./stock-urgency";
 
 export function ProductBuy({
@@ -56,6 +57,15 @@ export function ProductBuy({
       <h1 className="font-display mt-3 text-[2.35rem] leading-[0.98] tracking-[-0.035em] text-neutral-950 sm:text-5xl lg:text-[3.15rem]">
         {product.name}
       </h1>
+      {product.ratingCount > 0 ? (
+        <p className="mt-3 flex flex-wrap items-center gap-2 text-sm text-neutral-500">
+          <StarRating value={product.ratingAvg} />
+          <span className="font-medium text-neutral-800">{product.ratingAvg.toFixed(1)}</span>
+          <span>
+            {product.ratingCount} review{product.ratingCount === 1 ? "" : "s"}
+          </span>
+        </p>
+      ) : null}
       {product.blurb ? (
         <p className="mt-4 max-w-md text-[15px] leading-7 text-neutral-600">{product.blurb}</p>
       ) : null}

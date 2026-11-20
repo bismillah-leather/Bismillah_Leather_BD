@@ -5,12 +5,14 @@ import { BrandMarquee } from "@/components/brand-marquee";
 import { CatalogFilterProvider } from "@/components/catalog-filter";
 import { FeaturedCategoryRail } from "@/components/featured-category-rail";
 import { HeroSlider } from "@/components/hero-slider";
+import { HomeReviews } from "@/components/home-reviews";
 import { HomeFlashSale } from "@/components/home-flash-sale";
 import { NewArrivalsSection } from "@/components/new-arrivals-section";
 import { ProductPhoto } from "@/components/leather-visual";
 import { CenteredRuleHeading } from "@/components/section-heading";
 import { TrustStrip } from "@/components/trust-strip";
 import { listPublishedProducts } from "@/lib/catalog";
+import { listHomeReviews } from "@/lib/home-reviews";
 import { getStoreBrand } from "@/lib/store-brand";
 import { getStorefrontContent } from "@/lib/storefront-content";
 
@@ -22,10 +24,11 @@ const moreCategories = [
 ] as const;
 
 export default async function HomePage() {
-  const [brand, products, content] = await Promise.all([
+  const [brand, products, content, reviews] = await Promise.all([
     getStoreBrand(),
     listPublishedProducts(),
     getStorefrontContent(),
+    listHomeReviews(),
   ]);
 
   return (
@@ -79,6 +82,8 @@ export default async function HomePage() {
             </ul>
           </div>
         </section>
+
+        <HomeReviews reviews={reviews} />
 
         <section className="border-t border-border bg-white">
           <div className="mx-auto grid max-w-7xl gap-6 px-3 py-8 sm:gap-8 sm:px-6 sm:py-12 lg:grid-cols-2 lg:py-14">

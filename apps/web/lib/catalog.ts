@@ -16,6 +16,8 @@ type DbProductRow = {
   description: string;
   ogImageKey: string | null;
   isNew: boolean;
+  ratingAvg: { toNumber(): number } | number;
+  ratingCount: number;
   primaryCategory: { slug: string; path: string };
   variants: Array<{
     sku: string;
@@ -53,6 +55,7 @@ function mapRow(row: DbProductRow): ShowcaseProduct {
     : 0;
 
   return {
+    id: row.id,
     slug: row.slug,
     name: row.name,
     sku: variant?.sku ?? fallback?.sku ?? `BL-${row.slug.slice(0, 8).toUpperCase()}`,
@@ -73,6 +76,8 @@ function mapRow(row: DbProductRow): ShowcaseProduct {
     blurb: row.description?.trim() || fallback?.blurb || "",
     highlights: fallback?.highlights,
     videoUrl: video?.storageKey || fallback?.videoUrl || null,
+    ratingAvg: typeof row.ratingAvg === "number" ? row.ratingAvg : Number(row.ratingAvg),
+    ratingCount: row.ratingCount,
   };
 }
 
@@ -83,6 +88,8 @@ const productSelect = {
   description: true,
   ogImageKey: true,
   isNew: true,
+  ratingAvg: true,
+  ratingCount: true,
   primaryCategory: { select: { slug: true, path: true } },
   variants: {
     where: { isActive: true },

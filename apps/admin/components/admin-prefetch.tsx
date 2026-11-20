@@ -15,6 +15,7 @@ const ROUTES = [
   "/landings",
   "/flash-sale",
   "/coupons",
+  "/reviews",
   "/content",
   "/team",
   "/security",
