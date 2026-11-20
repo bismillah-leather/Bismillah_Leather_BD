@@ -6,7 +6,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/hooks/use-cart";
-import { BrandLogo } from "./brand-logo";
 import { useStoreBrand } from "./brand-provider";
 import { useCartUi } from "./cart-provider";
 
@@ -195,12 +194,9 @@ export function SiteHeader({ brand: brandProp }: { brand?: StoreBrand }) {
 
               <Link
                 href="/"
-                className="inline-flex max-w-[16rem] items-center justify-center gap-2.5 sm:max-w-none"
+                className="font-display max-w-[11rem] truncate text-center text-base tracking-tight sm:max-w-none sm:text-lg md:text-xl"
               >
-                <BrandLogo size={42} className="h-9 w-9 sm:h-10 sm:w-10" />
-                <span className="font-display text-base tracking-tight sm:text-lg md:text-xl">
-                  {brand.name}
-                </span>
+                {brand.name}
               </Link>
 
               <div className="flex items-center justify-end gap-0.5 sm:gap-1">

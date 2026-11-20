@@ -260,35 +260,24 @@ export function CheckoutForm({
                 placeholder="Address"
                 className="h-12 rounded-md border border-input bg-white px-3 outline-none focus-visible:border-foreground"
               />
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="grid gap-1.5 text-sm">
-                  <span className="text-xs tracking-[0.12em] text-muted-foreground uppercase">District</span>
-                  <select
-                    name="city"
-                    required
-                    value={city}
-                    onChange={(event) => {
-                      const next = event.target.value;
-                      setCity(next);
-                      setShipping(next === "Dhaka" ? "inside" : "outside");
-                    }}
-                    className="h-12 rounded-md border border-input bg-white px-3 outline-none focus-visible:border-foreground"
-                  >
-                    {BD_DISTRICTS.map((district) => (
-                      <option key={district}>{district}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="grid gap-1.5 text-sm">
-                  <span className="text-xs tracking-[0.12em] text-muted-foreground uppercase">Postal code</span>
-                  <input
-                    name="postal"
-                    autoComplete="postal-code"
-                    placeholder="Optional"
-                    className="h-12 rounded-md border border-input bg-white px-3 outline-none focus-visible:border-foreground"
-                  />
-                </label>
-              </div>
+              <label className="grid gap-1.5 text-sm">
+                <span className="text-xs tracking-[0.12em] text-muted-foreground uppercase">District</span>
+                <select
+                  name="city"
+                  required
+                  value={city}
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    setCity(next);
+                    setShipping(next === "Dhaka" ? "inside" : "outside");
+                  }}
+                  className="h-12 rounded-md border border-input bg-white px-3 outline-none focus-visible:border-foreground"
+                >
+                  {BD_DISTRICTS.map((district) => (
+                    <option key={district}>{district}</option>
+                  ))}
+                </select>
+              </label>
               <input
                 name="phone"
                 required

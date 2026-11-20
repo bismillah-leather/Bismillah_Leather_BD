@@ -60,7 +60,10 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     keywords,
     icons: {
-      icon: [{ url: "/icon.png", type: "image/png", sizes: "48x48" }, { url: "/brand/logo.png", type: "image/png" }],
+      icon: [
+        { url: "/icon.png", type: "image/png", sizes: "48x48" },
+        { url: "/apple-icon.png", type: "image/png", sizes: "180x180" },
+      ],
       apple: [{ url: "/apple-icon.png", sizes: "180x180" }],
       shortcut: "/icon.png",
     },

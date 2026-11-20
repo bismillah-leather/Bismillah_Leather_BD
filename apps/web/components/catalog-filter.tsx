@@ -45,7 +45,7 @@ export function CatalogFilterProvider({ children }: { children: ReactNode }) {
     <CatalogFilterContext.Provider value={value}>
       <div className="relative">
         <CategoryPillsBar>
-          <div role="tablist" aria-label="Product categories" className="contents">
+          <div role="tablist" aria-label="Product categories" className="flex flex-nowrap items-center gap-1.5 sm:gap-2">
             {FILTERS.map((item) => {
               const selected = item.id === filter;
               return (

@@ -294,10 +294,6 @@ export function LandingOrderForm({
                 ))}
               </select>
             </label>
-            <label className="block">
-              <span className="mb-1.5 block text-[11px] tracking-[0.14em] text-neutral-500 uppercase">Postal code</span>
-              <input name="postal" autoComplete="postal-code" placeholder="Optional" className="h-12 w-full border border-neutral-300 px-3 text-sm outline-none focus:border-black" />
-            </label>
             <label className="block sm:col-span-2">
               <span className="mb-1.5 block text-[11px] tracking-[0.14em] text-neutral-500 uppercase">Address</span>
               <textarea name="address" required rows={3} className="w-full border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-black" />
