@@ -136,11 +136,8 @@ export function SiteHeader({ brand: brandProp }: { brand?: StoreBrand }) {
       >
         {overHero ? (
           <div className="pt-[max(12px,env(safe-area-inset-top,0px))]">
-            <div className="mx-auto flex w-full max-w-[90rem] items-center gap-3 px-3 py-3 sm:gap-4 sm:px-6 sm:py-4 lg:px-10">
-              <Link href="/" className="hidden shrink-0 sm:inline-flex" aria-label={brand.name}>
-                <BrandLogo onDark size={36} className="size-9 drop-shadow-[0_1px_8px_rgba(0,0,0,0.35)]" />
-              </Link>
-              <form action="/search" className="min-w-0 flex-1">
+            <div className="mx-auto w-full max-w-[90rem] px-3 py-3 sm:px-6 sm:py-4 lg:px-10">
+              <form action="/search" className="w-full">
                 <label className="sr-only" htmlFor="hero-search">
                   Search products
                 </label>
