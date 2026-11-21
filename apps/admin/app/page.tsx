@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdminAuthShell } from "@/components/admin-auth-shell";
-import { getAdminSession } from "@/lib/session";
+import { getActiveAdmin } from "@/lib/admin-auth";
 import { LoginForm } from "./login/login-form";
 
 /** /admin — login for guests, dashboard for signed-in staff. */
 export default async function AdminRootPage() {
-  const session = await getAdminSession();
+  const session = await getActiveAdmin();
   if (session) redirect("/dashboard");
 
   return (

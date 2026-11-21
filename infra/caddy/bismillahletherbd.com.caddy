@@ -9,6 +9,23 @@
 # Sending ALL of /api to Express would 404 those routes. Express is only
 # healthz/readyz, so those two paths go to the API container.
 
+# Cloudflare Flexible uses origin HTTP. Serving this block avoids a 308 loop.
+http://bismillahletherbd.com, http://www.bismillahletherbd.com {
+	encode gzip zstd
+	handle /api/healthz {
+		reverse_proxy 172.18.0.1:18102
+	}
+	handle /api/readyz {
+		reverse_proxy 172.18.0.1:18102
+	}
+	handle /admin* {
+		reverse_proxy 172.18.0.1:18101
+	}
+	handle {
+		reverse_proxy 172.18.0.1:18100
+	}
+}
+
 bismillahletherbd.com, www.bismillahletherbd.com {
 	# Cloudflare orange-cloud: origin handshake needs a cert. Internal CA works
 	# with SSL/TLS mode Full. Full (strict) needs a Cloudflare Origin CA cert.

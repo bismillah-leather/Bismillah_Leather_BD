@@ -5,12 +5,29 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 if [[ -f "$ROOT/.env" ]]; then
-  set -a
-  # shellcheck disable=SC1091
-  source "$ROOT/.env"
-  set +a
+  eval "$(python3 - "$ROOT/.env" <<'PY'
+from pathlib import Path
+import shlex, sys
+keys = {
+    "SOURCE_DIRECT_URL",
+    "POSTGRES_USER",
+    "POSTGRES_PASSWORD",
+    "POSTGRES_DB",
+}
+path = Path(sys.argv[1])
+for raw in path.read_text().splitlines():
+    line = raw.strip()
+    if not line or line.startswith("#") or "=" not in line:
+        continue
+    key, value = line.split("=", 1)
+    if key not in keys:
+        continue
+    value = value.strip().strip("'").strip('"')
+    print(f"export {key}={shlex.quote(value)}")
+PY
+)"
 fi
-COMPOSE=(docker compose -f "$ROOT/infra/docker-compose.prod.yml" --env-file "$ROOT/.env")
+COMPOSE=(docker compose -p bismillah-leather -f "$ROOT/infra/docker-compose.prod.yml" --env-file "$ROOT/.env")
 DUMP_DIR="$ROOT/infra/backups"
 DUMP_FILE="$DUMP_DIR/bismillah.dump"
 
