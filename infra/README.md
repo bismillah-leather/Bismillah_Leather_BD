@@ -36,6 +36,18 @@ Do **not** send all of `/api` to Express. Storefront Next.js routes (`/api/revie
 
 ## Commands
 
+On the VPS, after GitHub has the latest `main`, one shot (keeps `.env`, does not seed, does not touch other sites):
+
+```bash
+bash /opt/bismillah-leather/infra/scripts/vps-update.sh
+```
+
+First time the script is not on the server yet:
+
+```bash
+cd /opt/bismillah-leather && git fetch origin && git reset --hard origin/main && bash infra/scripts/vps-update.sh
+```
+
 ```bash
 docker compose -p bismillah-leather -f infra/docker-compose.prod.yml --env-file .env config
 docker compose -p bismillah-leather -f infra/docker-compose.prod.yml --env-file .env up -d --build

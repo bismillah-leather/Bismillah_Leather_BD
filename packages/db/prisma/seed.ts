@@ -103,6 +103,21 @@ async function seedSettings() {
       value: "Dhaka delivery 1–2 days. Outside Dhaka 2–4 days after confirmation.",
     },
     { key: "store.announcement", value: "" },
+    {
+      key: "seo.tracking",
+      value: {
+        gtmId: "GTM-WBHX3XS6",
+        ga4Id: "",
+        googleAdsId: "",
+        googleSiteVerification: "",
+        bingSiteVerification: "",
+        facebookPixelId: "",
+        tiktokPixelId: "",
+        seoTitle: "",
+        seoDescription: "",
+        seoKeywords: "",
+      },
+    },
   ];
 
   for (const setting of settings) {
