@@ -55,3 +55,6 @@ packages/db/src/generated
 # shop photos saved when R2 is not configured
 apps/web/public/uploads/**
 !apps/web/public/uploads/.gitkeep
+
+# database dumps from VPS import
+infra/backups/*.dump

@@ -7,6 +7,9 @@ const rootDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "../..")
 loadEnvConfig(rootDir);
 
 const nextConfig: NextConfig = {
+  ...(process.env.BUILD_STANDALONE === "1"
+    ? { output: "standalone" as const, outputFileTracingRoot: rootDir }
+    : {}),
   // Public URL is /admin/* via Vercel Services rewrites.
   basePath: "/admin",
   experimental: {
@@ -14,7 +17,7 @@ const nextConfig: NextConfig = {
   },
   // Avoid /admin ↔ /admin/ redirect loops with basePath + proxy rewrites.
   skipTrailingSlashRedirect: true,
-  transpilePackages: ["@bismillah/ui", "@bismillah/shared", "@bismillah/db"],
+  transpilePackages: ["@bismillah/ui", "@bismillah/shared", "@bismillah/db", "@bismillah/cache"],
   turbopack: {
     rules: {
       "*.css": {

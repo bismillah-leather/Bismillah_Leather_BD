@@ -9,7 +9,7 @@ import { clientIp, hitRateLimit } from "@/lib/rate-limit";
 
 export async function placeOrderAction(input: PlaceOrderInput): Promise<PlaceOrderResult> {
   const ip = clientIp(await headers());
-  const limited = hitRateLimit(`checkout:${ip}`, 5, 10 * 60 * 1000);
+  const limited = await hitRateLimit(`checkout:${ip}`, 5, 10 * 60 * 1000);
   if (!limited.ok) {
     await pushCheckoutAlert("checkout_rate_limit", ip, "Checkout blocked for this IP");
     return { ok: false, error: "Too many attempts. Wait a few minutes and try again." };
@@ -31,7 +31,7 @@ export async function placeOrderAction(input: PlaceOrderInput): Promise<PlaceOrd
 
   const phone = normalizeBdPhone(input.phone) ?? normalizeBdPhone(input.contact);
   if (phone) {
-    const byPhone = hitRateLimit(`checkout-phone:${phone}`, 4, 30 * 60 * 1000);
+    const byPhone = await hitRateLimit(`checkout-phone:${phone}`, 4, 30 * 60 * 1000);
     if (!byPhone.ok) {
       await pushCheckoutAlert("checkout_rate_limit", ip, "Too many checkouts for one number");
       return { ok: false, error: "Too many orders from this number. Wait a bit, or call the shop." };
@@ -47,7 +47,7 @@ export async function placeOrderAction(input: PlaceOrderInput): Promise<PlaceOrd
 
 export async function quoteCouponAction(input: CouponQuoteInput): Promise<CouponQuoteView> {
   const ip = clientIp(await headers());
-  const limited = hitRateLimit(`coupon:${ip}`, 20, 10 * 60 * 1000);
+  const limited = await hitRateLimit(`coupon:${ip}`, 20, 10 * 60 * 1000);
   if (!limited.ok) {
     return { ok: false, error: "Too many coupon tries. Wait a few minutes." };
   }

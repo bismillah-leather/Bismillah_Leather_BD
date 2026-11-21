@@ -21,7 +21,10 @@ function r2ImagePattern() {
 }
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@bismillah/ui", "@bismillah/shared", "@bismillah/db"],
+  ...(process.env.BUILD_STANDALONE === "1"
+    ? { output: "standalone" as const, outputFileTracingRoot: rootDir }
+    : {}),
+  transpilePackages: ["@bismillah/ui", "@bismillah/shared", "@bismillah/db", "@bismillah/cache"],
   experimental: {
     agentFeedback: true,
   },

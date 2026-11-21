@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@bismillah/cache": "workspace:*",
     "@bismillah/db": "workspace:^",
     "@bismillah/shared": "workspace:*",
     "@bismillah/ui": "workspace:*",

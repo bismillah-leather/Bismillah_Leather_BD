@@ -1,0 +1,35 @@
+# INCLUDE this file from the existing host Caddyfile.
+# Do not replace /etc/caddy/Caddyfile.
+#
+# After VPS audit confirms 127.0.0.1:18100–18102 are free:
+#
+#   import /etc/caddy/sites/bismillahletherbd.com.caddy
+#
+# Routing note: the Next.js storefront owns /api/reviews, /api/account, etc.
+# Sending ALL of /api to Express would 404 those routes. Express is only
+# healthz/readyz, so those two paths go to the API container.
+
+bismillahletherbd.com, www.bismillahletherbd.com {
+	encode gzip zstd
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+
+	handle /api/healthz {
+		reverse_proxy 172.18.0.1:18102
+	}
+
+	handle /api/readyz {
+		reverse_proxy 172.18.0.1:18102
+	}
+
+	handle /admin* {
+		reverse_proxy 172.18.0.1:18101
+	}
+
+	handle {
+		reverse_proxy 172.18.0.1:18100
+	}
+}

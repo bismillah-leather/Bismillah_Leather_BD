@@ -6,7 +6,7 @@ import { pushSecurityAlert } from "@/lib/security-alerts";
 
 export async function POST(request: Request) {
   const ip = clientIp(request.headers);
-  const limited = hitRateLimit(`admin-register:${ip}`, 8, 15 * 60 * 1000);
+  const limited = await hitRateLimit(`admin-register:${ip}`, 8, 15 * 60 * 1000);
   if (!limited.ok) {
     await pushSecurityAlert({
       kind: "admin_rate_limit",

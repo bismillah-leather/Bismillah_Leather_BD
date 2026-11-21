@@ -1,0 +1,34 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$SITE_ADDRESS:localhost} {
+	encode gzip zstd
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	handle /admin* {
+		reverse_proxy admin:3001 {
+			health_uri /admin/api/health
+			health_interval 15s
+			health_timeout 3s
+		}
+	}
+
+	handle {
+		reverse_proxy web-1:3000 web-2:3000 {
+			lb_policy round_robin
+			lb_retries 1
+			health_uri /api/health
+			health_interval 10s
+			health_timeout 3s
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-Host {host}
+			header_up X-Real-IP {remote_host}
+		}
+	}
+}

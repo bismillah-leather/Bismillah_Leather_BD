@@ -10,7 +10,7 @@ import { clientIp, hitRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const ip = clientIp(request.headers);
-  const limited = hitRateLimit(`customer-login:${ip}`, 20, 15 * 60 * 1000);
+  const limited = await hitRateLimit(`customer-login:${ip}`, 20, 15 * 60 * 1000);
   if (!limited.ok) {
     try {
       const prisma = getPrisma();

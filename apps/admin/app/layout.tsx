@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
 import { Fraunces, Outfit } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";

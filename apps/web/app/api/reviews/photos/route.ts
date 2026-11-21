@@ -10,7 +10,7 @@ export const maxDuration = 30;
 
 export async function POST(request: Request) {
   const ip = clientIp(request.headers);
-  const limited = hitRateLimit(`review-photo:${ip}`, 20, 15 * 60 * 1000);
+  const limited = await hitRateLimit(`review-photo:${ip}`, 20, 15 * 60 * 1000);
   if (!limited.ok) {
     return NextResponse.json({ error: "Too many uploads. Try again later." }, { status: 429 });
   }

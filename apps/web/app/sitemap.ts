@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { readLandingPages } from "@bismillah/db";
 import { INITIAL_CATEGORIES } from "@bismillah/shared";
 import type { MetadataRoute } from "next";

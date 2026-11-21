@@ -1,0 +1,207 @@
+# Shared VPS: does NOT bind :80/:443 (host Caddy already owns them).
+# Project name: bismillah-leather
+name: bismillah-leather
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-app-env: &app-env
+  DATABASE_URL: postgresql://${POSTGRES_USER:-bismillah}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-bismillah}
+  DIRECT_URL: postgresql://${POSTGRES_USER:-bismillah}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-bismillah}
+  DATABASE_POOL_URL: postgresql://${POSTGRES_USER:-bismillah}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-bismillah}
+  REDIS_CACHE_URL: redis://redis-cache:6379
+  REDIS_CORE_URL: redis://redis-core:6379
+  HOSTNAME: 0.0.0.0
+
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    logging: *default-logging
+    mem_limit: 512m
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-bismillah}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-bismillah}
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - shared_buffers=128MB
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - ./backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bismillah} -d ${POSTGRES_DB:-bismillah}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - internal
+
+  redis-cache:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    logging: *default-logging
+    mem_limit: 96m
+    command: ["redis-server", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru", "--save", ""]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - internal
+
+  redis-core:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    logging: *default-logging
+    mem_limit: 96m
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec", "--maxmemory", "64mb", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis-core:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - internal
+
+  migrate:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+      target: migrate
+    env_file:
+      - ../.env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bismillah}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-bismillah}
+      DIRECT_URL: postgresql://${POSTGRES_USER:-bismillah}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-bismillah}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    logging: *default-logging
+    networks:
+      - internal
+
+  web:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+      target: runner
+      args:
+        APP: web
+        PORT: "3000"
+        NEXT_PUBLIC_STORE_URL: ${NEXT_PUBLIC_STORE_URL:-https://bismillahletherbd.com}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/}
+        NEXT_PUBLIC_GTM_ID: ${NEXT_PUBLIC_GTM_ID:-}
+        NEXT_PUBLIC_GA_ID: ${NEXT_PUBLIC_GA_ID:-}
+    restart: unless-stopped
+    logging: *default-logging
+    mem_limit: 768m
+    env_file:
+      - ../.env
+    environment:
+      <<: *app-env
+      PORT: "3000"
+    ports:
+      # Profitnex Caddy is on 172.18.0.1; loopback-only binds are unreachable from that container.
+      - "${WEB_PUBLISH:-172.18.0.1:18100}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      redis-core:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 50s
+    networks:
+      - internal
+
+  admin:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+      target: runner
+      args:
+        APP: admin
+        PORT: "3001"
+        NEXT_PUBLIC_STORE_URL: ${NEXT_PUBLIC_STORE_URL:-https://bismillahletherbd.com}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/}
+    restart: unless-stopped
+    logging: *default-logging
+    mem_limit: 512m
+    env_file:
+      - ../.env
+    environment:
+      <<: *app-env
+      PORT: "3001"
+    ports:
+      - "${ADMIN_PUBLISH:-172.18.0.1:18101}:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3001/admin/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 50s
+    networks:
+      - internal
+
+  api:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+      target: api
+    restart: unless-stopped
+    logging: *default-logging
+    mem_limit: 256m
+    env_file:
+      - ../.env
+    environment:
+      <<: *app-env
+      PORT: "4000"
+    ports:
+      - "${API_PUBLISH:-172.18.0.1:18102}:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:4000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 20s
+    networks:
+      - internal
+
+volumes:
+  pgdata:
+  redis-core:
+
+networks:
+  internal:
+    name: bismillah-leather-internal
+    driver: bridge

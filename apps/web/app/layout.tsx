@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+
+export const dynamic = "force-dynamic";
 import { Fraunces, Outfit } from "next/font/google";
 import { BrandProvider } from "@/components/brand-provider";
 import { CartDrawer } from "@/components/cart-drawer";

@@ -20,7 +20,12 @@
     "db:migrate": "pnpm --filter @bismillah/db migrate",
     "db:seed": "pnpm --filter @bismillah/db seed",
     "db:validate": "pnpm --filter @bismillah/db validate",
-    "db:studio": "pnpm --filter @bismillah/db studio"
+    "db:studio": "pnpm --filter @bismillah/db studio",
+    "vps:up": "docker compose -p bismillah-leather -f infra/docker-compose.prod.yml --env-file .env up -d --build",
+    "vps:down": "docker compose -p bismillah-leather -f infra/docker-compose.prod.yml --env-file .env down",
+    "vps:logs": "docker compose -p bismillah-leather -f infra/docker-compose.prod.yml logs -f --tail=200",
+    "vps:migrate": "docker compose -p bismillah-leather -f infra/docker-compose.prod.yml --env-file .env run --rm migrate",
+    "vps:import-db": "bash infra/scripts/import-database.sh"
   },
   "devDependencies": {
     "turbo": "^2.5.8"
