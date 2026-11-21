@@ -12,6 +12,7 @@
     "migrate": "prisma migrate deploy",
     "migrate:dev": "prisma migrate dev",
     "seed": "prisma db seed",
+    "sync-owner": "tsx prisma/sync-owner.ts",
     "studio": "prisma studio",
     "typecheck": "tsc --noEmit",
     "test": "tsx src/enum-parity.ts"
