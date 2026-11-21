@@ -10,6 +10,9 @@
 # healthz/readyz, so those two paths go to the API container.
 
 bismillahletherbd.com, www.bismillahletherbd.com {
+	# Cloudflare orange-cloud: origin handshake needs a cert. Internal CA works
+	# with SSL/TLS mode Full. Full (strict) needs a Cloudflare Origin CA cert.
+	tls internal
 	encode gzip zstd
 
 	header {

@@ -13,6 +13,7 @@ else
 
 # Bismillah Leather (isolated compose; host ports on 172.18.0.1)
 bismillahletherbd.com, www.bismillahletherbd.com {
+	tls internal
 	encode gzip zstd
 	handle /api/healthz {
 		reverse_proxy 172.18.0.1:18102
