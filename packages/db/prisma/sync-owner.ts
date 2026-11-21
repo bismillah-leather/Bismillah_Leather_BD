@@ -1,12 +1,12 @@
 import "dotenv/config";
-import { hash } from "@node-rs/argon2";
+import { hash, verify } from "@node-rs/argon2";
 import { getPrisma } from "../src/client";
 
 const PLACEHOLDERS = new Set(["", "unused-do-not-seed", "dev-only-change-me"]);
 
 async function main() {
   const email = (process.env.SEED_ADMIN_EMAIL ?? "").trim().toLowerCase();
-  const password = process.env.SEED_ADMIN_PASSWORD ?? "";
+  const password = (process.env.SEED_ADMIN_PASSWORD ?? "").trim().replace(/^['"]|['"]$/g, "");
   if (!email.includes("@")) {
     throw new Error("SEED_ADMIN_EMAIL is missing");
   }
@@ -41,9 +41,10 @@ async function main() {
 
   const row = await prisma.adminUser.findUnique({
     where: { email },
-    select: { email: true, role: true, isActive: true },
+    select: { email: true, role: true, isActive: true, passwordHash: true },
   });
-  console.log("OWNER_SYNC_OK", row?.email, row?.role, row?.isActive);
+  const matches = row ? await verify(row.passwordHash, password) : false;
+  console.log("OWNER_SYNC_OK", row?.email, row?.role, row?.isActive, "PASSWORD_VERIFY=" + matches);
 }
 
 const prisma = getPrisma();
