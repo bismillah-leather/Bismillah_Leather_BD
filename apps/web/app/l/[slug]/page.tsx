@@ -5,6 +5,8 @@ import { LandingView } from "@/components/landing-view";
 import { listPublishedProducts } from "@/lib/catalog";
 import { epsReady } from "@/lib/eps";
 import { getSeoConfig } from "@/lib/seo";
+import { publicStoreOrigin } from "@/lib/site-origin";
+import { DEFAULT_OG_IMAGE, ogImageTags, shareImageUrl } from "@/lib/social-preview";
 import { getStoreBrand } from "@/lib/store-brand";
 
 export const dynamic = "force-dynamic";
@@ -15,16 +17,24 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const page = await readPublishedLanding(slug);
+  const [page, origin] = await Promise.all([readPublishedLanding(slug), publicStoreOrigin()]);
   if (!page) return { title: "Landing" };
+  const title = page.seoTitle || page.headline;
+  const description = page.seoDescription || page.subhead;
+  const image = shareImageUrl(origin, page.heroImage || DEFAULT_OG_IMAGE);
   return {
-    title: page.seoTitle || page.headline,
-    description: page.seoDescription || page.subhead,
-    alternates: { canonical: `/l/${slug}` },
+    title,
+    description,
+    alternates: { canonical: `${origin}/l/${slug}` },
     openGraph: {
-      title: page.seoTitle || page.headline,
-      description: page.seoDescription || page.subhead,
+      type: "website",
+      locale: "en_US",
+      url: `${origin}/l/${slug}`,
+      title,
+      description,
+      images: ogImageTags(image, title),
     },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
   };
 }
 

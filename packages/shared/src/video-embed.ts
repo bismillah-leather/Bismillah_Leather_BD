@@ -67,7 +67,7 @@ function unwrapFacebook(url: URL): URL {
       }
     }
   }
-  if (url.pathname.includes("/plugins/video.php")) {
+  if (url.pathname.includes("/plugins/video.php") || url.pathname.includes("/plugins/post.php")) {
     const href = url.searchParams.get("href");
     if (href) {
       try {
@@ -85,6 +85,9 @@ function isFacebookVideo(url: URL): boolean {
   const host = url.hostname.replace(/^www\./, "").toLowerCase();
   if (host === "fb.watch" || host === "fb.com") return true;
   const path = url.pathname.toLowerCase();
+  if (path.includes("/share/p/") || path.includes("/posts/") || path.includes("/permalink.php")) {
+    return false;
+  }
   if (
     path.includes("/videos/") ||
     path.includes("/video.php") ||
@@ -93,12 +96,24 @@ function isFacebookVideo(url: URL): boolean {
     path.includes("/plugins/video") ||
     path.includes("/share/v") ||
     path.includes("/share/r") ||
-    path.includes("/share/video") ||
-    /^\/share\/[^/]+/.test(path)
+    path.includes("/share/video")
   ) {
     return true;
   }
   return url.searchParams.has("v") || url.searchParams.has("story_fbid") || url.searchParams.has("video_id");
+}
+
+function isFacebookPost(url: URL): boolean {
+  if (!facebookHost(url.hostname)) return false;
+  const path = url.pathname.toLowerCase();
+  return path.includes("/share/p/") || path.includes("/posts/") || path.includes("/permalink.php");
+}
+
+function isShortFacebookLink(url: URL): boolean {
+  const host = url.hostname.replace(/^www\./, "").toLowerCase();
+  if (host === "fb.watch" || host === "fb.com") return true;
+  const path = url.pathname.toLowerCase();
+  return path.includes("/share/v") || path.includes("/share/r") || path.includes("/share/video") || path.includes("/share/p");
 }
 
 function facebookPermalink(url: URL): string {
@@ -109,6 +124,14 @@ function facebookPermalink(url: URL): string {
   }
   canonical.hash = "";
   return canonical.toString();
+}
+
+function facebookPlugin(kind: "video" | "post", permalink: string): string {
+  const href = encodeURIComponent(permalink);
+  if (kind === "post") {
+    return `https://www.facebook.com/plugins/post.php?href=${href}&show_text=true&width=500`;
+  }
+  return `https://www.facebook.com/plugins/video.php?href=${href}&show_text=false&width=1280&height=720`;
 }
 
 /** Turn a YouTube or Facebook video / live / reel / share URL into an embeddable player. */
@@ -129,12 +152,21 @@ export function parseVideoEmbed(raw: string): VideoEmbed | null {
 
   if (isFacebookVideo(url)) {
     const permalink = facebookPermalink(url);
-    const href = encodeURIComponent(permalink);
     return {
       provider: "facebook",
-      embedUrl: `https://www.facebook.com/plugins/video.php?href=${href}&show_text=false&width=1280&height=720`,
+      embedUrl: facebookPlugin("video", permalink),
       watchUrl: permalink,
       label: "Facebook video",
+    };
+  }
+
+  if (isFacebookPost(url)) {
+    const permalink = facebookPermalink(url);
+    return {
+      provider: "facebook",
+      embedUrl: facebookPlugin("post", permalink),
+      watchUrl: permalink,
+      label: "Facebook post",
     };
   }
 
@@ -143,4 +175,81 @@ export function parseVideoEmbed(raw: string): VideoEmbed | null {
 
 export function isSupportedVideoUrl(raw: string): boolean {
   return parseVideoEmbed(raw) !== null;
+}
+
+function canonicalFromHtml(html: string): string | null {
+  const og =
+    html.match(/property=["']og:url["'][^>]*content=["']([^"']+)/i) ||
+    html.match(/content=["']([^"']+)["'][^>]*property=["']og:url["']/i);
+  if (og?.[1]) return og[1].replace(/&amp;/g, "&");
+  const canon =
+    html.match(/rel=["']canonical["'][^>]*href=["']([^"']+)/i) ||
+    html.match(/href=["']([^"']+)["'][^>]*rel=["']canonical["']/i);
+  return canon?.[1]?.replace(/&amp;/g, "&") ?? null;
+}
+
+async function followFacebook(start: string): Promise<string | null> {
+  let url = start;
+  for (let i = 0; i < 6; i++) {
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "GET",
+        redirect: "manual",
+        headers: {
+          accept: "text/html,application/xhtml+xml",
+          "user-agent": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
+        },
+        signal: AbortSignal.timeout(8000),
+      });
+    } catch {
+      return null;
+    }
+    const location = res.headers.get("location");
+    if (location && res.status >= 300 && res.status < 400) {
+      try {
+        const next = new URL(location, url);
+        if (next.hostname.includes("facebook.com") && next.pathname.includes("login")) return url;
+        url = next.toString();
+        continue;
+      } catch {
+        break;
+      }
+    }
+    const html = await res.text().catch(() => "");
+    const found = html ? canonicalFromHtml(html) : null;
+    if (found) {
+      try {
+        const next = new URL(found);
+        if (!facebookHost(next.hostname)) break;
+        if (next.toString() !== url) {
+          url = next.toString();
+          const parsed = parseVideoEmbed(url);
+          if (parsed && !isShortFacebookLink(next)) return parsed.watchUrl;
+          continue;
+        }
+      } catch {
+        break;
+      }
+    }
+    break;
+  }
+  return parseVideoEmbed(url)?.watchUrl ?? url;
+}
+
+/** Resolve Facebook share/v and fb.watch short links to a permalink Facebook's player can embed. */
+export async function resolveVideoEmbed(raw: string): Promise<VideoEmbed | null> {
+  const first = parseVideoEmbed(raw);
+  if (!first) return null;
+  if (first.provider !== "facebook") return first;
+  let current: URL;
+  try {
+    current = new URL(first.watchUrl);
+  } catch {
+    return first;
+  }
+  if (!isShortFacebookLink(current)) return first;
+  const resolved = await followFacebook(current.toString());
+  if (!resolved) return first;
+  return parseVideoEmbed(resolved) ?? first;
 }

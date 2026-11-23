@@ -15,6 +15,7 @@ import { getPublishedProduct, listPublishedProducts } from "@/lib/catalog";
 import { getCustomerSession } from "@/lib/customer-session";
 import { videoUrlForSlug } from "@/lib/product-videos-store";
 import { absoluteUrl, publicStoreOrigin } from "@/lib/site-origin";
+import { ogImageTags, shareImageUrl } from "@/lib/social-preview";
 import { getStoreBrand } from "@/lib/store-brand";
 
 export function generateStaticParams() {
@@ -33,7 +34,7 @@ export async function generateMetadata({
   const description =
     product.blurb ||
     `${product.name} — genuine leather from Bismillah Leather, Mirpur-10, Dhaka. Cash on delivery across Bangladesh.`;
-  const image = absoluteUrl(origin, product.image);
+  const image = shareImageUrl(origin, product.image);
   const url = `${origin}/product/${product.slug}`;
   return {
     title: `${product.name} | leather ${product.kind} Bangladesh`,
@@ -48,10 +49,11 @@ export async function generateMetadata({
     alternates: { canonical: url },
     openGraph: {
       type: "website",
+      locale: "en_US",
       url,
       title: product.name,
       description,
-      images: [{ url: image, alt: product.name }],
+      images: ogImageTags(image, product.name),
     },
     twitter: { card: "summary_large_image", title: product.name, description, images: [image] },
     other: { "product:price:amount": String(price), "product:price:currency": "BDT" },

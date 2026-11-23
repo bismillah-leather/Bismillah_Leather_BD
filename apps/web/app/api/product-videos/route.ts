@@ -1,4 +1,4 @@
-import { parseVideoEmbed } from "@bismillah/shared";
+import { resolveVideoEmbed } from "@bismillah/shared";
 import { NextResponse } from "next/server";
 import { readProductVideos, writeProductVideos, type ProductVideoMap } from "@/lib/product-videos-store";
 
@@ -29,7 +29,7 @@ export async function PUT(request: Request) {
     if (typeof value !== "string") continue;
     const trimmed = value.trim();
     if (!trimmed) continue;
-    const embed = parseVideoEmbed(trimmed);
+    const embed = await resolveVideoEmbed(trimmed);
     if (!embed) {
       return NextResponse.json(
         {

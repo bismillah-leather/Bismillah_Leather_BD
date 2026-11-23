@@ -1,5 +1,5 @@
 import { getPrisma, mergeProductVideoSlug } from "@bismillah/db";
-import { parseVideoEmbed } from "@bismillah/shared";
+import { resolveVideoEmbed } from "@bismillah/shared";
 import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
 
@@ -60,7 +60,7 @@ export async function PUT(
   if (!raw) {
     return NextResponse.json({ error: "Video URL required." }, { status: 400 });
   }
-  const embed = parseVideoEmbed(raw);
+  const embed = await resolveVideoEmbed(raw);
   if (!embed) {
     return NextResponse.json(
       { error: "Use a Facebook video / reel / share link, or a YouTube link." },

@@ -66,7 +66,7 @@ export type {
   CouponScopeKind,
   CouponTypeKind,
 } from "./coupon";
-export { isSupportedVideoUrl, parseVideoEmbed } from "./video-embed";
+export { isSupportedVideoUrl, parseVideoEmbed, resolveVideoEmbed } from "./video-embed";
 export type { VideoEmbed, VideoProvider } from "./video-embed";
 export {
   DEFAULT_ABOUT,

@@ -51,6 +51,7 @@ export function ProductVideo({
           }
           className="absolute inset-0 size-full border-0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerPolicy="origin-when-cross-origin"
           allowFullScreen
           loading="eager"
         />

@@ -13,6 +13,7 @@ import { SiteHeader } from "@/components/site-header";
 import { TrackingNoscript, TrackingScripts } from "@/components/tracking-scripts";
 import { keywordList, getSeoConfig } from "@/lib/seo";
 import { absoluteUrl, publicStoreOrigin } from "@/lib/site-origin";
+import { DEFAULT_OG_IMAGE, ogImageTags, shareImageUrl } from "@/lib/social-preview";
 import { getStoreBrand } from "@/lib/store-brand";
 import "./globals.css";
 
@@ -27,8 +28,6 @@ const fraunces = Fraunces({
   variable: "--font-fraunces",
   display: "swap",
 });
-
-const OG_IMAGE = "/catalog/wallet-black-long.jpg";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -51,7 +50,7 @@ export async function generateMetadata(): Promise<Metadata> {
     seo.seoDescription ||
     `${brand.tagline}. Genuine leather wallets and belts from ${brand.addressShort}. Cash on delivery across Bangladesh. Call ${brand.phoneDisplay}.`;
   const keywords = keywordList(seo.seoKeywords);
-  const ogImage = absoluteUrl(origin, OG_IMAGE);
+  const ogImage = shareImageUrl(origin, DEFAULT_OG_IMAGE);
 
   return {
     metadataBase: new URL(origin),
@@ -84,12 +83,12 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     openGraph: {
       type: "website",
-      locale: "en_BD",
+      locale: "en_US",
       url: origin,
       siteName: brand.name,
       title,
       description,
-      images: [{ url: ogImage, alt: `${brand.name} leather wallet` }],
+      images: ogImageTags(ogImage, `${brand.name} leather wallet`),
     },
     twitter: {
       card: "summary_large_image",
@@ -115,7 +114,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         "@id": `${origin}/#store`,
         name: brand.name,
         url: origin,
-        image: absoluteUrl(origin, OG_IMAGE),
+        image: shareImageUrl(origin, DEFAULT_OG_IMAGE),
         logo: absoluteUrl(origin, "/brand/logo.png"),
         description: brand.tagline,
         telephone: brand.phoneE164,

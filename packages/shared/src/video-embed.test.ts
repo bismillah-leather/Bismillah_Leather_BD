@@ -12,6 +12,10 @@ describe("parseVideoEmbed", () => {
 
     const watch = parseVideoEmbed("https://fb.watch/abcDE/");
     expect(watch?.provider).toBe("facebook");
+
+    const post = parseVideoEmbed("https://www.facebook.com/share/p/1AbCdEfGh/");
+    expect(post?.provider).toBe("facebook");
+    expect(post?.embedUrl).toContain("plugins/post.php");
   });
 
   it("accepts YouTube watch links", () => {
