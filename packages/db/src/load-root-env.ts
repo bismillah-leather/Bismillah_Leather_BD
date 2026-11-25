@@ -21,6 +21,7 @@ export function loadRootEnv(): void {
   if (loaded) return;
   loaded = true;
   const rootDir = workspaceRoot();
-  loadDotenv({ path: path.join(rootDir, ".env"), override: true });
-  loadDotenv({ path: path.join(rootDir, ".env.local"), override: true });
+  // Do not override: Docker/compose runtime env must win over any traced empty .env.
+  loadDotenv({ path: path.join(rootDir, ".env"), override: false });
+  loadDotenv({ path: path.join(rootDir, ".env.local"), override: false });
 }

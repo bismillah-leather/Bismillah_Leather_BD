@@ -9,13 +9,31 @@ export type R2Config = {
   publicBase: string;
 };
 
+function envTrim(name: string) {
+  // Dynamic lookup so Next.js cannot inline empty values from image build time.
+  const value = process.env[name];
+  return typeof value === "string" ? value.trim() : "";
+}
+
+export function isUsableR2PublicBase(publicBase: string) {
+  try {
+    const parsed = new URL(publicBase);
+    if (parsed.protocol !== "https:") return false;
+    const host = parsed.hostname.toLowerCase();
+    if (host.includes("cloudflarestorage.com")) return false;
+    return host.endsWith(".r2.dev") || host.includes(".");
+  } catch {
+    return false;
+  }
+}
+
 export function readR2Config(): R2Config | null {
   loadRootEnv();
-  const accountId = process.env.R2_ACCOUNT_ID?.trim();
-  const accessKeyId = process.env.R2_ACCESS_KEY_ID?.trim();
-  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY?.trim();
-  const bucket = process.env.R2_BUCKET?.trim();
-  const publicBase = process.env.R2_PUBLIC_URL?.trim().replace(/\/$/, "");
+  const accountId = envTrim("R2_ACCOUNT_ID");
+  const accessKeyId = envTrim("R2_ACCESS_KEY_ID");
+  const secretAccessKey = envTrim("R2_SECRET_ACCESS_KEY");
+  const bucket = envTrim("R2_BUCKET");
+  const publicBase = envTrim("R2_PUBLIC_URL").replace(/\/$/, "");
   if (!accountId || !accessKeyId || !secretAccessKey || !bucket || !publicBase) return null;
   return { accountId, accessKeyId, secretAccessKey, bucket, publicBase };
 }
@@ -36,7 +54,10 @@ function amzTimestamp(now = new Date()) {
 export async function putR2Object(key: string, body: Buffer, contentType: string) {
   const config = readR2Config();
   if (!config) {
-    throw new Error("R2 is not configured. Set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, and R2_PUBLIC_URL.");
+    throw new Error("Image hosting is not set up yet. Add the R2 keys.");
+  }
+  if (!isUsableR2PublicBase(config.publicBase)) {
+    throw new Error("R2_PUBLIC_URL must be the public r2.dev URL, not the S3 or catalog endpoint.");
   }
 
   const host = `${config.accountId}.r2.cloudflarestorage.com`;

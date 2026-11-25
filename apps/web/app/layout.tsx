@@ -62,11 +62,11 @@ export async function generateMetadata(): Promise<Metadata> {
     keywords,
     icons: {
       icon: [
-        { url: "/icon.png", type: "image/png", sizes: "48x48" },
-        { url: "/apple-icon.png", type: "image/png", sizes: "180x180" },
+        { url: "/brand/favicon.png?v=20261126", type: "image/png", sizes: "48x48" },
+        { url: "/brand/apple-icon.png?v=20261126", type: "image/png", sizes: "180x180" },
       ],
-      apple: [{ url: "/apple-icon.png", sizes: "180x180" }],
-      shortcut: "/icon.png",
+      apple: [{ url: "/brand/apple-icon.png?v=20261126", sizes: "180x180" }],
+      shortcut: "/brand/favicon.png?v=20261126",
     },
     applicationName: brand.name,
     authors: [{ name: brand.name }],

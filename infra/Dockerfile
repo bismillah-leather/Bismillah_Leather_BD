@@ -16,6 +16,7 @@ COPY packages/db/package.json packages/db/package.json
 COPY packages/shared/package.json packages/shared/package.json
 COPY packages/ui/package.json packages/ui/package.json
 COPY packages/config/package.json packages/config/package.json
+COPY packages/cache/package.json packages/cache/package.json
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS migrate

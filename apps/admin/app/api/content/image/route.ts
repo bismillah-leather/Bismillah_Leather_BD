@@ -5,7 +5,7 @@ import { imageExtension, storeUploadedImage } from "@/lib/store-upload";
 
 export const maxDuration = 30;
 
-const MAX_BYTES = 4 * 1024 * 1024;
+const MAX_BYTES = 8 * 1024 * 1024;
 
 export async function POST(request: Request) {
   const admin = await getActiveAdmin();

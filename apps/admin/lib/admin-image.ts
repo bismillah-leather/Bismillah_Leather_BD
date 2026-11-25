@@ -51,9 +51,14 @@ export async function postAdminImage(url: string, file: File) {
     body,
     signal: AbortSignal.timeout(25_000),
   });
-  const data = (await response.json().catch(() => ({}))) as { url?: string; src?: string; error?: string };
+  const data = (await response.json().catch(() => ({}))) as {
+    url?: string;
+    src?: string;
+    mediaId?: string;
+    error?: string;
+  };
   if (!response.ok || !data.url) {
     throw new Error(data.error || "Photo was not saved.");
   }
-  return { url: data.url, src: data.src || data.url };
+  return { url: data.url, src: data.src || data.url, mediaId: data.mediaId };
 }

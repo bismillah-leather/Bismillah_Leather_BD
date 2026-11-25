@@ -45,22 +45,21 @@ export function ProductVideosPage({
   async function save() {
     setStatus("saving");
     setError(null);
-    const cleaned: VideoMap = {};
+    const payload: VideoMap = {};
     for (const [slug, url] of Object.entries(draft)) {
       const trimmed = url.trim();
-      if (!trimmed) continue;
-      if (!isSupportedVideoUrl(trimmed)) {
+      payload[slug] = trimmed;
+      if (trimmed && !isSupportedVideoUrl(trimmed)) {
         setStatus("error");
         setError(`Invalid link for ${slug}. Use a Facebook video / reel / share URL, or YouTube.`);
         return;
       }
-      cleaned[slug] = trimmed;
     }
     try {
       const res = await fetch("/admin/api/product-videos", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cleaned),
+        body: JSON.stringify(payload),
       });
       const data = (await res.json().catch(() => ({}))) as VideoMap & { error?: string };
       if (!res.ok) {

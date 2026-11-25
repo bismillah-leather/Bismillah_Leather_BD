@@ -22,13 +22,18 @@ export function reviewImageExt(file: { type: string; name: string }) {
   return match[1] === "jpeg" ? "jpg" : match[1];
 }
 
+function envTrim(name: string) {
+  const value = process.env[name];
+  return typeof value === "string" ? value.trim() : "";
+}
+
 function readR2() {
   loadRootEnv();
-  const accountId = process.env.R2_ACCOUNT_ID?.trim();
-  const accessKeyId = process.env.R2_ACCESS_KEY_ID?.trim();
-  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY?.trim();
-  const bucket = process.env.R2_BUCKET?.trim();
-  const publicBase = process.env.R2_PUBLIC_URL?.trim().replace(/\/$/, "");
+  const accountId = envTrim("R2_ACCOUNT_ID");
+  const accessKeyId = envTrim("R2_ACCESS_KEY_ID");
+  const secretAccessKey = envTrim("R2_SECRET_ACCESS_KEY");
+  const bucket = envTrim("R2_BUCKET");
+  const publicBase = envTrim("R2_PUBLIC_URL").replace(/\/$/, "");
   if (!accountId || !accessKeyId || !secretAccessKey || !bucket || !publicBase) return null;
   return { accountId, accessKeyId, secretAccessKey, bucket, publicBase };
 }
@@ -91,7 +96,7 @@ function saveLocal(key: string, bytes: Buffer) {
 
 export async function storeReviewPhoto(key: string, bytes: Buffer, contentType: string) {
   if (readR2()) return putR2(key, bytes, contentType);
-  if (process.env.VERCEL === "1" || process.env.VERCEL_ENV) {
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL === "1" || process.env.VERCEL_ENV) {
     throw new Error("Image hosting is not set up yet.");
   }
   if (!existsSync(path.join(process.cwd(), "public"))) {

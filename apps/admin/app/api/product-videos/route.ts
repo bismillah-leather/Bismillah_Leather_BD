@@ -26,11 +26,15 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Expected a slug → url map" }, { status: 400 });
   }
 
-  const next: ProductVideoMap = {};
+  const current = (await readStoredProductVideos()) ?? {};
+  const next: ProductVideoMap = { ...current };
   for (const [slug, value] of Object.entries(body as Record<string, unknown>)) {
     if (typeof value !== "string") continue;
     const trimmed = value.trim();
-    if (!trimmed) continue;
+    if (!trimmed) {
+      delete next[slug];
+      continue;
+    }
     const embed = await resolveVideoEmbed(trimmed);
     if (!embed) {
       return NextResponse.json(

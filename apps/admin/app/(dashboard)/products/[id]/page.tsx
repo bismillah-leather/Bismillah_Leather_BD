@@ -9,6 +9,7 @@ import { adminMediaSrc, requestStoreOrigin } from "@/lib/media-url";
 import { NewToggle } from "../new-toggle";
 import { ProductDeleteButton } from "../product-delete-button";
 import { ProductEditForm } from "./product-edit-form";
+import { ProductGalleryEditor } from "./product-gallery-editor";
 import { ProductVideoEditor } from "./product-video-editor";
 
 const STATUSES = ["draft", "scheduled", "published", "archived"] as const;
@@ -51,7 +52,7 @@ export default async function ProductDetailPage({
         },
         media: {
           orderBy: { sortOrder: "asc" },
-          select: { type: true, storageKey: true },
+          select: { id: true, type: true, storageKey: true },
         },
       },
     }),
@@ -66,10 +67,13 @@ export default async function ProductDetailPage({
 
   const variant = product.variants[0];
   const videoUrl = product.media.find((item) => item.type === "video")?.storageKey ?? null;
-  const imageUrl = adminMediaSrc(
-    product.media.find((item) => item.type === "image")?.storageKey,
-    origin,
-  );
+  const gallery = product.media
+    .filter((item) => item.type === "image")
+    .map((item) => ({
+      id: item.id,
+      src: adminMediaSrc(item.storageKey, origin) ?? item.storageKey,
+    }));
+  const imageUrl = gallery[0]?.src ?? null;
 
   return (
     <div>
@@ -158,6 +162,12 @@ export default async function ProductDetailPage({
           />
         </div>
       </section>
+
+      <ProductGalleryEditor
+        productId={product.id}
+        productName={product.name}
+        initial={gallery}
+      />
 
       <ProductVideoEditor
         productId={product.id}

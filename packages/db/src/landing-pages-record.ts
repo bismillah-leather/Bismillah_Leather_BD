@@ -10,6 +10,10 @@ export async function readLandingPages(): Promise<LandingPage[]> {
 
 export async function writeLandingPages(value: unknown): Promise<LandingPage[]> {
   const pages = normalizeLandingList(value);
+  const current = await readLandingPages();
+  if (pages.length === 0 && current.length > 0) {
+    throw new Error("Refusing to wipe landing pages with an empty save.");
+  }
   await writeJsonSetting(KEY, pages);
   return pages;
 }

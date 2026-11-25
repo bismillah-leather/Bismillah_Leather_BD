@@ -21,9 +21,9 @@ export const metadata: Metadata = {
   title: "Admin · Bismillah Leather",
   robots: { index: false, follow: false },
   icons: {
-    icon: [{ url: "/icon.png", type: "image/png" }],
-    apple: [{ url: "/apple-icon.png" }],
-    shortcut: "/icon.png",
+    icon: [{ url: "/brand/favicon.png?v=20261126", type: "image/png", sizes: "48x48" }],
+    apple: [{ url: "/brand/apple-icon.png?v=20261126", sizes: "180x180" }],
+    shortcut: "/brand/favicon.png?v=20261126",
   },
 };
 
