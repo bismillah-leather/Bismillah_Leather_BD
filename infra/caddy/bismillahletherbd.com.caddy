@@ -8,9 +8,12 @@
 # Routing note: the Next.js storefront owns /api/reviews, /api/account, etc.
 # Sending ALL of /api to Express would 404 those routes. Express is only
 # healthz/readyz, so those two paths go to the API container.
+#
+# Canonical host is https://bismillahleatherbd.com
+# www + old typo domains 301 there. Do NOT 308 apex HTTP→HTTPS here:
+# Cloudflare Flexible talks HTTP to origin; that looped before.
 
-# Cloudflare Flexible uses origin HTTP. Serving this block avoids a 308 loop.
-http://bismillahletherbd.com, http://www.bismillahletherbd.com {
+(bismillah_leather_proxy) {
 	encode gzip zstd
 	handle /api/healthz {
 		reverse_proxy 172.18.0.1:18102
@@ -26,30 +29,24 @@ http://bismillahletherbd.com, http://www.bismillahletherbd.com {
 	}
 }
 
-bismillahletherbd.com, www.bismillahletherbd.com {
-	# Cloudflare orange-cloud: origin handshake needs a cert. Internal CA works
-	# with SSL/TLS mode Full. Full (strict) needs a Cloudflare Origin CA cert.
-	tls internal
-	encode gzip zstd
+http://bismillahleatherbd.com {
+	import bismillah_leather_proxy
+}
 
+http://www.bismillahleatherbd.com, http://bismillahletherbd.com, http://www.bismillahletherbd.com {
+	redir https://bismillahleatherbd.com{uri} 301
+}
+
+bismillahleatherbd.com {
+	tls internal
 	header {
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
 	}
+	import bismillah_leather_proxy
+}
 
-	handle /api/healthz {
-		reverse_proxy 172.18.0.1:18102
-	}
-
-	handle /api/readyz {
-		reverse_proxy 172.18.0.1:18102
-	}
-
-	handle /admin* {
-		reverse_proxy 172.18.0.1:18101
-	}
-
-	handle {
-		reverse_proxy 172.18.0.1:18100
-	}
+www.bismillahleatherbd.com, bismillahletherbd.com, www.bismillahletherbd.com {
+	tls internal
+	redir https://bismillahleatherbd.com{uri} 301
 }

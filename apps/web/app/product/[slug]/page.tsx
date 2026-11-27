@@ -11,7 +11,7 @@ import { ProductGrid } from "@/components/product-grid";
 import { ProductInfoSection } from "@/components/product-info-section";
 import { ProductReviews } from "@/components/product-reviews";
 import { TrustStrip } from "@/components/trust-strip";
-import { getPublishedProduct, listPublishedProducts } from "@/lib/catalog";
+import { getPublishedProduct, listPublishedProducts, productSeoDescription } from "@/lib/catalog";
 import { getCustomerSession } from "@/lib/customer-session";
 import { videoUrlForSlug } from "@/lib/product-videos-store";
 import { absoluteUrl, publicStoreOrigin } from "@/lib/site-origin";
@@ -31,9 +31,7 @@ export async function generateMetadata({
   const [product, origin] = await Promise.all([getPublishedProduct(slug), publicStoreOrigin()]);
   if (!product) return { title: "Product" };
   const price = Number(product.salePaisa ?? product.pricePaisa) / 100;
-  const description =
-    product.blurb ||
-    `${product.name} — genuine leather from Bismillah Leather, Mirpur-10, Dhaka. Cash on delivery across Bangladesh.`;
+  const description = productSeoDescription(product.name, product.blurb);
   const image = shareImageUrl(origin, product.image);
   const url = `${origin}/product/${product.slug}`;
   return {
@@ -49,7 +47,7 @@ export async function generateMetadata({
     alternates: { canonical: url },
     openGraph: {
       type: "website",
-      locale: "en_US",
+      locale: "en_BD",
       url,
       title: product.name,
       description,
@@ -92,12 +90,14 @@ async function ProductContent({ params }: { params: Promise<{ slug: string }> })
   const categoryLabel = product.categorySlug.replaceAll("-", " ");
 
   const unit = Number(product.salePaisa ?? product.pricePaisa) / 100;
+  const description = productSeoDescription(product.name, product.blurb, view.blurb);
   const productLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
-    image: [absoluteUrl(origin, product.image)],
-    description: product.blurb || view.blurb,
+    url: `${origin}/product/${product.slug}`,
+    image: galleryFor(product).map((src) => absoluteUrl(origin, src)),
+    description,
     sku: product.sku,
     brand: {
       "@type": "Brand",

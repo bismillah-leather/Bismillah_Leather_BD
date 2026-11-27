@@ -59,7 +59,9 @@ export function ProductCreateForm({ categories }: { categories: CategoryOption[]
     try {
       const res = await fetch("/admin/api/products", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
         body: JSON.stringify({
           name,
           slug: previewSlug,

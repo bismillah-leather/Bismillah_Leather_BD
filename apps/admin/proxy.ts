@@ -3,15 +3,34 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminToken } from "@/lib/session";
 
-const PUBLIC = new Set(["/", "/login", "/register", "/api/auth/login", "/api/auth/register"]);
+const PUBLIC = new Set([
+  "/",
+  "/login",
+  "/register",
+  "/api/auth/login",
+  "/api/auth/register",
+  "/api/health",
+  "/api/uploads/status",
+]);
 
-function clearSessionCookie(res: NextResponse) {
+function cookieDomainFromRequest(request: NextRequest) {
+  const hostHeader = request.headers.get("x-forwarded-host") || request.nextUrl.hostname || "";
+  const host = (hostHeader.split(":")[0] || "").toLowerCase();
+  if (host === "bismillahleatherbd.com" || host === "www.bismillahleatherbd.com") {
+    return "bismillahleatherbd.com";
+  }
+  return undefined;
+}
+
+function clearSessionCookie(res: NextResponse, request: NextRequest) {
+  const domain = cookieDomainFromRequest(request);
   res.cookies.set(ADMIN_SESSION_COOKIE, "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/admin",
     maxAge: 0,
+    ...(domain ? { domain } : {}),
   });
 }
 
@@ -64,7 +83,7 @@ export async function proxy(request: NextRequest) {
     home.search = "";
     if (pathname !== "/") home.searchParams.set("next", pathname);
     const res = NextResponse.redirect(home);
-    if (token) clearSessionCookie(res);
+    if (token) clearSessionCookie(res, request);
     return res;
   }
 

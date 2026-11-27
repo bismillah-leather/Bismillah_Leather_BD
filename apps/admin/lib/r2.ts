@@ -9,10 +9,23 @@ export type R2Config = {
   publicBase: string;
 };
 
+const R2_ENV_NAMES = [
+  "R2_ACCOUNT_ID",
+  "R2_ACCESS_KEY_ID",
+  "R2_SECRET_ACCESS_KEY",
+  "R2_BUCKET",
+  "R2_PUBLIC_URL",
+] as const;
+
 function envTrim(name: string) {
   // Dynamic lookup so Next.js cannot inline empty values from image build time.
   const value = process.env[name];
   return typeof value === "string" ? value.trim() : "";
+}
+
+export function missingR2EnvNames() {
+  loadRootEnv();
+  return R2_ENV_NAMES.filter((name) => !envTrim(name));
 }
 
 export function isUsableR2PublicBase(publicBase: string) {
@@ -28,14 +41,14 @@ export function isUsableR2PublicBase(publicBase: string) {
 }
 
 export function readR2Config(): R2Config | null {
-  loadRootEnv();
-  const accountId = envTrim("R2_ACCOUNT_ID");
-  const accessKeyId = envTrim("R2_ACCESS_KEY_ID");
-  const secretAccessKey = envTrim("R2_SECRET_ACCESS_KEY");
-  const bucket = envTrim("R2_BUCKET");
-  const publicBase = envTrim("R2_PUBLIC_URL").replace(/\/$/, "");
-  if (!accountId || !accessKeyId || !secretAccessKey || !bucket || !publicBase) return null;
-  return { accountId, accessKeyId, secretAccessKey, bucket, publicBase };
+  if (missingR2EnvNames().length > 0) return null;
+  return {
+    accountId: envTrim("R2_ACCOUNT_ID"),
+    accessKeyId: envTrim("R2_ACCESS_KEY_ID"),
+    secretAccessKey: envTrim("R2_SECRET_ACCESS_KEY"),
+    bucket: envTrim("R2_BUCKET"),
+    publicBase: envTrim("R2_PUBLIC_URL").replace(/\/$/, ""),
+  };
 }
 
 function sha256Hex(data: Buffer | string) {

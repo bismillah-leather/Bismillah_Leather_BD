@@ -9,11 +9,26 @@ import {
 import { cache } from "react";
 import { remember } from "./remember";
 
+export function productSeoDescription(
+  name: string,
+  description?: string | null,
+  seoDescription?: string | null,
+  fallbackBlurb?: string | null,
+) {
+  const text =
+    description?.trim() ||
+    seoDescription?.trim() ||
+    fallbackBlurb?.trim() ||
+    `${name} — genuine leather from Bismillah Leather, Mirpur-10, Dhaka. Cash on delivery across Bangladesh.`;
+  return text;
+}
+
 type DbProductRow = {
   id: string;
   name: string;
   slug: string;
   description: string;
+  seoDescription: string | null;
   ogImageKey: string | null;
   isNew: boolean;
   ratingAvg: { toNumber(): number } | number;
@@ -73,7 +88,7 @@ function mapRow(row: DbProductRow): ShowcaseProduct {
     inStock: variant ? available > 0 : false,
     stockQty: variant ? available : 0,
     isNew: row.isNew,
-    blurb: row.description?.trim() || fallback?.blurb || "",
+    blurb: productSeoDescription(row.name, row.description, row.seoDescription, fallback?.blurb),
     highlights: fallback?.highlights,
     videoUrl: video?.storageKey || fallback?.videoUrl || null,
     ratingAvg: typeof row.ratingAvg === "number" ? row.ratingAvg : Number(row.ratingAvg),
@@ -86,6 +101,7 @@ const productSelect = {
   name: true,
   slug: true,
   description: true,
+  seoDescription: true,
   ogImageKey: true,
   isNew: true,
   ratingAvg: true,

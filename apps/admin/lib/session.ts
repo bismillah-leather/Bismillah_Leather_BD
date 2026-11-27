@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 export const ADMIN_SESSION_COOKIE = "bl_admin_session";
 const COOKIE_PATH = "/admin";
@@ -55,24 +55,40 @@ export async function getAdminSession(): Promise<AdminSession | null> {
   return verifyAdminToken(token);
 }
 
+async function cookieDomain() {
+  try {
+    const h = await headers();
+    const hostHeader = h.get("x-forwarded-host") || h.get("host") || "";
+    const host = (hostHeader.split(":")[0] || "").toLowerCase();
+    if (host === "bismillahleatherbd.com" || host === "www.bismillahleatherbd.com") {
+      return "bismillahleatherbd.com";
+    }
+  } catch {
+    /* route handlers without request headers */
+  }
+  return undefined;
+}
+
+function cookieBase(domain?: string) {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: COOKIE_PATH,
+    ...(domain ? { domain } : {}),
+  };
+}
+
 export async function setAdminSessionCookie(token: string) {
   const jar = await cookies();
   jar.set(ADMIN_SESSION_COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: COOKIE_PATH,
+    ...cookieBase(await cookieDomain()),
     maxAge: MAX_AGE_SEC,
   });
 }
 
 export async function clearAdminSessionCookie() {
   const jar = await cookies();
-  jar.set(ADMIN_SESSION_COOKIE, "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: COOKIE_PATH,
-    maxAge: 0,
-  });
+  const domain = await cookieDomain();
+  jar.set(ADMIN_SESSION_COOKIE, "", { ...cookieBase(domain), maxAge: 0 });
 }

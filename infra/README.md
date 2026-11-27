@@ -22,10 +22,10 @@ Confirm `18100–18102` are free on the VPS before `up`. Change `WEB_HOST_PORT` 
 Copy `infra/caddy/bismillahletherbd.com.caddy` into the host Caddy **sites include** directory. **Import it; do not overwrite** `/etc/caddy/Caddyfile`.
 
 ```
-https://bismillahletherbd.com/          → web :18100
-https://bismillahletherbd.com/admin     → admin :18101
-https://bismillahletherbd.com/api/healthz → api :18102
-https://bismillahletherbd.com/api/readyz  → api :18102
+https://bismillahleatherbd.com/          → web :18100
+https://bismillahleatherbd.com/admin     → admin :18101
+https://bismillahleatherbd.com/api/healthz → api :18102
+https://bismillahleatherbd.com/api/readyz  → api :18102
 ```
 
 Do **not** send all of `/api` to Express. Storefront Next.js routes (`/api/reviews`, `/api/account`, checkout actions) live on **web**.

@@ -42,6 +42,39 @@ export async function prepareAdminImage(file: File): Promise<File> {
   return blobToFile(blob, file.name);
 }
 
+function throwUploadFailure(response: Response, text: string) {
+  const snippet = text.slice(0, 220).toLowerCase();
+  if (
+    response.type === "opaqueredirect" ||
+    response.status === 301 ||
+    response.status === 302 ||
+    response.status === 307 ||
+    response.status === 308
+  ) {
+    throw new Error("Session expired. Open https://bismillahleatherbd.com/admin, log in, then upload again.");
+  }
+  if (snippet.includes("error code: 1010") || response.headers.get("cf-mitigated") || response.status === 403) {
+    throw new Error(
+      "This network/browser was blocked before the photo reached the server. Use https://bismillahleatherbd.com/admin (not www/old domain), another browser, or another network.",
+    );
+  }
+  if (snippet.includes("<!doctype") || snippet.includes("<html")) {
+    throw new Error(
+      "The upload hit a login or challenge page instead of the API. Hard-refresh, log in on the main domain, then retry.",
+    );
+  }
+  let data: { error?: string } = {};
+  try {
+    data = text ? (JSON.parse(text) as { error?: string }) : {};
+  } catch {
+    data = {};
+  }
+  if (response.status === 401) {
+    throw new Error(data.error || "Session expired. Log in again.");
+  }
+  throw new Error(data.error || "Photo was not saved.");
+}
+
 export async function postAdminImage(url: string, file: File) {
   const prepared = await prepareAdminImage(file);
   const body = new FormData();
@@ -49,16 +82,21 @@ export async function postAdminImage(url: string, file: File) {
   const response = await fetch(url, {
     method: "POST",
     body,
+    cache: "no-store",
+    credentials: "same-origin",
+    redirect: "manual",
+    headers: { "Cache-Control": "no-store" },
     signal: AbortSignal.timeout(25_000),
   });
-  const data = (await response.json().catch(() => ({}))) as {
-    url?: string;
-    src?: string;
-    mediaId?: string;
-    error?: string;
-  };
-  if (!response.ok || !data.url) {
-    throw new Error(data.error || "Photo was not saved.");
+  const text = await response.text();
+  let data: { url?: string; src?: string; mediaId?: string; error?: string } = {};
+  try {
+    data = text ? (JSON.parse(text) as typeof data) : {};
+  } catch {
+    throwUploadFailure(response, text);
   }
-  return { url: data.url, src: data.src || data.url, mediaId: data.mediaId };
+  if (!response.ok || !data.url) {
+    throwUploadFailure(response, text);
+  }
+  return { url: data.url!, src: data.src || data.url!, mediaId: data.mediaId };
 }

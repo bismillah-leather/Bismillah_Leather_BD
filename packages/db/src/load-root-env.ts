@@ -1,4 +1,4 @@
-import { config as loadDotenv } from "dotenv";
+import { parse as parseDotenv } from "dotenv";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,12 +16,30 @@ function workspaceRoot() {
   return path.join(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 }
 
+function fillEmptyFromFile(filePath: string) {
+  if (!fs.existsSync(filePath)) return;
+  let parsed: Record<string, string> = {};
+  try {
+    parsed = parseDotenv(fs.readFileSync(filePath));
+  } catch {
+    return;
+  }
+  for (const [key, value] of Object.entries(parsed)) {
+    if (!value?.trim()) continue;
+    const current = process.env[key];
+    // Compose can inject empty R2_*= ; treat blank as unset so the file can fill it.
+    // Never clobber a non-empty Docker/runtime value.
+    if (current === undefined || current.trim() === "") {
+      process.env[key] = value;
+    }
+  }
+}
+
 /** Load monorepo root `.env` once (Turbopack workers often miss next.config loadEnvConfig). */
 export function loadRootEnv(): void {
   if (loaded) return;
   loaded = true;
   const rootDir = workspaceRoot();
-  // Do not override: Docker/compose runtime env must win over any traced empty .env.
-  loadDotenv({ path: path.join(rootDir, ".env"), override: false });
-  loadDotenv({ path: path.join(rootDir, ".env.local"), override: false });
+  fillEmptyFromFile(path.join(rootDir, ".env"));
+  fillEmptyFromFile(path.join(rootDir, ".env.local"));
 }

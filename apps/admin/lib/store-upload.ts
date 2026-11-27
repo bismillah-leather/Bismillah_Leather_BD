@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { putR2Object, readR2Config } from "./r2";
+import { missingR2EnvNames, putR2Object, readR2Config } from "./r2";
 
 const ALLOWED = new Map([
   ["image/jpeg", "jpg"],
@@ -44,6 +44,7 @@ function saveLocalShopImage(key: string, bytes: Buffer) {
 export async function storeUploadedImage(key: string, bytes: Buffer, contentType: string) {
   if (readR2Config()) return putR2Object(key, bytes, contentType);
   if (process.env.NODE_ENV === "production" || process.env.VERCEL === "1" || process.env.VERCEL_ENV) {
+    console.error("[admin] R2 env missing at request time:", missingR2EnvNames().join(",") || "unknown");
     throw new Error("Image hosting is not set up yet. Add the R2 keys.");
   }
   return saveLocalShopImage(key, bytes);

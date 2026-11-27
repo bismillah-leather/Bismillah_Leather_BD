@@ -16,8 +16,13 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
         allow: "/",
       },
       {
+        userAgent: "Googlebot",
+        allow: ["/", "/product/", "/category/", "/about", "/policies/", "/l/", "/search"],
+        disallow: ["/checkout", "/cart", "/account", "/admin", "/pay", "/api"],
+      },
+      {
         userAgent: "*",
-        allow: "/",
+        allow: ["/", "/product/", "/category/"],
         disallow: ["/checkout", "/cart", "/account", "/admin", "/pay", "/api"],
       },
     ],

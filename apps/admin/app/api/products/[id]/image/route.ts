@@ -1,10 +1,12 @@
 import { getPrisma } from "@bismillah/db";
-import { NextResponse } from "next/server";
 import { getActiveAdmin } from "@/lib/admin-auth";
 import { requestStoreOrigin } from "@/lib/media-url";
+import { noStoreJson } from "@/lib/no-store";
 import { imageExtension, storeUploadedImage } from "@/lib/store-upload";
 import { forgetAdminLists } from "@/lib/ttl-cache";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 export const maxDuration = 30;
 
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -32,7 +34,7 @@ export async function POST(
   ctx: { params: Promise<{ id: string }> },
 ) {
   const admin = await getActiveAdmin();
-  if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!admin) return noStoreJson({ error: "Unauthorized." }, 401);
 
   const { id } = await ctx.params;
   const prisma = getPrisma();
@@ -40,32 +42,32 @@ export async function POST(
     where: { id, deletedAt: null },
     select: { id: true, name: true, slug: true, ogImageKey: true },
   });
-  if (!product) return NextResponse.json({ error: "Product not found." }, { status: 404 });
+  if (!product) return noStoreJson({ error: "Product not found." }, 404);
 
   const imageCount = await prisma.productMedia.count({
     where: { productId: id, type: "image" },
   });
   if (imageCount >= MAX_IMAGES) {
-    return NextResponse.json({ error: "This product already has 16 photos." }, { status: 400 });
+    return noStoreJson({ error: "This product already has 16 photos." }, 400);
   }
 
   let form: FormData;
   try {
     form = await request.formData();
   } catch {
-    return NextResponse.json({ error: "Expected a photo upload." }, { status: 400 });
+    return noStoreJson({ error: "Expected a photo upload." }, 400);
   }
 
   const file = form.get("file");
   if (!(file instanceof File)) {
-    return NextResponse.json({ error: "Choose an image file." }, { status: 400 });
+    return noStoreJson({ error: "Choose an image file." }, 400);
   }
   const ext = imageExtension(file);
   if (!ext) {
-    return NextResponse.json({ error: "Use JPG, PNG, WebP, AVIF, or GIF." }, { status: 400 });
+    return noStoreJson({ error: "Use JPG, PNG, WebP, AVIF, or GIF." }, 400);
   }
   if (file.size <= 0 || file.size > MAX_BYTES) {
-    return NextResponse.json({ error: "Photo must be under 8 MB." }, { status: 400 });
+    return noStoreJson({ error: "Photo must be under 8 MB." }, 400);
   }
 
   const bytes = Buffer.from(await file.arrayBuffer());
@@ -78,9 +80,9 @@ export async function POST(
     console.error("[admin] product image upload failed:", error);
     const message = error instanceof Error ? error.message : "Could not store the photo.";
     const status = message.includes("not set up") ? 503 : 502;
-    return NextResponse.json(
+    return noStoreJson(
       { error: status === 503 ? message : "Could not store the photo." },
-      { status },
+      status,
     );
   }
 
@@ -121,7 +123,7 @@ export async function POST(
 
   forgetAdminLists();
   const origin = await requestStoreOrigin();
-  return NextResponse.json({
+  return noStoreJson({
     ok: true,
     url,
     src: publicSrc(url, origin),
@@ -135,12 +137,12 @@ export async function DELETE(
   ctx: { params: Promise<{ id: string }> },
 ) {
   const admin = await getActiveAdmin();
-  if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!admin) return noStoreJson({ error: "Unauthorized." }, 401);
 
   const { id } = await ctx.params;
   const mediaId = new URL(request.url).searchParams.get("mediaId")?.trim() ?? "";
   if (!mediaId) {
-    return NextResponse.json({ error: "mediaId is required." }, { status: 400 });
+    return noStoreJson({ error: "mediaId is required." }, 400);
   }
 
   const prisma = getPrisma();
@@ -148,7 +150,7 @@ export async function DELETE(
     where: { id: mediaId, productId: id, type: "image" },
     select: { id: true, storageKey: true },
   });
-  if (!media) return NextResponse.json({ error: "Photo not found." }, { status: 404 });
+  if (!media) return noStoreJson({ error: "Photo not found." }, 404);
 
   await prisma.productMedia.delete({ where: { id: media.id } });
   await refreshOgImage(id);
@@ -164,5 +166,5 @@ export async function DELETE(
   });
 
   forgetAdminLists();
-  return NextResponse.json({ ok: true, removed: media.id });
+  return noStoreJson({ ok: true, removed: media.id });
 }
